@@ -634,6 +634,13 @@ function PartyRoomScreen({ onNavigate }: { onNavigate: (screen: Screen) => void 
   const [selectedItem, setSelectedItem] = useState<QueueItem | null>(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [queue, setQueue] = useState(mockQueue)
+  // Note editing state
+  const [showEditNote, setShowEditNote] = useState(false)
+  const [editNoteText, setEditNoteText] = useState('')
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null)
+  // Note viewing state
+  const [showViewNote, setShowViewNote] = useState(false)
+  const [viewingNote, setViewingNote] = useState<QueueItem | null>(null)
 
   const currentItem = queue.find(v => v.status === 'showing')
   const pendingItems = queue.filter(v => v.status === 'pending')
@@ -693,6 +700,44 @@ function PartyRoomScreen({ onNavigate }: { onNavigate: (screen: Screen) => void 
     if (noteText.trim()) {
       setDetectedType('note')
       setAddContentStep('preview')
+    }
+  }
+
+  // Note editing handlers
+  const handleOpenEditNote = (item: QueueItem) => {
+    if (item.type === 'note') {
+      setEditNoteText(item.noteContent || '')
+      setEditingNoteId(item.id)
+      setShowEditNote(true)
+      setSelectedItem(null)
+    }
+  }
+
+  const handleSaveNote = () => {
+    if (editingNoteId && editNoteText.trim()) {
+      setQueue(queue.map(item =>
+        item.id === editingNoteId
+          ? { ...item, noteContent: editNoteText.trim() }
+          : item
+      ))
+      setShowEditNote(false)
+      setEditNoteText('')
+      setEditingNoteId(null)
+    }
+  }
+
+  const handleCancelEditNote = () => {
+    setShowEditNote(false)
+    setEditNoteText('')
+    setEditingNoteId(null)
+  }
+
+  // Note viewing handlers
+  const handleViewNote = (item: QueueItem) => {
+    if (item.type === 'note') {
+      setViewingNote(item)
+      setShowViewNote(true)
+      setSelectedItem(null)
     }
   }
 
@@ -1210,6 +1255,39 @@ function PartyRoomScreen({ onNavigate }: { onNavigate: (screen: Screen) => void 
 
             {/* Actions */}
             <div className="space-y-2">
+              {/* Note-specific actions */}
+              {selectedItem.type === 'note' && (
+                <>
+                  <button
+                    onClick={() => handleViewNote(selectedItem)}
+                    className="w-full flex items-center gap-4 p-3 rounded-xl hover:bg-surface-800 transition-colors text-left"
+                  >
+                    <div className="w-10 h-10 rounded-full bg-gray-500/20 flex items-center justify-center text-gray-400">
+                      <NoteIcon size={20} />
+                    </div>
+                    <div>
+                      <div className="font-medium">View Note</div>
+                      <div className="text-text-muted text-xs">Read the full note</div>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => handleOpenEditNote(selectedItem)}
+                    className="w-full flex items-center gap-4 p-3 rounded-xl hover:bg-surface-800 transition-colors text-left"
+                  >
+                    <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400">
+                      <EditIcon />
+                    </div>
+                    <div>
+                      <div className="font-medium">Edit Note</div>
+                      <div className="text-text-muted text-xs">Modify note content</div>
+                    </div>
+                  </button>
+
+                  <div className="h-px bg-surface-700 my-2"></div>
+                </>
+              )}
+
               <button
                 onClick={() => handleShowNext(selectedItem.id)}
                 className="w-full flex items-center gap-4 p-3 rounded-xl hover:bg-surface-800 transition-colors text-left"
@@ -1301,6 +1379,108 @@ function PartyRoomScreen({ onNavigate }: { onNavigate: (screen: Screen) => void 
                 className="btn flex-1 bg-red-500 text-white hover:bg-red-600"
               >
                 Remove
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* View Note Modal */}
+      {showViewNote && viewingNote && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end justify-center z-50">
+          <div className="bg-surface-900 w-full max-w-md rounded-t-3xl p-6 animate-fade-in-up max-h-[80vh] flex flex-col">
+            <div className="w-12 h-1 bg-surface-600 rounded-full mx-auto mb-6"></div>
+
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-gray-500/20 flex items-center justify-center text-gray-400">
+                  <NoteIcon size={20} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold">Note</h3>
+                  <p className="text-text-muted text-xs">Added by {viewingNote.addedBy}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => { setShowViewNote(false); setViewingNote(null); }}
+                className="text-text-muted"
+              >
+                <CloseIcon />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-auto">
+              <div className="bg-surface-800 rounded-xl p-4">
+                <p className="text-lg leading-relaxed whitespace-pre-wrap">{viewingNote.noteContent}</p>
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-4">
+              <button
+                onClick={() => {
+                  setShowViewNote(false)
+                  setViewingNote(null)
+                  handleOpenEditNote(viewingNote)
+                }}
+                className="btn btn-secondary flex-1 flex items-center justify-center gap-2"
+              >
+                <EditIcon />
+                Edit
+              </button>
+              <button
+                onClick={() => { setShowViewNote(false); setViewingNote(null); }}
+                className="btn btn-primary flex-1"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Note Modal */}
+      {showEditNote && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end justify-center z-50">
+          <div className="bg-surface-900 w-full max-w-md rounded-t-3xl p-6 animate-fade-in-up">
+            <div className="w-12 h-1 bg-surface-600 rounded-full mx-auto mb-6"></div>
+
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400">
+                  <EditIcon />
+                </div>
+                <h3 className="text-xl font-bold">Edit Note</h3>
+              </div>
+              <button onClick={handleCancelEditNote} className="text-text-muted">
+                <CloseIcon />
+              </button>
+            </div>
+
+            <textarea
+              placeholder="Write your note..."
+              value={editNoteText}
+              onChange={(e) => setEditNoteText(e.target.value)}
+              className="input min-h-[150px] resize-none mb-4"
+              autoFocus
+            />
+
+            <p className="text-text-muted text-xs mb-4">
+              {editNoteText.length} characters
+            </p>
+
+            <div className="flex gap-3">
+              <button
+                onClick={handleCancelEditNote}
+                className="btn btn-secondary flex-1"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveNote}
+                disabled={!editNoteText.trim()}
+                className="btn btn-primary flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Save Note
               </button>
             </div>
           </div>
