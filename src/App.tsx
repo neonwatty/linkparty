@@ -892,6 +892,7 @@ function PartyRoomScreen({ onNavigate, partyId, partyCode, onLeaveParty }: Party
         type: detectedType,
         status: queue.length === 0 ? 'showing' : 'pending',
         addedBy: currentUserDisplayName,
+        isCompleted: false,
         ...preview,
       })
 

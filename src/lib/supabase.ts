@@ -97,6 +97,7 @@ export interface DbPartyMember {
   id: string
   party_id: string
   session_id: string
+  user_id: string | null
   display_name: string
   avatar: string
   is_host: boolean
@@ -130,4 +131,9 @@ export interface DbQueueItem {
   comment_count: number | null
   // Note fields
   note_content: string | null
+  // Reminder/completion fields
+  due_date: string | null
+  is_completed: boolean
+  completed_at: string | null
+  completed_by_user_id: string | null
 }

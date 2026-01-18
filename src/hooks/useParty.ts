@@ -28,6 +28,11 @@ export interface QueueItem {
   commentCount?: number
   // Note-specific
   noteContent?: string
+  // Reminder/completion fields
+  dueDate?: string
+  isCompleted: boolean
+  completedAt?: string
+  completedByUserId?: string
 }
 
 export interface PartyMember {
@@ -69,6 +74,10 @@ function transformQueueItem(item: DbQueueItem): QueueItem {
     upvotes: item.upvotes ?? undefined,
     commentCount: item.comment_count ?? undefined,
     noteContent: item.note_content ?? undefined,
+    dueDate: item.due_date ?? undefined,
+    isCompleted: item.is_completed ?? false,
+    completedAt: item.completed_at ?? undefined,
+    completedByUserId: item.completed_by_user_id ?? undefined,
   }
 }
 
@@ -396,6 +405,50 @@ export function useParty(partyId: string | null) {
     [partyId]
   )
 
+  const toggleComplete = useCallback(
+    async (itemId: string, userId?: string) => {
+      if (!partyId) return
+
+      const item = queue.find((q) => q.id === itemId)
+      if (!item) return
+
+      const isCompleted = !item.isCompleted
+      const updates: Record<string, unknown> = {
+        is_completed: isCompleted,
+        completed_at: isCompleted ? new Date().toISOString() : null,
+        completed_by_user_id: isCompleted ? (userId ?? null) : null,
+      }
+
+      const { error } = await supabase
+        .from('queue_items')
+        .update(updates)
+        .eq('id', itemId)
+
+      if (error) {
+        console.error('Error toggling completion:', error)
+        throw error
+      }
+    },
+    [partyId, queue]
+  )
+
+  const updateDueDate = useCallback(
+    async (itemId: string, dueDate: string | null) => {
+      if (!partyId) return
+
+      const { error } = await supabase
+        .from('queue_items')
+        .update({ due_date: dueDate })
+        .eq('id', itemId)
+
+      if (error) {
+        console.error('Error updating due date:', error)
+        throw error
+      }
+    },
+    [partyId]
+  )
+
   return {
     queue,
     members,
@@ -408,6 +461,8 @@ export function useParty(partyId: string | null) {
     advanceQueue,
     showNext,
     updateNoteContent,
+    toggleComplete,
+    updateDueDate,
     refetch: fetchData,
   }
 }
