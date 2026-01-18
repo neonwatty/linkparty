@@ -14,7 +14,7 @@ export const supabase = createClient(
 
 // Generate or retrieve anonymous session ID
 export function getSessionId(): string {
-  const storageKey = 'party-queue-session-id'
+  const storageKey = 'remember-party-session-id'
   let sessionId = localStorage.getItem(storageKey)
 
   if (!sessionId) {
@@ -37,12 +37,12 @@ export function generatePartyCode(): string {
 
 // Get or set display name
 export function getDisplayName(): string {
-  const storageKey = 'party-queue-display-name'
+  const storageKey = 'remember-party-display-name'
   return localStorage.getItem(storageKey) || ''
 }
 
 export function setDisplayName(name: string): void {
-  const storageKey = 'party-queue-display-name'
+  const storageKey = 'remember-party-display-name'
   localStorage.setItem(storageKey, name)
 }
 
@@ -50,7 +50,7 @@ export function setDisplayName(name: string): void {
 const AVATARS = ['🎉', '🎸', '🎮', '🎨', '🎪', '🎭', '🎯', '🎲', '🎵', '🎺', '🎻', '🪇', '🎤', '🎧', '🎬']
 
 export function getAvatar(): string {
-  const storageKey = 'party-queue-avatar'
+  const storageKey = 'remember-party-avatar'
   let avatar = localStorage.getItem(storageKey)
 
   if (!avatar) {
@@ -62,24 +62,24 @@ export function getAvatar(): string {
 }
 
 export function setAvatar(emoji: string): void {
-  const storageKey = 'party-queue-avatar'
+  const storageKey = 'remember-party-avatar'
   localStorage.setItem(storageKey, emoji)
 }
 
 // Store current party for rejoin
 export function getCurrentParty(): { partyId: string; partyCode: string } | null {
-  const storageKey = 'party-queue-current-party'
+  const storageKey = 'remember-party-current-party'
   const data = localStorage.getItem(storageKey)
   return data ? JSON.parse(data) : null
 }
 
 export function setCurrentParty(partyId: string, partyCode: string): void {
-  const storageKey = 'party-queue-current-party'
+  const storageKey = 'remember-party-current-party'
   localStorage.setItem(storageKey, JSON.stringify({ partyId, partyCode }))
 }
 
 export function clearCurrentParty(): void {
-  const storageKey = 'party-queue-current-party'
+  const storageKey = 'remember-party-current-party'
   localStorage.removeItem(storageKey)
 }
 

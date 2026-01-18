@@ -206,13 +206,13 @@ function HomeScreen({ onNavigate }: { onNavigate: (screen: Screen) => void }) {
       <div className="flex-1 flex flex-col justify-center">
         <div className="animate-fade-in-up opacity-0">
           <div className="text-accent-500 font-mono text-sm tracking-wider mb-4">
-            WATCH TOGETHER
+            SHARE TOGETHER
           </div>
           <h1 className="text-5xl font-bold leading-tight mb-4">
-            Party<br />Queue
+            Remember<br />Party
           </h1>
           <p className="text-text-secondary text-lg mb-12 max-w-xs">
-            Share content at parties without the chaos. Everyone queues, host controls.
+            Share content together. Queue videos, tweets, posts, and notes in real-time.
           </p>
         </div>
 
