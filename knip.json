@@ -1,0 +1,18 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": ["src/main.tsx"],
+  "project": ["src/**/*.{ts,tsx}"],
+  "ignore": ["src/vite-env.d.ts"],
+  "ignoreDependencies": [
+    "@capacitor/core",
+    "@capacitor/ios",
+    "@testing-library/react",
+    "@testing-library/user-event",
+    "@vitest/coverage-v8",
+    "tailwindcss"
+  ],
+  "ignoreBinaries": ["doppler"],
+  "vitest": {
+    "entry": ["src/**/*.{test,spec}.{ts,tsx}", "vitest.config.ts"]
+  }
+}

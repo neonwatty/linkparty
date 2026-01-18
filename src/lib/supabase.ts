@@ -61,11 +61,6 @@ export function getAvatar(): string {
   return avatar
 }
 
-export function setAvatar(emoji: string): void {
-  const storageKey = 'remember-party-avatar'
-  localStorage.setItem(storageKey, emoji)
-}
-
 // Store current party for rejoin
 export function getCurrentParty(): { partyId: string; partyCode: string } | null {
   const storageKey = 'remember-party-current-party'

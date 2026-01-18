@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import './App.css'
 import {
   supabase,
@@ -257,7 +257,7 @@ function LoginScreen({ onNavigate }: { onNavigate: (screen: Screen) => void }) {
     setError(null)
     try {
       await signInWithGoogle()
-    } catch (err) {
+    } catch {
       setError('Failed to sign in with Google')
       setIsLoading(false)
     }
@@ -355,7 +355,7 @@ function SignupScreen({ onNavigate }: { onNavigate: (screen: Screen) => void }) 
     setError(null)
     try {
       await signInWithGoogle()
-    } catch (err) {
+    } catch {
       setError('Failed to sign in with Google')
       setIsLoading(false)
     }
@@ -1901,20 +1901,20 @@ function HistoryScreen({ onNavigate }: { onNavigate: (screen: Screen) => void })
 
 // Main App Content
 function AppContent() {
-  const [currentScreen, setCurrentScreen] = useState<Screen>('home')
-  const [currentPartyId, setCurrentPartyId] = useState<string | null>(null)
-  const [currentPartyCode, setCurrentPartyCode] = useState<string | null>(null)
-  const { isLoading: authLoading } = useAuth()
-
-  // Check for existing party on mount
-  useEffect(() => {
+  // Use lazy initialization to restore state from localStorage
+  const [currentScreen, setCurrentScreen] = useState<Screen>(() => {
     const savedParty = getCurrentParty()
-    if (savedParty) {
-      setCurrentPartyId(savedParty.partyId)
-      setCurrentPartyCode(savedParty.partyCode)
-      setCurrentScreen('party')
-    }
-  }, [])
+    return savedParty ? 'party' : 'home'
+  })
+  const [currentPartyId, setCurrentPartyId] = useState<string | null>(() => {
+    const savedParty = getCurrentParty()
+    return savedParty?.partyId ?? null
+  })
+  const [currentPartyCode, setCurrentPartyCode] = useState<string | null>(() => {
+    const savedParty = getCurrentParty()
+    return savedParty?.partyCode ?? null
+  })
+  const { isLoading: authLoading } = useAuth()
 
   const handlePartyCreated = (partyId: string, partyCode: string) => {
     setCurrentPartyId(partyId)
