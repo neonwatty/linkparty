@@ -177,6 +177,30 @@ const LinkIcon = () => (
   </svg>
 )
 
+const CalendarIcon = ({ size = 16 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+    <line x1="16" y1="2" x2="16" y2="6"/>
+    <line x1="8" y1="2" x2="8" y2="6"/>
+    <line x1="3" y1="10" x2="21" y2="10"/>
+  </svg>
+)
+
+const CheckCircleIcon = ({ size = 16, filled = false }: { size?: number; filled?: boolean }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
+    <circle cx="12" cy="12" r="10"/>
+    {filled && <polyline points="9 12 12 15 16 10" stroke="white" strokeWidth="2" fill="none"/>}
+  </svg>
+)
+
+const AlertIcon = ({ size = 16 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <circle cx="12" cy="12" r="10"/>
+    <line x1="12" y1="8" x2="12" y2="12"/>
+    <line x1="12" y1="16" x2="12.01" y2="16"/>
+  </svg>
+)
+
 // Types
 type Screen = 'home' | 'login' | 'signup' | 'create' | 'join' | 'party' | 'tv' | 'history'
 type ContentType = 'youtube' | 'tweet' | 'reddit' | 'note'
@@ -785,18 +809,53 @@ function getQueueItemTitle(item: QueueItem): string {
   }
 }
 
+// Helper to check if an item is overdue
+function isItemOverdue(item: QueueItem): boolean {
+  if (!item.dueDate || item.isCompleted) return false
+  return new Date(item.dueDate) < new Date()
+}
+
+// Helper to format due date
+function formatDueDate(dueDate: string): string {
+  const date = new Date(dueDate)
+  const now = new Date()
+  const diffMs = date.getTime() - now.getTime()
+  const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24))
+
+  if (diffDays < 0) {
+    return `${Math.abs(diffDays)} day${Math.abs(diffDays) !== 1 ? 's' : ''} overdue`
+  } else if (diffDays === 0) {
+    return 'Due today'
+  } else if (diffDays === 1) {
+    return 'Due tomorrow'
+  } else if (diffDays <= 7) {
+    return `Due in ${diffDays} days`
+  } else {
+    return `Due ${date.toLocaleDateString()}`
+  }
+}
+
 // Helper to get subtitle for queue item
 function getQueueItemSubtitle(item: QueueItem): string {
-  switch (item.type) {
-    case 'youtube':
-      return `${item.duration || ''} · Added by ${item.addedBy}`
-    case 'tweet':
-      return `${item.tweetAuthor} · Added by ${item.addedBy}`
-    case 'reddit':
-      return `${item.subreddit} · Added by ${item.addedBy}`
-    case 'note':
-      return `Added by ${item.addedBy}`
-  }
+  const baseSubtitle = (() => {
+    switch (item.type) {
+      case 'youtube':
+        return `${item.duration || ''} · Added by ${item.addedBy}`
+      case 'tweet':
+        return `${item.tweetAuthor} · Added by ${item.addedBy}`
+      case 'reddit':
+        return `${item.subreddit} · Added by ${item.addedBy}`
+      case 'note':
+        if (item.isCompleted) {
+          return `Completed · Added by ${item.addedBy}`
+        }
+        if (item.dueDate) {
+          return `${formatDueDate(item.dueDate)} · Added by ${item.addedBy}`
+        }
+        return `Added by ${item.addedBy}`
+    }
+  })()
+  return baseSubtitle
 }
 
 interface PartyRoomScreenProps {
@@ -818,12 +877,14 @@ function PartyRoomScreen({ onNavigate, partyId, partyCode, onLeaveParty }: Party
     advanceQueue,
     showNext,
     updateNoteContent,
+    toggleComplete,
   } = useParty(partyId)
 
   const [showAddContent, setShowAddContent] = useState(false)
   const [addContentStep, setAddContentStep] = useState<AddContentStep>('input')
   const [contentUrl, setContentUrl] = useState('')
   const [noteText, setNoteText] = useState('')
+  const [noteDueDate, setNoteDueDate] = useState<string>('')
   const [detectedType, setDetectedType] = useState<ContentType | null>(null)
   const [selectedItem, setSelectedItem] = useState<QueueItem | null>(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
@@ -886,7 +947,9 @@ function PartyRoomScreen({ onNavigate, partyId, partyCode, onLeaveParty }: Party
     if (!detectedType) return
 
     try {
-      const preview = detectedType === 'note' ? { noteContent: noteText } : previewData[detectedType]
+      const preview = detectedType === 'note'
+        ? { noteContent: noteText, dueDate: noteDueDate || undefined }
+        : previewData[detectedType]
 
       await addToQueue({
         type: detectedType,
@@ -902,6 +965,7 @@ function PartyRoomScreen({ onNavigate, partyId, partyCode, onLeaveParty }: Party
         setAddContentStep('input')
         setContentUrl('')
         setNoteText('')
+        setNoteDueDate('')
         setDetectedType(null)
       }, 1500)
     } catch (err) {
@@ -1157,14 +1221,28 @@ function PartyRoomScreen({ onNavigate, partyId, partyCode, onLeaveParty }: Party
             const badge = getContentTypeBadge(item.type)
             const BadgeIcon = badge.icon
             const isOwnItem = item.addedBySessionId === sessionId
+            const overdue = isItemOverdue(item)
             return (
               <div
                 key={item.id}
                 onClick={() => setSelectedItem(item)}
-                className="queue-item cursor-pointer active:bg-surface-700"
+                className={`queue-item cursor-pointer active:bg-surface-700 ${item.isCompleted ? 'opacity-60' : ''}`}
                 style={{ animationDelay: `${index * 50}ms` }}
               >
-                <DragIcon />
+                {/* Completion checkbox for notes */}
+                {item.type === 'note' ? (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      toggleComplete(item.id)
+                    }}
+                    className={`flex-shrink-0 ${item.isCompleted ? 'text-green-500' : overdue ? 'text-red-500' : 'text-text-muted'}`}
+                  >
+                    <CheckCircleIcon size={20} filled={item.isCompleted} />
+                  </button>
+                ) : (
+                  <DragIcon />
+                )}
                 {/* Content type badge/preview */}
                 <div className={`relative w-20 h-12 rounded-lg overflow-hidden flex-shrink-0 ${badge.bg} flex items-center justify-center`}>
                   {item.type === 'youtube' && item.thumbnail ? (
@@ -1181,15 +1259,23 @@ function PartyRoomScreen({ onNavigate, partyId, partyCode, onLeaveParty }: Party
                   {isOwnItem && (
                     <div className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-teal-500"></div>
                   )}
+                  {/* Overdue indicator */}
+                  {overdue && (
+                    <div className="absolute bottom-0.5 right-0.5 text-red-500">
+                      <AlertIcon size={12} />
+                    </div>
+                  )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className={`${badge.color}`}>
                       <BadgeIcon size={12} />
                     </span>
-                    <span className="font-medium text-sm truncate">{getQueueItemTitle(item)}</span>
+                    <span className={`font-medium text-sm truncate ${item.isCompleted ? 'line-through' : ''}`}>
+                      {getQueueItemTitle(item)}
+                    </span>
                   </div>
-                  <div className="text-text-muted text-xs">
+                  <div className={`text-xs ${overdue ? 'text-red-400' : 'text-text-muted'}`}>
                     {getQueueItemSubtitle(item)}
                   </div>
                 </div>
@@ -1293,9 +1379,32 @@ function PartyRoomScreen({ onNavigate, partyId, partyCode, onLeaveParty }: Party
                   autoFocus
                 />
 
+                {/* Optional Due Date */}
+                <div className="mb-4">
+                  <label className="flex items-center gap-2 text-sm text-text-secondary mb-2">
+                    <CalendarIcon size={16} />
+                    Due date (optional)
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={noteDueDate}
+                    onChange={(e) => setNoteDueDate(e.target.value)}
+                    className="input"
+                    min={new Date().toISOString().slice(0, 16)}
+                  />
+                  {noteDueDate && (
+                    <button
+                      onClick={() => setNoteDueDate('')}
+                      className="text-xs text-text-muted hover:text-text-secondary mt-1"
+                    >
+                      Clear due date
+                    </button>
+                  )}
+                </div>
+
                 <div className="flex gap-3">
                   <button
-                    onClick={() => { setAddContentStep('input'); setNoteText(''); }}
+                    onClick={() => { setAddContentStep('input'); setNoteText(''); setNoteDueDate(''); }}
                     className="btn btn-secondary flex-1"
                   >
                     Cancel
