@@ -482,6 +482,19 @@ function CreatePartyScreen({ onNavigate, onPartyCreated }: CreatePartyScreenProp
       const code = generatePartyCode()
       const avatar = getAvatar()
 
+      // Check if we're in mock mode (no Supabase)
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+      const isMockMode = !supabaseUrl || supabaseUrl.includes('placeholder') || supabaseUrl.includes('your-project-id')
+
+      if (isMockMode) {
+        // Mock party creation
+        const mockPartyId = `mock-party-${Date.now()}`
+        setDisplayName(displayName.trim())
+        setCurrentParty(mockPartyId, code)
+        onPartyCreated(mockPartyId, code)
+        return
+      }
+
       // Create the party
       const { data: party, error: partyError } = await supabase
         .from('parties')
@@ -943,38 +956,47 @@ function PartyRoomScreen({ onNavigate, partyId, partyCode, onLeaveParty }: Party
     }
   }
 
-  const handleAddToQueue = async () => {
+  const handleAddToQueue = () => {
     if (!detectedType) return
 
-    try {
-      const preview = detectedType === 'note'
-        ? { noteContent: noteText, dueDate: noteDueDate || undefined }
-        : previewData[detectedType]
+    // Immediately show success state (sync) to ensure iOS touch event completes
+    setAddContentStep('success')
 
-      await addToQueue({
-        type: detectedType,
-        status: queue.length === 0 ? 'showing' : 'pending',
-        addedBy: currentUserDisplayName,
-        isCompleted: false,
-        ...preview,
-      })
+    // Then do async work
+    const doAddToQueue = async () => {
+      try {
+        const preview = detectedType === 'note'
+          ? { noteContent: noteText }
+          : previewData[detectedType]
 
-      setAddContentStep('success')
-      setTimeout(() => {
-        setShowAddContent(false)
-        setAddContentStep('input')
-        setContentUrl('')
-        setNoteText('')
-        setNoteDueDate('')
-        setDetectedType(null)
-      }, 1500)
-    } catch (err) {
-      console.error('Failed to add to queue:', err)
+        await addToQueue({
+          type: detectedType,
+          status: queue.length === 0 ? 'showing' : 'pending',
+          addedBy: currentUserDisplayName,
+          isCompleted: false,
+          ...preview,
+        })
+      } catch (err) {
+        console.error('Failed to add to queue:', err)
+      }
     }
+
+    doAddToQueue()
+
+    setTimeout(() => {
+      setShowAddContent(false)
+      setAddContentStep('input')
+      setContentUrl('')
+      setNoteText('')
+      setNoteDueDate('')
+      setDetectedType(null)
+    }, 1500)
   }
 
   const handleNoteSubmit = () => {
+    console.log('handleNoteSubmit called, noteText:', noteText.trim())
     if (noteText.trim()) {
+      console.log('Setting detectedType to note')
       setDetectedType('note')
       setAddContentStep('preview')
     }
@@ -1231,15 +1253,22 @@ function PartyRoomScreen({ onNavigate, partyId, partyCode, onLeaveParty }: Party
               >
                 {/* Completion checkbox for notes */}
                 {item.type === 'note' ? (
-                  <button
+                  <div
+                    role="button"
+                    tabIndex={0}
                     onClick={(e) => {
                       e.stopPropagation()
                       toggleComplete(item.id)
                     }}
-                    className={`flex-shrink-0 ${item.isCompleted ? 'text-green-500' : overdue ? 'text-red-500' : 'text-text-muted'}`}
+                    onTouchEnd={(e) => {
+                      e.stopPropagation()
+                      e.preventDefault()
+                      toggleComplete(item.id)
+                    }}
+                    className={`flex-shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center -ml-2 cursor-pointer ${item.isCompleted ? 'text-green-500' : overdue ? 'text-red-500' : 'text-text-muted'}`}
                   >
-                    <CheckCircleIcon size={20} filled={item.isCompleted} />
-                  </button>
+                    <CheckCircleIcon size={24} filled={item.isCompleted} />
+                  </div>
                 ) : (
                   <DragIcon />
                 )}
@@ -1505,16 +1534,18 @@ function PartyRoomScreen({ onNavigate, partyId, partyCode, onLeaveParty }: Party
                   This will be added to the end of the queue
                 </div>
 
-                <div className="flex gap-3">
+                <div className="flex gap-3 pb-2">
                   <button
                     onClick={() => { setAddContentStep('input'); setContentUrl(''); setNoteText(''); setDetectedType(null); }}
-                    className="btn btn-secondary flex-1"
+                    onTouchEnd={(e) => { e.stopPropagation(); e.preventDefault(); setAddContentStep('input'); setContentUrl(''); setNoteText(''); setDetectedType(null); }}
+                    className="btn btn-secondary flex-1 min-h-[52px]"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleAddToQueue}
-                    className="btn btn-primary flex-1"
+                    onTouchEnd={(e) => { e.stopPropagation(); e.preventDefault(); handleAddToQueue(); }}
+                    className="btn btn-primary flex-1 min-h-[52px]"
                   >
                     Add to Queue
                   </button>
@@ -1572,10 +1603,32 @@ function PartyRoomScreen({ onNavigate, partyId, partyCode, onLeaveParty }: Party
             </div>
 
             {/* Actions */}
-            <div className="space-y-2">
+            <div className="space-y-2 max-h-[50vh] overflow-y-auto">
               {/* Note-specific actions */}
               {selectedItem.type === 'note' && (
                 <>
+                  <button
+                    onClick={() => {
+                      toggleComplete(selectedItem.id)
+                      setSelectedItem(null)
+                    }}
+                    onTouchEnd={(e) => {
+                      e.stopPropagation()
+                      e.preventDefault()
+                      toggleComplete(selectedItem.id)
+                      setSelectedItem(null)
+                    }}
+                    className="w-full flex items-center gap-4 p-3 rounded-xl bg-green-900/30 hover:bg-surface-800 transition-colors text-left min-h-[64px]"
+                  >
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${selectedItem.isCompleted ? 'bg-gray-500/20 text-gray-400' : 'bg-green-500/20 text-green-400'}`}>
+                      <CheckCircleIcon size={20} filled={selectedItem.isCompleted} />
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-medium">{selectedItem.isCompleted ? 'Mark Incomplete' : 'Mark Complete'}</div>
+                      <div className="text-text-muted text-xs">{selectedItem.isCompleted ? 'Remove completion status' : 'Mark this note as done'}</div>
+                    </div>
+                  </button>
+
                   <button
                     onClick={() => handleViewNote(selectedItem)}
                     className="w-full flex items-center gap-4 p-3 rounded-xl hover:bg-surface-800 transition-colors text-left"

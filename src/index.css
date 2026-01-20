@@ -293,6 +293,24 @@ body {
 /* Bottom sheet modal improvements */
 .bottom-sheet {
   padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  pointer-events: auto;
+  touch-action: manipulation;
+}
+
+/* Ensure buttons in modals receive touches on iOS WebView */
+.bottom-sheet .btn {
+  position: relative;
+  z-index: 1;
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Force touch event handling for primary buttons in Capacitor */
+.btn-primary {
+  cursor: pointer;
+  -webkit-appearance: none;
+  -webkit-touch-callout: none;
 }
 
 /* Improved active states for touch */
