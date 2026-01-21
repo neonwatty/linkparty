@@ -1570,11 +1570,11 @@ function PartyRoomScreen({ onNavigate, partyId, partyCode, onLeaveParty }: Party
       {/* Queue Item Actions Sheet */}
       {selectedItem && !showDeleteConfirm && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end justify-center z-50">
-          <div className="bg-surface-900 w-full max-w-md rounded-t-3xl p-6 bottom-sheet animate-fade-in-up">
-            <div className="w-12 h-1 bg-surface-600 rounded-full mx-auto mb-6"></div>
+          <div className="bg-surface-900 w-full max-w-md rounded-t-3xl p-6 bottom-sheet animate-fade-in-up max-h-[85vh] overflow-hidden flex flex-col">
+            <div className="w-12 h-1 bg-surface-600 rounded-full mx-auto mb-6 flex-shrink-0"></div>
 
             {/* Item Info */}
-            <div className="flex gap-3 mb-6">
+            <div className="flex gap-3 mb-6 flex-shrink-0">
               {(() => {
                 const badge = getContentTypeBadge(selectedItem.type)
                 const BadgeIcon = badge.icon
@@ -1603,7 +1603,7 @@ function PartyRoomScreen({ onNavigate, partyId, partyCode, onLeaveParty }: Party
             </div>
 
             {/* Actions */}
-            <div className="space-y-2 max-h-[50vh] overflow-y-auto">
+            <div className="space-y-2 flex-1 overflow-y-auto min-h-0">
               {/* Note-specific actions */}
               {selectedItem.type === 'note' && (
                 <>
@@ -1716,7 +1716,7 @@ function PartyRoomScreen({ onNavigate, partyId, partyCode, onLeaveParty }: Party
 
             <button
               onClick={() => setSelectedItem(null)}
-              className="btn btn-secondary w-full mt-4"
+              className="btn btn-secondary w-full mt-4 flex-shrink-0"
             >
               Cancel
             </button>
