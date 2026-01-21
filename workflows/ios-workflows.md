@@ -8,13 +8,13 @@
 
 | # | Workflow | Purpose | Steps | Status |
 |---|----------|---------|-------|--------|
-| 1 | App Launch (Fresh) | First-time app open | 4 | ⬜ |
+| 1 | App Launch (Fresh) | First-time app open | 4 | ✅ Passed (2026-01-21) - Sign in link not in current UI |
 | 2 | Create a New Party | Party creation flow | 8 | ✅ Passed (2026-01-20) |
 | 3 | Join an Existing Party | Join with code | 7 | ✅ Passed (2026-01-20) |
 | 4 | Leave Party | Exit to home | 4 | ✅ Passed (2026-01-21) |
-| 5 | Add YouTube Content | Add video to queue | 7 | ⬜ |
-| 6 | Add Tweet Content | Add tweet to queue | 7 | ⬜ |
-| 7 | Add Reddit Content | Add post to queue | 7 | ⬜ |
+| 5 | Add YouTube Content | Add video to queue | 7 | ✅ Passed (2026-01-21) |
+| 6 | Add Tweet Content | Add tweet to queue | 7 | ✅ Passed (2026-01-21) |
+| 7 | Add Reddit Content | Add post to queue | 7 | ✅ Passed (2026-01-21) |
 | 8 | Add Simple Note | Add text note | 6 | ✅ Passed (2026-01-20) |
 | 9 | Add Note with Due Date | Add reminder | 7 | ✅ Passed (2026-01-21) - Note: due date saved but indicator not visible in queue list |
 | 10 | Mark Note Complete | Toggle completion | 4 | ✅ Passed (2026-01-20) |
