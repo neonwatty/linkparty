@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase, getSessionId } from '../lib/supabase'
 import type { DbParty, DbPartyMember, DbQueueItem } from '../lib/supabase'
 import type { RealtimeChannel } from '@supabase/supabase-js'
@@ -158,6 +158,11 @@ export function useParty(partyId: string | null) {
   const [isLoading, setIsLoading] = useState(!IS_MOCK_MODE)
   const [error, setError] = useState<string | null>(null)
 
+  // Use ref to track current partyId for subscription callbacks
+  // This prevents stale closure issues where callbacks capture an old partyId
+  const partyIdRef = useRef(partyId)
+  partyIdRef.current = partyId
+
   // Fetch initial data (skip in mock mode)
   const fetchData = useCallback(async () => {
     if (IS_MOCK_MODE) {
@@ -242,9 +247,58 @@ export function useParty(partyId: string | null) {
       return
     }
 
-    fetchData()
+    // Fetch initial data inline to avoid dependency on fetchData
+    const loadInitialData = async () => {
+      setIsLoading(true)
+      setError(null)
+      try {
+        const { data: partyData, error: partyError } = await supabase
+          .from('parties')
+          .select('*')
+          .eq('id', partyId)
+          .single()
+
+        if (partyError) throw partyError
+
+        const party = partyData as DbParty
+        setPartyInfo({
+          id: party.id,
+          code: party.code,
+          name: party.name,
+          hostSessionId: party.host_session_id,
+          createdAt: party.created_at,
+        })
+
+        const { data: queueData, error: queueError } = await supabase
+          .from('queue_items')
+          .select('*')
+          .eq('party_id', partyId)
+          .neq('status', 'shown')
+          .order('position', { ascending: true })
+
+        if (queueError) throw queueError
+        setQueue((queueData as DbQueueItem[]).map(transformQueueItem))
+
+        const { data: membersData, error: membersError } = await supabase
+          .from('party_members')
+          .select('*')
+          .eq('party_id', partyId)
+          .order('joined_at', { ascending: true })
+
+        if (membersError) throw membersError
+        setMembers((membersData as DbPartyMember[]).map(transformMember))
+      } catch (err) {
+        console.error('Error fetching party data:', err)
+        setError(err instanceof Error ? err.message : 'Failed to load party')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadInitialData()
 
     // Subscribe to queue changes
+    // Use partyIdRef.current in callbacks to always get the latest value
     const queueChannel: RealtimeChannel = supabase
       .channel(`queue:${partyId}`)
       .on(
@@ -256,16 +310,28 @@ export function useParty(partyId: string | null) {
           filter: `party_id=eq.${partyId}`,
         },
         async () => {
-          // Refetch queue to get correct ordering
-          const { data } = await supabase
-            .from('queue_items')
-            .select('*')
-            .eq('party_id', partyId)
-            .neq('status', 'shown')
-            .order('position', { ascending: true })
+          // Use ref to get current partyId (prevents stale closure)
+          const currentPartyId = partyIdRef.current
+          if (!currentPartyId) return
 
-          if (data) {
-            setQueue((data as DbQueueItem[]).map(transformQueueItem))
+          try {
+            const { data, error } = await supabase
+              .from('queue_items')
+              .select('*')
+              .eq('party_id', currentPartyId)
+              .neq('status', 'shown')
+              .order('position', { ascending: true })
+
+            if (error) {
+              console.error('Error refetching queue:', error)
+              return
+            }
+
+            if (data) {
+              setQueue((data as DbQueueItem[]).map(transformQueueItem))
+            }
+          } catch (err) {
+            console.error('Error in queue subscription callback:', err)
           }
         }
       )
@@ -283,15 +349,27 @@ export function useParty(partyId: string | null) {
           filter: `party_id=eq.${partyId}`,
         },
         async () => {
-          // Refetch members
-          const { data } = await supabase
-            .from('party_members')
-            .select('*')
-            .eq('party_id', partyId)
-            .order('joined_at', { ascending: true })
+          // Use ref to get current partyId (prevents stale closure)
+          const currentPartyId = partyIdRef.current
+          if (!currentPartyId) return
 
-          if (data) {
-            setMembers((data as DbPartyMember[]).map(transformMember))
+          try {
+            const { data, error } = await supabase
+              .from('party_members')
+              .select('*')
+              .eq('party_id', currentPartyId)
+              .order('joined_at', { ascending: true })
+
+            if (error) {
+              console.error('Error refetching members:', error)
+              return
+            }
+
+            if (data) {
+              setMembers((data as DbPartyMember[]).map(transformMember))
+            }
+          } catch (err) {
+            console.error('Error in members subscription callback:', err)
           }
         }
       )
@@ -302,7 +380,7 @@ export function useParty(partyId: string | null) {
       queueChannel.unsubscribe()
       membersChannel.unsubscribe()
     }
-  }, [partyId, fetchData])
+  }, [partyId]) // Removed fetchData dependency to prevent stale closures
 
   // Queue operations
   const addToQueue = useCallback(
