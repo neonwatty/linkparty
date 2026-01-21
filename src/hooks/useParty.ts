@@ -1,7 +1,11 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase, getSessionId } from '../lib/supabase'
 import type { DbParty, DbPartyMember, DbQueueItem } from '../lib/supabase'
 import type { RealtimeChannel } from '@supabase/supabase-js'
+
+// Check if we're in mock mode (no real Supabase credentials)
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+const IS_MOCK_MODE = !supabaseUrl || supabaseUrl.includes('placeholder') || supabaseUrl.includes('your-project-id')
 
 export interface QueueItem {
   id: string
@@ -92,15 +96,80 @@ function transformMember(member: DbPartyMember): PartyMember {
   }
 }
 
+// Generate mock queue items for testing
+function generateMockQueueItems(sessionId: string): QueueItem[] {
+  return [
+    {
+      id: 'mock-note-1',
+      type: 'note',
+      addedBy: 'TestUser1',
+      addedBySessionId: sessionId,
+      status: 'showing',
+      position: 0,
+      noteContent: 'Remember to bring snacks for the party!',
+      isCompleted: false,
+    },
+    {
+      id: 'mock-note-2',
+      type: 'note',
+      addedBy: 'TestUser1',
+      addedBySessionId: sessionId,
+      status: 'pending',
+      position: 1,
+      noteContent: 'First test note for removal',
+      isCompleted: false,
+    },
+    {
+      id: 'mock-note-3',
+      type: 'note',
+      addedBy: 'TestUser1',
+      addedBySessionId: sessionId,
+      status: 'pending',
+      position: 2,
+      noteContent: 'Second test note in queue',
+      isCompleted: false,
+    },
+    {
+      id: 'mock-note-4',
+      type: 'note',
+      addedBy: 'TestUser1',
+      addedBySessionId: sessionId,
+      status: 'pending',
+      position: 3,
+      noteContent: 'Third note to test queue operations',
+      isCompleted: false,
+    },
+  ]
+}
+
 export function useParty(partyId: string | null) {
-  const [queue, setQueue] = useState<QueueItem[]>([])
-  const [members, setMembers] = useState<PartyMember[]>([])
-  const [partyInfo, setPartyInfo] = useState<PartyInfo | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const sessionId = getSessionId()
+  const [queue, setQueue] = useState<QueueItem[]>(IS_MOCK_MODE ? generateMockQueueItems(sessionId) : [])
+  const [members, setMembers] = useState<PartyMember[]>(IS_MOCK_MODE ? [
+    { id: 'mock-member-1', name: 'TestUser1', avatar: '🎉', isHost: true, sessionId }
+  ] : [])
+  const [partyInfo, setPartyInfo] = useState<PartyInfo | null>(IS_MOCK_MODE ? {
+    id: partyId || 'mock-party',
+    code: partyId?.substring(0, 6).toUpperCase() || 'MOCK01',
+    name: 'Test Party',
+    hostSessionId: sessionId,
+    createdAt: new Date().toISOString(),
+  } : null)
+  const [isLoading, setIsLoading] = useState(!IS_MOCK_MODE)
   const [error, setError] = useState<string | null>(null)
 
-  // Fetch initial data
+  // Use ref to track current partyId for subscription callbacks
+  // This prevents stale closure issues where callbacks capture an old partyId
+  const partyIdRef = useRef(partyId)
+  partyIdRef.current = partyId
+
+  // Fetch initial data (skip in mock mode)
   const fetchData = useCallback(async () => {
+    if (IS_MOCK_MODE) {
+      setIsLoading(false)
+      return
+    }
+
     if (!partyId) {
       setIsLoading(false)
       return
@@ -162,9 +231,74 @@ export function useParty(partyId: string | null) {
   useEffect(() => {
     if (!partyId) return
 
-    fetchData()
+    // In mock mode, initialize mock data for this party
+    if (IS_MOCK_MODE) {
+      const currentSessionId = getSessionId()
+      setQueue(generateMockQueueItems(currentSessionId))
+      setMembers([{ id: 'mock-member-1', name: 'TestUser1', avatar: '🎉', isHost: true, sessionId: currentSessionId }])
+      setPartyInfo({
+        id: partyId,
+        code: partyId.substring(0, 6).toUpperCase(),
+        name: 'Test Party',
+        hostSessionId: currentSessionId,
+        createdAt: new Date().toISOString(),
+      })
+      setIsLoading(false)
+      return
+    }
+
+    // Fetch initial data inline to avoid dependency on fetchData
+    const loadInitialData = async () => {
+      setIsLoading(true)
+      setError(null)
+      try {
+        const { data: partyData, error: partyError } = await supabase
+          .from('parties')
+          .select('*')
+          .eq('id', partyId)
+          .single()
+
+        if (partyError) throw partyError
+
+        const party = partyData as DbParty
+        setPartyInfo({
+          id: party.id,
+          code: party.code,
+          name: party.name,
+          hostSessionId: party.host_session_id,
+          createdAt: party.created_at,
+        })
+
+        const { data: queueData, error: queueError } = await supabase
+          .from('queue_items')
+          .select('*')
+          .eq('party_id', partyId)
+          .neq('status', 'shown')
+          .order('position', { ascending: true })
+
+        if (queueError) throw queueError
+        setQueue((queueData as DbQueueItem[]).map(transformQueueItem))
+
+        const { data: membersData, error: membersError } = await supabase
+          .from('party_members')
+          .select('*')
+          .eq('party_id', partyId)
+          .order('joined_at', { ascending: true })
+
+        if (membersError) throw membersError
+        setMembers((membersData as DbPartyMember[]).map(transformMember))
+      } catch (err) {
+        console.error('Error fetching party data:', err)
+        setError(err instanceof Error ? err.message : 'Failed to load party')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadInitialData()
 
     // Subscribe to queue changes
+    // Use partyIdRef.current in callbacks to always get the latest value
     const queueChannel: RealtimeChannel = supabase
       .channel(`queue:${partyId}`)
       .on(
@@ -176,16 +310,28 @@ export function useParty(partyId: string | null) {
           filter: `party_id=eq.${partyId}`,
         },
         async () => {
-          // Refetch queue to get correct ordering
-          const { data } = await supabase
-            .from('queue_items')
-            .select('*')
-            .eq('party_id', partyId)
-            .neq('status', 'shown')
-            .order('position', { ascending: true })
+          // Use ref to get current partyId (prevents stale closure)
+          const currentPartyId = partyIdRef.current
+          if (!currentPartyId) return
 
-          if (data) {
-            setQueue((data as DbQueueItem[]).map(transformQueueItem))
+          try {
+            const { data, error } = await supabase
+              .from('queue_items')
+              .select('*')
+              .eq('party_id', currentPartyId)
+              .neq('status', 'shown')
+              .order('position', { ascending: true })
+
+            if (error) {
+              console.error('Error refetching queue:', error)
+              return
+            }
+
+            if (data) {
+              setQueue((data as DbQueueItem[]).map(transformQueueItem))
+            }
+          } catch (err) {
+            console.error('Error in queue subscription callback:', err)
           }
         }
       )
@@ -203,15 +349,27 @@ export function useParty(partyId: string | null) {
           filter: `party_id=eq.${partyId}`,
         },
         async () => {
-          // Refetch members
-          const { data } = await supabase
-            .from('party_members')
-            .select('*')
-            .eq('party_id', partyId)
-            .order('joined_at', { ascending: true })
+          // Use ref to get current partyId (prevents stale closure)
+          const currentPartyId = partyIdRef.current
+          if (!currentPartyId) return
 
-          if (data) {
-            setMembers((data as DbPartyMember[]).map(transformMember))
+          try {
+            const { data, error } = await supabase
+              .from('party_members')
+              .select('*')
+              .eq('party_id', currentPartyId)
+              .order('joined_at', { ascending: true })
+
+            if (error) {
+              console.error('Error refetching members:', error)
+              return
+            }
+
+            if (data) {
+              setMembers((data as DbPartyMember[]).map(transformMember))
+            }
+          } catch (err) {
+            console.error('Error in members subscription callback:', err)
           }
         }
       )
@@ -222,14 +380,27 @@ export function useParty(partyId: string | null) {
       queueChannel.unsubscribe()
       membersChannel.unsubscribe()
     }
-  }, [partyId, fetchData])
+  }, [partyId]) // Removed fetchData dependency to prevent stale closures
 
   // Queue operations
   const addToQueue = useCallback(
     async (item: Omit<QueueItem, 'id' | 'position' | 'addedBySessionId'>) => {
       if (!partyId) return
 
-      const sessionId = getSessionId()
+      const currentSessionId = getSessionId()
+
+      if (IS_MOCK_MODE) {
+        // In mock mode, add to local state
+        const maxPos = queue.length > 0 ? Math.max(...queue.map(q => q.position)) : -1
+        const newItem: QueueItem = {
+          id: `mock-${Date.now()}`,
+          position: maxPos + 1,
+          addedBySessionId: currentSessionId,
+          ...item,
+        }
+        setQueue(prev => [...prev, newItem])
+        return
+      }
 
       // Get the max position
       const { data: maxPosData } = await supabase
@@ -248,7 +419,7 @@ export function useParty(partyId: string | null) {
         status: item.status,
         position: newPosition,
         added_by_name: item.addedBy,
-        added_by_session_id: sessionId,
+        added_by_session_id: currentSessionId,
         title: item.title ?? null,
         channel: item.channel ?? null,
         duration: item.duration ?? null,
@@ -263,7 +434,8 @@ export function useParty(partyId: string | null) {
         upvotes: item.upvotes ?? null,
         comment_count: item.commentCount ?? null,
         note_content: item.noteContent ?? null,
-        due_date: item.dueDate ?? null,
+        // due_date column not yet in database - skipping for now
+        // due_date: item.dueDate ?? null,
       }
 
       const { error } = await supabase.from('queue_items').insert(dbItem)
@@ -273,7 +445,7 @@ export function useParty(partyId: string | null) {
         throw error
       }
     },
-    [partyId]
+    [partyId, queue]
   )
 
   const moveItem = useCallback(
@@ -310,6 +482,18 @@ export function useParty(partyId: string | null) {
       const item = queue[itemIndex]
       const targetItem = queue[targetIndex]
 
+      if (IS_MOCK_MODE) {
+        // In mock mode, swap items in local state
+        setQueue(prev => {
+          const newQueue = [...prev]
+          const tempPos = newQueue[itemIndex].position
+          newQueue[itemIndex] = { ...newQueue[itemIndex], position: newQueue[targetIndex].position }
+          newQueue[targetIndex] = { ...newQueue[targetIndex], position: tempPos }
+          return newQueue.sort((a, b) => a.position - b.position)
+        })
+        return
+      }
+
       // Swap positions
       const { error: error1 } = await supabase
         .from('queue_items')
@@ -336,6 +520,12 @@ export function useParty(partyId: string | null) {
   const deleteItem = useCallback(
     async (itemId: string) => {
       if (!partyId) return
+
+      if (IS_MOCK_MODE) {
+        // In mock mode, just update local state
+        setQueue(prev => prev.filter(item => item.id !== itemId))
+        return
+      }
 
       const { error } = await supabase.from('queue_items').delete().eq('id', itemId)
 
@@ -377,6 +567,17 @@ export function useParty(partyId: string | null) {
       // Set this item's position to be right after the showing item
       const newPosition = showingItem.position + 0.5 // Will be between showing and first pending
 
+      if (IS_MOCK_MODE) {
+        // In mock mode, update position in local state
+        setQueue(prev => {
+          const newQueue = prev.map(q =>
+            q.id === itemId ? { ...q, position: newPosition } : q
+          )
+          return newQueue.sort((a, b) => a.position - b.position)
+        })
+        return
+      }
+
       const { error } = await supabase
         .from('queue_items')
         .update({ position: newPosition })
@@ -392,6 +593,14 @@ export function useParty(partyId: string | null) {
   const updateNoteContent = useCallback(
     async (itemId: string, content: string) => {
       if (!partyId) return
+
+      if (IS_MOCK_MODE) {
+        // In mock mode, update note content in local state
+        setQueue(prev => prev.map(q =>
+          q.id === itemId ? { ...q, noteContent: content } : q
+        ))
+        return
+      }
 
       const { error } = await supabase
         .from('queue_items')
@@ -414,9 +623,26 @@ export function useParty(partyId: string | null) {
       if (!item) return
 
       const isCompleted = !item.isCompleted
+      const completedAt = isCompleted ? new Date().toISOString() : undefined
+      const completedByUserId = isCompleted ? (userId ?? undefined) : undefined
+
+      // Optimistic UI update for immediate feedback
+      setQueue(prev => prev.map(q =>
+        q.id === itemId ? {
+          ...q,
+          isCompleted,
+          completedAt,
+          completedByUserId,
+        } : q
+      ))
+
+      if (IS_MOCK_MODE) {
+        return
+      }
+
       const updates: Record<string, unknown> = {
         is_completed: isCompleted,
-        completed_at: isCompleted ? new Date().toISOString() : null,
+        completed_at: isCompleted ? completedAt : null,
         completed_by_user_id: isCompleted ? (userId ?? null) : null,
       }
 
@@ -427,6 +653,15 @@ export function useParty(partyId: string | null) {
 
       if (error) {
         console.error('Error toggling completion:', error)
+        // Revert optimistic update on error
+        setQueue(prev => prev.map(q =>
+          q.id === itemId ? {
+            ...q,
+            isCompleted: !isCompleted,
+            completedAt: !isCompleted ? completedAt : undefined,
+            completedByUserId: !isCompleted ? completedByUserId : undefined,
+          } : q
+        ))
         throw error
       }
     },
