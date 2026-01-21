@@ -17,7 +17,7 @@
 | 7 | Add Reddit Content | Add post to queue | 7 | ⬜ |
 | 8 | Add Simple Note | Add text note | 6 | ✅ Passed (2026-01-20) - Note: requires rejoin to see updates (realtime bug) |
 | 9 | Add Note with Due Date | Add reminder | 7 | ⬜ |
-| 10 | Mark Note Complete | Toggle completion | 4 | ⬜ |
+| 10 | Mark Note Complete | Toggle completion | 4 | ✅ Passed (2026-01-20) |
 | 11 | View and Edit Note | Open and modify note | 8 | ⬜ |
 | 12 | Reorder Queue Items | Move items up/down | 6 | ⬜ |
 | 13 | Show Item Next | Bump to show next | 5 | ⬜ |
