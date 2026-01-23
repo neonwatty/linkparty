@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import './App.css'
 import {
   supabase,
@@ -2466,6 +2466,8 @@ function AppContent() {
     // Check for password reset URL parameter (Supabase sends type=recovery)
     const hash = window.location.hash
     if (hash.includes('type=recovery')) {
+      // Clean up the URL hash after detecting recovery
+      window.history.replaceState(null, '', window.location.pathname)
       return 'reset-password'
     }
     const savedParty = getCurrentParty()
@@ -2480,16 +2482,6 @@ function AppContent() {
     return savedParty?.partyCode ?? null
   })
   const { isLoading: authLoading } = useAuth()
-
-  // Handle password reset redirect from email link
-  useEffect(() => {
-    const hash = window.location.hash
-    if (hash.includes('type=recovery')) {
-      setCurrentScreen('reset-password')
-      // Clean up the URL hash after detecting recovery
-      window.history.replaceState(null, '', window.location.pathname)
-    }
-  }, [])
 
   const handlePartyCreated = (partyId: string, partyCode: string) => {
     setCurrentPartyId(partyId)
