@@ -1,10 +1,10 @@
-# Remember Party - Development Status
+# Link Party - Development Status
 
 **Date:** January 25, 2026
 
 ## Overview
 
-**Remember Party** is a collaborative task/reminder queue app for couples to save and organize things together. Supports web (PWA) and iOS native via Capacitor.
+**Link Party** is a collaborative content queue app to share links together in real-time. Queue YouTube videos, tweets, and Reddit posts together. Supports web (PWA) and iOS native via Capacitor.
 
 ## Tech Stack
 

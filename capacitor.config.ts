@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from '@capacitor/cli'
 
 const config: CapacitorConfig = {
-  appId: 'com.rememberparty.app',
-  appName: 'Remember Party',
+  appId: 'com.linkparty.app',
+  appName: 'Link Party',
   webDir: 'dist',
   server: {
     androidScheme: 'https',

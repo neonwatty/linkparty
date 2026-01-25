@@ -1,7 +1,7 @@
 {
-  "name": "Remember Party",
-  "short_name": "Remember",
-  "description": "A shared app for couples to save and remember things together",
+  "name": "Link Party",
+  "short_name": "LinkParty",
+  "description": "Queue YouTube videos, tweets, and Reddit posts together in real-time",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0a0a0f",

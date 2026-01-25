@@ -1,5 +1,5 @@
-// Remember Party Service Worker
-const CACHE_NAME = 'remember-party-v1'
+// Link Party Service Worker
+const CACHE_NAME = 'link-party-v1'
 const OFFLINE_URL = '/offline.html'
 
 // Assets to cache on install
@@ -95,7 +95,7 @@ self.addEventListener('push', (event) => {
   }
 
   event.waitUntil(
-    self.registration.showNotification(data.title || 'Remember Party', options)
+    self.registration.showNotification(data.title || 'Link Party', options)
   )
 })
 

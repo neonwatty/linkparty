@@ -12,9 +12,27 @@ export const supabase = createClient(
   supabaseAnonKey || 'placeholder-key'
 )
 
+// Migrate localStorage keys from old brand to new brand
+function migrateLocalStorage() {
+  const migrations = [
+    ['remember-party-session-id', 'link-party-session-id'],
+    ['remember-party-display-name', 'link-party-display-name'],
+    ['remember-party-avatar', 'link-party-avatar'],
+    ['remember-party-current-party', 'link-party-current-party'],
+  ]
+  for (const [oldKey, newKey] of migrations) {
+    const oldValue = localStorage.getItem(oldKey)
+    if (oldValue && !localStorage.getItem(newKey)) {
+      localStorage.setItem(newKey, oldValue)
+      localStorage.removeItem(oldKey)
+    }
+  }
+}
+migrateLocalStorage()
+
 // Generate or retrieve anonymous session ID
 export function getSessionId(): string {
-  const storageKey = 'remember-party-session-id'
+  const storageKey = 'link-party-session-id'
   let sessionId = localStorage.getItem(storageKey)
 
   if (!sessionId) {
@@ -37,12 +55,12 @@ export function generatePartyCode(): string {
 
 // Get or set display name
 export function getDisplayName(): string {
-  const storageKey = 'remember-party-display-name'
+  const storageKey = 'link-party-display-name'
   return localStorage.getItem(storageKey) || ''
 }
 
 export function setDisplayName(name: string): void {
-  const storageKey = 'remember-party-display-name'
+  const storageKey = 'link-party-display-name'
   localStorage.setItem(storageKey, name)
 }
 
@@ -50,7 +68,7 @@ export function setDisplayName(name: string): void {
 const AVATARS = ['🎉', '🎸', '🎮', '🎨', '🎪', '🎭', '🎯', '🎲', '🎵', '🎺', '🎻', '🪇', '🎤', '🎧', '🎬']
 
 export function getAvatar(): string {
-  const storageKey = 'remember-party-avatar'
+  const storageKey = 'link-party-avatar'
   let avatar = localStorage.getItem(storageKey)
 
   if (!avatar) {
@@ -63,18 +81,18 @@ export function getAvatar(): string {
 
 // Store current party for rejoin
 export function getCurrentParty(): { partyId: string; partyCode: string } | null {
-  const storageKey = 'remember-party-current-party'
+  const storageKey = 'link-party-current-party'
   const data = localStorage.getItem(storageKey)
   return data ? JSON.parse(data) : null
 }
 
 export function setCurrentParty(partyId: string, partyCode: string): void {
-  const storageKey = 'remember-party-current-party'
+  const storageKey = 'link-party-current-party'
   localStorage.setItem(storageKey, JSON.stringify({ partyId, partyCode }))
 }
 
 export function clearCurrentParty(): void {
-  const storageKey = 'remember-party-current-party'
+  const storageKey = 'link-party-current-party'
   localStorage.removeItem(storageKey)
 }
 

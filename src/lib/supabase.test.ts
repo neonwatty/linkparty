@@ -37,7 +37,7 @@ describe('supabase utilities', () => {
 
       const result = getSessionId()
 
-      expect(localStorage.getItem).toHaveBeenCalledWith('remember-party-session-id')
+      expect(localStorage.getItem).toHaveBeenCalledWith('link-party-session-id')
       expect(result).toBe(mockSessionId)
     })
 
@@ -46,7 +46,7 @@ describe('supabase utilities', () => {
 
       const result = getSessionId()
 
-      expect(localStorage.setItem).toHaveBeenCalledWith('remember-party-session-id', 'test-uuid-1234')
+      expect(localStorage.setItem).toHaveBeenCalledWith('link-party-session-id', 'test-uuid-1234')
       expect(result).toBe('test-uuid-1234')
     })
   })
@@ -57,7 +57,7 @@ describe('supabase utilities', () => {
 
       const result = getDisplayName()
 
-      expect(localStorage.getItem).toHaveBeenCalledWith('remember-party-display-name')
+      expect(localStorage.getItem).toHaveBeenCalledWith('link-party-display-name')
       expect(result).toBe('Test User')
     })
 
@@ -74,7 +74,7 @@ describe('supabase utilities', () => {
     it('saves display name to localStorage', () => {
       setDisplayName('New User')
 
-      expect(localStorage.setItem).toHaveBeenCalledWith('remember-party-display-name', 'New User')
+      expect(localStorage.setItem).toHaveBeenCalledWith('link-party-display-name', 'New User')
     })
   })
 })
