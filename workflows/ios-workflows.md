@@ -1,8 +1,8 @@
 # iOS Workflows
 
-> Auto-generated workflow documentation for Remember Party
+> Auto-generated workflow documentation for Link Party
 > Last updated: 2026-01-20
-> Bundle ID: com.rememberparty.app
+> Bundle ID: com.linkparty.app
 
 ## Quick Reference
 
@@ -38,7 +38,7 @@
 3. Network access available for Supabase connection
 4. Safari cookies cleared for fresh OAuth testing
 
-**Bundle ID:** `com.rememberparty.app`
+**Bundle ID:** `com.linkparty.app`
 
 ---
 
@@ -51,12 +51,12 @@
 **Prerequisites:** App installed, no existing party in localStorage
 
 1. Launch the app
-   - Launch Remember Party (com.rememberparty.app)
+   - Launch Link Party (com.linkparty.app)
    - Wait for splash/loading to complete
    - Verify home screen loads
 
 2. Verify home screen branding
-   - Verify "Remember Party" title is visible
+   - Verify "Link Party" title is visible
    - Verify tagline text is displayed
    - Verify gradient background renders correctly
 
