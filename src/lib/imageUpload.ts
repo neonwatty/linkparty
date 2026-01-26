@@ -35,62 +35,6 @@ export function validateImage(file: File): ImageValidationResult {
   return { valid: true }
 }
 
-// Resize image using canvas API (for thumbnails or large images)
-export async function resizeImage(file: File, maxDimension: number): Promise<Blob> {
-  return new Promise((resolve, reject) => {
-    const img = new Image()
-    const url = URL.createObjectURL(file)
-
-    img.onload = () => {
-      URL.revokeObjectURL(url)
-
-      // Calculate new dimensions maintaining aspect ratio
-      let { width, height } = img
-      if (width > maxDimension || height > maxDimension) {
-        if (width > height) {
-          height = (height / width) * maxDimension
-          width = maxDimension
-        } else {
-          width = (width / height) * maxDimension
-          height = maxDimension
-        }
-      }
-
-      // Create canvas and draw resized image
-      const canvas = document.createElement('canvas')
-      canvas.width = width
-      canvas.height = height
-      const ctx = canvas.getContext('2d')
-      if (!ctx) {
-        reject(new Error('Failed to get canvas context'))
-        return
-      }
-
-      ctx.drawImage(img, 0, 0, width, height)
-
-      // Convert to blob
-      canvas.toBlob(
-        (blob) => {
-          if (blob) {
-            resolve(blob)
-          } else {
-            reject(new Error('Failed to create image blob'))
-          }
-        },
-        file.type,
-        0.9 // Quality for JPEG
-      )
-    }
-
-    img.onerror = () => {
-      URL.revokeObjectURL(url)
-      reject(new Error('Failed to load image'))
-    }
-
-    img.src = url
-  })
-}
-
 // Upload image to Supabase Storage
 export async function uploadImage(
   file: File,
