@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { Screen } from '../../types'
 import { supabase, generatePartyCode, getSessionId, getDisplayName, setDisplayName, getAvatar, setCurrentParty } from '../../lib/supabase'
+import { useAuth } from '../../contexts/AuthContext'
 import { ChevronLeftIcon, LoaderIcon } from '../icons'
 
 interface CreatePartyScreenProps {
@@ -9,6 +10,7 @@ interface CreatePartyScreenProps {
 }
 
 export function CreatePartyScreen({ onNavigate, onPartyCreated }: CreatePartyScreenProps) {
+  const { user } = useAuth()
   const [partyName, setPartyName] = useState('')
   const [displayName, setDisplayNameInput] = useState(getDisplayName() || '')
   const [isCreating, setIsCreating] = useState(false)
@@ -55,15 +57,20 @@ export function CreatePartyScreen({ onNavigate, onPartyCreated }: CreatePartyScr
       if (partyError) throw partyError
 
       // Add host as a member
+      const memberData: Record<string, unknown> = {
+        party_id: party.id,
+        session_id: sessionId,
+        display_name: displayName.trim(),
+        avatar,
+        is_host: true,
+      }
+      // Only include user_id if user is logged in
+      if (user?.id) {
+        memberData.user_id = user.id
+      }
       const { error: memberError } = await supabase
         .from('party_members')
-        .insert({
-          party_id: party.id,
-          session_id: sessionId,
-          display_name: displayName.trim(),
-          avatar,
-          is_host: true,
-        })
+        .insert(memberData)
 
       if (memberError) throw memberError
 

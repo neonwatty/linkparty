@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { Screen } from '../../types'
 import { supabase, getSessionId, getDisplayName, setDisplayName, getAvatar, setCurrentParty } from '../../lib/supabase'
+import { useAuth } from '../../contexts/AuthContext'
 import { ChevronLeftIcon, LoaderIcon } from '../icons'
 
 interface JoinPartyScreenProps {
@@ -10,6 +11,7 @@ interface JoinPartyScreenProps {
 }
 
 export function JoinPartyScreen({ onNavigate, onPartyJoined, initialCode = '' }: JoinPartyScreenProps) {
+  const { user } = useAuth()
   const [code, setCode] = useState(initialCode)
   const [displayName, setDisplayNameInput] = useState(getDisplayName() || '')
   const [isJoining, setIsJoining] = useState(false)
@@ -50,20 +52,22 @@ export function JoinPartyScreen({ onNavigate, onPartyJoined, initialCode = '' }:
       }
 
       // Upsert member (in case they've joined before)
+      const memberData: Record<string, unknown> = {
+        party_id: party.id,
+        session_id: sessionId,
+        display_name: displayName.trim(),
+        avatar,
+        is_host: false,
+      }
+      // Only include user_id if user is logged in
+      if (user?.id) {
+        memberData.user_id = user.id
+      }
       const { error: memberError } = await supabase
         .from('party_members')
-        .upsert(
-          {
-            party_id: party.id,
-            session_id: sessionId,
-            display_name: displayName.trim(),
-            avatar,
-            is_host: false,
-          },
-          {
-            onConflict: 'party_id,session_id',
-          }
-        )
+        .upsert(memberData, {
+          onConflict: 'party_id,session_id',
+        })
 
       if (memberError) throw memberError
 
