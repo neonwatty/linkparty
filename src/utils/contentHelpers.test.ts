@@ -64,5 +64,12 @@ describe('contentHelpers', () => {
       expect(badge.bg).toBe('bg-gray-400/20')
       expect(badge.icon).toBeDefined()
     })
+
+    it('returns correct badge info for image', () => {
+      const badge = getContentTypeBadge('image')
+      expect(badge.color).toBe('text-purple-400')
+      expect(badge.bg).toBe('bg-purple-400/20')
+      expect(badge.icon).toBeDefined()
+    })
   })
 })

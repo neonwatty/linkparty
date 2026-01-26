@@ -9,7 +9,7 @@ const IS_MOCK_MODE = !supabaseUrl || supabaseUrl.includes('placeholder') || supa
 
 export interface QueueItem {
   id: string
-  type: 'youtube' | 'tweet' | 'reddit' | 'note'
+  type: 'youtube' | 'tweet' | 'reddit' | 'note' | 'image'
   addedBy: string
   addedBySessionId: string
   status: 'pending' | 'showing' | 'shown'
@@ -32,6 +32,11 @@ export interface QueueItem {
   commentCount?: number
   // Note-specific
   noteContent?: string
+  // Image-specific
+  imageName?: string
+  imageUrl?: string
+  imageStoragePath?: string
+  imageCaption?: string
   // Reminder/completion fields
   dueDate?: string
   isCompleted: boolean
@@ -78,6 +83,10 @@ function transformQueueItem(item: DbQueueItem): QueueItem {
     upvotes: item.upvotes ?? undefined,
     commentCount: item.comment_count ?? undefined,
     noteContent: item.note_content ?? undefined,
+    imageName: item.image_name ?? undefined,
+    imageUrl: item.image_url ?? undefined,
+    imageStoragePath: item.image_storage_path ?? undefined,
+    imageCaption: item.image_caption ?? undefined,
     dueDate: item.due_date ?? undefined,
     isCompleted: item.is_completed ?? false,
     completedAt: item.completed_at ?? undefined,
@@ -434,6 +443,10 @@ export function useParty(partyId: string | null) {
         upvotes: item.upvotes ?? null,
         comment_count: item.commentCount ?? null,
         note_content: item.noteContent ?? null,
+        image_name: item.imageName ?? null,
+        image_url: item.imageUrl ?? null,
+        image_storage_path: item.imageStoragePath ?? null,
+        image_caption: item.imageCaption ?? null,
         due_date: item.dueDate ?? null,
         is_completed: false,
       }

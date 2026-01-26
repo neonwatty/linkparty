@@ -24,6 +24,7 @@ export {
   RedditIcon,
   NoteIcon,
   LinkIcon,
+  ImageIcon,
 } from './ContentTypeIcons'
 
 export {

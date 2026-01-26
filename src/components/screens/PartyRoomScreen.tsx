@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import type { Screen, ContentType, AddContentStep } from '../../types'
 import { getSessionId, getDisplayName, clearCurrentParty } from '../../lib/supabase'
 import { useParty } from '../../hooks/useParty'
@@ -7,6 +7,10 @@ import { fetchContentMetadata, type ContentMetadataResponse } from '../../lib/co
 import { detectContentType, getContentTypeBadge } from '../../utils/contentHelpers'
 import { getQueueItemTitle, getQueueItemSubtitle } from '../../utils/queueHelpers'
 import { isItemOverdue } from '../../utils/dateHelpers'
+import { useImageUpload } from '../../hooks/useImageUpload'
+import { validateImage, createPreviewUrl, revokePreviewUrl, deleteImage } from '../../lib/imageUpload'
+import { UploadToast } from '../ui/UploadToast'
+import { ImageLightbox } from '../ui/ImageLightbox'
 import {
   PlayIcon,
   SkipIcon,
@@ -25,6 +29,7 @@ import {
   RedditIcon,
   NoteIcon,
   LinkIcon,
+  ImageIcon,
   CheckIcon,
   CheckCircleIcon,
   LoaderIcon,
@@ -76,6 +81,16 @@ export function PartyRoomScreen({ onNavigate, partyId, partyCode, onLeaveParty }
   const [viewingNote, setViewingNote] = useState<QueueItem | null>(null)
   // Share/copy feedback state
   const [showCopied, setShowCopied] = useState(false)
+  // Image upload state
+  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null)
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null)
+  const [imageCaption, setImageCaption] = useState('')
+  const [imageValidationError, setImageValidationError] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  // Image lightbox state
+  const [lightboxImage, setLightboxImage] = useState<{ url: string; caption?: string } | null>(null)
+  // Upload toast state
+  const [showUploadToast, setShowUploadToast] = useState(false)
 
   const sessionId = getSessionId()
   const currentUserDisplayName = getDisplayName() || 'You'
@@ -83,6 +98,125 @@ export function PartyRoomScreen({ onNavigate, partyId, partyCode, onLeaveParty }
 
   const currentItem = queue.find(v => v.status === 'showing')
   const pendingItems = queue.filter(v => v.status === 'pending')
+
+  // Ref to always access the latest addToQueue (prevents stale closure)
+  const addToQueueRef = useRef(addToQueue)
+  useEffect(() => {
+    addToQueueRef.current = addToQueue
+  }, [addToQueue])
+
+  // Ref to always access the latest queue length
+  const queueLengthRef = useRef(queue.length)
+  useEffect(() => {
+    queueLengthRef.current = queue.length
+  }, [queue.length])
+
+  // Image upload hook
+  const imageUpload = useImageUpload({
+    onSuccess: async (result, caption) => {
+      const itemToAdd = {
+        type: 'image' as const,
+        status: (queueLengthRef.current === 0 ? 'showing' : 'pending') as 'pending' | 'showing',
+        addedBy: currentUserDisplayName,
+        isCompleted: false,
+        imageName: result.fileName,
+        imageUrl: result.url,
+        imageStoragePath: result.storagePath,
+        imageCaption: caption,
+      }
+      try {
+        await addToQueueRef.current(itemToAdd)
+      } catch (err) {
+        console.error('Failed to add image to queue:', err)
+      }
+    },
+    onError: (error) => {
+      console.error('Image upload error:', error)
+    },
+  })
+
+  // Handle file selection
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Validate file
+    const validation = validateImage(file)
+    if (!validation.valid) {
+      setImageValidationError(validation.error || 'Invalid file')
+      return
+    }
+
+    // Clear any previous preview URL
+    if (imagePreviewUrl) {
+      revokePreviewUrl(imagePreviewUrl)
+    }
+
+    setSelectedImageFile(file)
+    setImagePreviewUrl(createPreviewUrl(file))
+    setImageValidationError(null)
+    setAddContentStep('preview')
+    setDetectedType('image')
+
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+  }
+
+  // Handle image upload submission
+  const handleImageUpload = () => {
+    if (!selectedImageFile) return
+
+    // Close modal immediately
+    setShowAddContent(false)
+    setAddContentStep('input')
+    setShowUploadToast(true)
+
+    // Start background upload
+    imageUpload.startUpload(selectedImageFile, partyId, imageCaption || undefined)
+
+    // Clean up preview
+    if (imagePreviewUrl) {
+      revokePreviewUrl(imagePreviewUrl)
+    }
+
+    // Reset state
+    setSelectedImageFile(null)
+    setImagePreviewUrl(null)
+    setImageCaption('')
+    setDetectedType(null)
+  }
+
+  // Handle image upload cancel
+  const handleImageCancel = () => {
+    if (imagePreviewUrl) {
+      revokePreviewUrl(imagePreviewUrl)
+    }
+    setSelectedImageFile(null)
+    setImagePreviewUrl(null)
+    setImageCaption('')
+    setImageValidationError(null)
+    setAddContentStep('input')
+    setDetectedType(null)
+  }
+
+  // Handle delete with image cleanup
+  const handleDeleteWithCleanup = async () => {
+    if (selectedItem) {
+      try {
+        // Delete image from storage if it's an image type
+        if (selectedItem.type === 'image' && selectedItem.imageStoragePath) {
+          await deleteImage(selectedItem.imageStoragePath)
+        }
+        await deleteItem(selectedItem.id)
+        setShowDeleteConfirm(false)
+        setSelectedItem(null)
+      } catch (err) {
+        console.error('Failed to delete item:', err)
+      }
+    }
+  }
 
   // Handle URL submission - fetch real metadata
   const handleUrlSubmit = async () => {
@@ -232,15 +366,7 @@ export function PartyRoomScreen({ onNavigate, partyId, partyCode, onLeaveParty }
   }
 
   const handleDelete = async () => {
-    if (selectedItem) {
-      try {
-        await deleteItem(selectedItem.id)
-        setShowDeleteConfirm(false)
-        setSelectedItem(null)
-      } catch (err) {
-        console.error('Failed to delete item:', err)
-      }
-    }
+    await handleDeleteWithCleanup()
   }
 
   const handleShowNext = async (itemId: string) => {
@@ -406,6 +532,38 @@ export function PartyRoomScreen({ onNavigate, partyId, partyCode, onLeaveParty }
             </div>
           )}
 
+          {currentItem.type === 'image' && (
+            <div className="mb-4">
+              <div
+                className="relative rounded-xl overflow-hidden cursor-pointer"
+                onClick={() => currentItem.imageUrl && setLightboxImage({
+                  url: currentItem.imageUrl,
+                  caption: currentItem.imageCaption,
+                })}
+              >
+                {currentItem.imageUrl ? (
+                  <img
+                    src={currentItem.imageUrl}
+                    alt={currentItem.imageCaption || currentItem.imageName || 'Shared image'}
+                    className="w-full max-h-[50vh] object-contain bg-surface-800 rounded-xl"
+                  />
+                ) : (
+                  <div className="w-full aspect-video bg-surface-800 rounded-xl flex items-center justify-center">
+                    <div className="text-purple-400">
+                      <ImageIcon size={48} />
+                    </div>
+                  </div>
+                )}
+              </div>
+              {currentItem.imageCaption && (
+                <p className="text-text-secondary text-sm mt-2 text-center">{currentItem.imageCaption}</p>
+              )}
+              <p className="text-text-muted text-xs mt-1 text-center">
+                Shared by {currentItem.addedBy} · Tap to expand
+              </p>
+            </div>
+          )}
+
           {/* Host Controls - Just Next button */}
           {isHost && (
             <div className="flex items-center justify-center mt-4">
@@ -495,6 +653,17 @@ export function PartyRoomScreen({ onNavigate, partyId, partyCode, onLeaveParty }
                       src={item.thumbnail}
                       alt={item.title}
                       className="w-full h-full object-cover"
+                    />
+                  ) : item.type === 'image' && item.imageUrl ? (
+                    <img
+                      src={item.imageUrl}
+                      alt={item.imageCaption || item.imageName || 'Image'}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        // Show placeholder on error
+                        e.currentTarget.style.display = 'none'
+                        e.currentTarget.nextElementSibling?.classList.remove('hidden')
+                      }}
                     />
                   ) : (
                     <span className={badge.color}>
@@ -601,11 +770,35 @@ export function PartyRoomScreen({ onNavigate, partyId, partyCode, onLeaveParty }
                 {/* Write a Note Button */}
                 <button
                   onClick={() => setAddContentStep('note')}
-                  className="btn btn-secondary w-full flex items-center justify-center gap-2"
+                  className="btn btn-secondary w-full flex items-center justify-center gap-2 mb-2"
                 >
                   <NoteIcon size={20} />
                   Write a note
                 </button>
+
+                {/* Upload an Image Button */}
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="btn btn-secondary w-full flex items-center justify-center gap-2"
+                >
+                  <ImageIcon size={20} />
+                  Upload an image
+                </button>
+                <div className="text-xs text-text-muted text-center mt-2">
+                  JPG, PNG, GIF, WebP up to 5MB
+                </div>
+                {imageValidationError && (
+                  <div className="text-xs text-red-400 text-center mt-1">{imageValidationError}</div>
+                )}
+
+                {/* Hidden file input */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/gif,image/webp"
+                  onChange={handleFileSelect}
+                  className="hidden"
+                />
               </>
             )}
 
@@ -770,6 +963,32 @@ export function PartyRoomScreen({ onNavigate, partyId, partyCode, onLeaveParty }
                       <p className="text-sm">{noteText}</p>
                     </div>
                   )}
+
+                  {detectedType === 'image' && imagePreviewUrl && (
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-purple-400"><ImageIcon size={16} /></span>
+                        <span className="text-purple-400 text-sm">Your image</span>
+                      </div>
+                      <div className="relative rounded-lg overflow-hidden bg-surface-800 max-h-48">
+                        <img
+                          src={imagePreviewUrl}
+                          alt="Preview"
+                          className="w-full h-auto max-h-48 object-contain"
+                        />
+                      </div>
+                      {selectedImageFile && (
+                        <div className="text-text-muted text-xs mt-1">{selectedImageFile.name}</div>
+                      )}
+                      <textarea
+                        placeholder="Add a caption (optional)..."
+                        value={imageCaption}
+                        onChange={(e) => setImageCaption(e.target.value)}
+                        className="input mt-3 min-h-[60px] resize-none"
+                        rows={2}
+                      />
+                    </div>
+                  )}
                 </div>
 
                 <div className="text-text-muted text-xs mb-4">
@@ -778,15 +997,35 @@ export function PartyRoomScreen({ onNavigate, partyId, partyCode, onLeaveParty }
 
                 <div className="flex gap-3 pb-2">
                   <button
-                    onClick={() => { setAddContentStep('input'); setContentUrl(''); setNoteText(''); setDetectedType(null); setFetchedPreview(null); setFetchError(null); }}
-                    onTouchEnd={(e) => { e.stopPropagation(); e.preventDefault(); setAddContentStep('input'); setContentUrl(''); setNoteText(''); setDetectedType(null); setFetchedPreview(null); setFetchError(null); }}
+                    onClick={() => {
+                      if (detectedType === 'image') {
+                        handleImageCancel()
+                      } else {
+                        setAddContentStep('input'); setContentUrl(''); setNoteText(''); setDetectedType(null); setFetchedPreview(null); setFetchError(null);
+                      }
+                    }}
+                    onTouchEnd={(e) => {
+                      e.stopPropagation(); e.preventDefault();
+                      if (detectedType === 'image') {
+                        handleImageCancel()
+                      } else {
+                        setAddContentStep('input'); setContentUrl(''); setNoteText(''); setDetectedType(null); setFetchedPreview(null); setFetchError(null);
+                      }
+                    }}
                     className="btn btn-secondary flex-1 min-h-[52px]"
                   >
                     Cancel
                   </button>
                   <button
-                    onClick={handleAddToQueue}
-                    onTouchEnd={(e) => { e.stopPropagation(); e.preventDefault(); handleAddToQueue(); }}
+                    onClick={detectedType === 'image' ? handleImageUpload : handleAddToQueue}
+                    onTouchEnd={(e) => {
+                      e.stopPropagation(); e.preventDefault();
+                      if (detectedType === 'image') {
+                        handleImageUpload()
+                      } else {
+                        handleAddToQueue()
+                      }
+                    }}
                     className="btn btn-primary flex-1 min-h-[52px]"
                   >
                     Add to Queue
@@ -1109,6 +1348,29 @@ export function PartyRoomScreen({ onNavigate, partyId, partyCode, onLeaveParty }
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-surface-800 text-white px-4 py-2 rounded-full shadow-lg z-50 animate-fade-in">
           Party link copied!
         </div>
+      )}
+
+      {/* Upload Toast */}
+      <UploadToast
+        isVisible={showUploadToast || imageUpload.isUploading || !!imageUpload.error}
+        isUploading={imageUpload.isUploading}
+        progress={imageUpload.uploadProgress}
+        error={imageUpload.error}
+        onRetry={imageUpload.retry}
+        onDismiss={() => {
+          setShowUploadToast(false)
+          imageUpload.clearError()
+        }}
+      />
+
+      {/* Image Lightbox */}
+      {lightboxImage && (
+        <ImageLightbox
+          imageUrl={lightboxImage.url}
+          caption={lightboxImage.caption}
+          isOpen={!!lightboxImage}
+          onClose={() => setLightboxImage(null)}
+        />
       )}
     </div>
   )

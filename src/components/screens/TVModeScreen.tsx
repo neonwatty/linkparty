@@ -1,12 +1,15 @@
+import { useState } from 'react'
 import { useParty } from '../../hooks/useParty'
 import { getQueueItemTitle } from '../../utils/queueHelpers'
 import { getContentTypeBadge } from '../../utils/contentHelpers'
 import type { Screen } from '../../types'
+import { ImageLightbox } from '../ui/ImageLightbox'
 import {
   ChevronLeftIcon,
   TwitterIcon,
   RedditIcon,
   NoteIcon,
+  ImageIcon,
   UsersIcon,
 } from '../icons'
 
@@ -18,6 +21,7 @@ interface TVModeScreenProps {
 
 export function TVModeScreen({ onNavigate, partyId, partyCode }: TVModeScreenProps) {
   const { queue, members, partyInfo } = useParty(partyId)
+  const [lightboxImage, setLightboxImage] = useState<{ url: string; caption?: string } | null>(null)
 
   const currentItem = queue.find(v => v.status === 'showing')
   const upNext = queue.filter(v => v.status === 'pending').slice(0, 3)
@@ -99,6 +103,41 @@ export function TVModeScreen({ onNavigate, partyId, partyCode }: TVModeScreenPro
           </div>
         )}
 
+        {currentItem?.type === 'image' && (
+          <div className="max-w-5xl mx-auto p-8 flex items-center justify-center">
+            <div
+              className="cursor-pointer"
+              onClick={() => currentItem.imageUrl && setLightboxImage({
+                url: currentItem.imageUrl,
+                caption: currentItem.imageCaption,
+              })}
+            >
+              {currentItem.imageUrl ? (
+                <div className="text-center">
+                  <img
+                    src={currentItem.imageUrl}
+                    alt={currentItem.imageCaption || currentItem.imageName || 'Shared image'}
+                    className="max-w-full max-h-[70vh] object-contain rounded-2xl"
+                  />
+                  {currentItem.imageCaption && (
+                    <p className="text-text-secondary text-xl mt-4">{currentItem.imageCaption}</p>
+                  )}
+                  <p className="text-text-muted text-sm mt-2">
+                    Shared by {currentItem.addedBy} · Click to expand
+                  </p>
+                </div>
+              ) : (
+                <div className="bg-surface-900/90 backdrop-blur rounded-2xl p-12 flex flex-col items-center justify-center">
+                  <div className="text-purple-400 mb-4">
+                    <ImageIcon size={64} />
+                  </div>
+                  <p className="text-text-muted text-lg">Image unavailable</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {!currentItem && (
           <div className="text-center text-text-muted">
             <p className="text-2xl">No content showing</p>
@@ -122,6 +161,7 @@ export function TVModeScreen({ onNavigate, partyId, partyCode }: TVModeScreenPro
               {currentItem?.type === 'tweet' && currentItem.tweetAuthor}
               {currentItem?.type === 'reddit' && currentItem.subreddit}
               {currentItem?.type === 'note' && `Added by ${currentItem.addedBy}`}
+              {currentItem?.type === 'image' && `Added by ${currentItem.addedBy}`}
             </p>
           </div>
 
@@ -139,6 +179,12 @@ export function TVModeScreen({ onNavigate, partyId, partyCode }: TVModeScreenPro
                         <img
                           src={item.thumbnail}
                           alt={item.title}
+                          className="w-full h-full object-cover opacity-70"
+                        />
+                      ) : item.type === 'image' && item.imageUrl ? (
+                        <img
+                          src={item.imageUrl}
+                          alt={item.imageCaption || item.imageName || 'Image'}
                           className="w-full h-full object-cover opacity-70"
                         />
                       ) : (
@@ -166,6 +212,16 @@ export function TVModeScreen({ onNavigate, partyId, partyCode }: TVModeScreenPro
           )}
         </div>
       </div>
+
+      {/* Image Lightbox */}
+      {lightboxImage && (
+        <ImageLightbox
+          imageUrl={lightboxImage.url}
+          caption={lightboxImage.caption}
+          isOpen={!!lightboxImage}
+          onClose={() => setLightboxImage(null)}
+        />
+      )}
     </div>
   )
 }

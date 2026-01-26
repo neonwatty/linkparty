@@ -14,6 +14,8 @@ export function getQueueItemTitle(item: QueueItem): string {
     case 'note':
       if (!item.noteContent) return 'Note'
       return item.noteContent.slice(0, 60) + (item.noteContent.length > 60 ? '...' : '')
+    case 'image':
+      return item.imageCaption || item.imageName || 'Image'
   }
 }
 
@@ -34,6 +36,8 @@ export function getQueueItemSubtitle(item: QueueItem): string {
         if (item.dueDate) {
           return `${formatDueDate(item.dueDate)} · Added by ${item.addedBy}`
         }
+        return `Added by ${item.addedBy}`
+      case 'image':
         return `Added by ${item.addedBy}`
     }
   })()

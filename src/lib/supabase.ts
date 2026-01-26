@@ -120,7 +120,7 @@ export interface DbPartyMember {
 export interface DbQueueItem {
   id: string
   party_id: string
-  type: 'youtube' | 'tweet' | 'reddit' | 'note'
+  type: 'youtube' | 'tweet' | 'reddit' | 'note' | 'image'
   status: 'pending' | 'showing' | 'shown'
   position: number
   added_by_name: string
@@ -144,6 +144,11 @@ export interface DbQueueItem {
   comment_count: number | null
   // Note fields
   note_content: string | null
+  // Image fields
+  image_name: string | null
+  image_url: string | null
+  image_storage_path: string | null
+  image_caption: string | null
   // Reminder/completion fields
   due_date: string | null
   is_completed: boolean

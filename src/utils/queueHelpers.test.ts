@@ -103,6 +103,33 @@ describe('queueHelpers', () => {
       })
       expect(getQueueItemTitle(item)).toBe('Note')
     })
+
+    it('returns caption for image items with caption', () => {
+      const item = createMockItem({
+        type: 'image',
+        imageCaption: 'My photo caption',
+        imageName: 'photo.jpg',
+      })
+      expect(getQueueItemTitle(item)).toBe('My photo caption')
+    })
+
+    it('returns filename for image items without caption', () => {
+      const item = createMockItem({
+        type: 'image',
+        imageCaption: undefined,
+        imageName: 'photo.jpg',
+      })
+      expect(getQueueItemTitle(item)).toBe('photo.jpg')
+    })
+
+    it('returns "Image" for image items without caption or filename', () => {
+      const item = createMockItem({
+        type: 'image',
+        imageCaption: undefined,
+        imageName: undefined,
+      })
+      expect(getQueueItemTitle(item)).toBe('Image')
+    })
   })
 
   describe('getQueueItemSubtitle', () => {
@@ -176,6 +203,14 @@ describe('queueHelpers', () => {
         dueDate: undefined,
       })
       expect(getQueueItemSubtitle(item)).toBe('Added by Frank')
+    })
+
+    it('shows addedBy for image items', () => {
+      const item = createMockItem({
+        type: 'image',
+        addedBy: 'Grace',
+      })
+      expect(getQueueItemSubtitle(item)).toBe('Added by Grace')
     })
   })
 })

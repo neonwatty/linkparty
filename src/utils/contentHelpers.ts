@@ -1,5 +1,5 @@
 import type { ContentType } from '../types'
-import { YoutubeIcon, TwitterIcon, RedditIcon, NoteIcon } from '../components/icons'
+import { YoutubeIcon, TwitterIcon, RedditIcon, NoteIcon, ImageIcon } from '../components/icons'
 
 // Helper to detect content type from URL
 export function detectContentType(url: string): ContentType | null {
@@ -21,5 +21,7 @@ export function getContentTypeBadge(type: ContentType) {
       return { icon: RedditIcon, color: 'text-orange-500', bg: 'bg-orange-500/20' }
     case 'note':
       return { icon: NoteIcon, color: 'text-gray-400', bg: 'bg-gray-400/20' }
+    case 'image':
+      return { icon: ImageIcon, color: 'text-purple-400', bg: 'bg-purple-400/20' }
   }
 }
