@@ -1,11 +1,11 @@
 // Link Party Service Worker
-const CACHE_NAME = 'link-party-v1'
+// Version updated to bust cache after performance optimizations
+const CACHE_NAME = 'link-party-v2'
 const OFFLINE_URL = '/offline.html'
 
-// Assets to cache on install
+// Only cache static assets that don't change often
+// DO NOT cache index.html or hashed JS bundles - they have their own cache busting
 const PRECACHE_ASSETS = [
-  '/',
-  '/index.html',
   '/manifest.json',
 ]
 
@@ -45,6 +45,18 @@ self.addEventListener('fetch', (event) => {
 
   // Skip API requests (Supabase)
   if (event.request.url.includes('supabase')) return
+
+  // Skip hashed assets - they already have cache-busting hashes in filenames
+  // and browser cache handles them correctly
+  const url = new URL(event.request.url)
+  if (url.pathname.match(/\.[a-f0-9]{8,}\.(js|css)$/)) {
+    return
+  }
+
+  // Skip index.html - always fetch fresh to get latest asset references
+  if (url.pathname === '/' || url.pathname === '/index.html') {
+    return
+  }
 
   event.respondWith(
     fetch(event.request)
