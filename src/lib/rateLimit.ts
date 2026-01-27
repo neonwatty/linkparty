@@ -195,11 +195,9 @@ export function tryAction(key: RateLimitKey): string | null {
   return null
 }
 
-/**
- * Clear all rate limit data - useful for testing
- */
-export function clearRateLimitData(): void {
-  Object.keys(RATE_LIMITS).forEach((key) => {
-    localStorage.removeItem(`${STORAGE_PREFIX}${key}`)
-  })
-}
+// Utility function for testing - uncomment if needed
+// export function clearRateLimitData(): void {
+//   Object.keys(RATE_LIMITS).forEach((key) => {
+//     localStorage.removeItem(`${STORAGE_PREFIX}${key}`)
+//   })
+// }
