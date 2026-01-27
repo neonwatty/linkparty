@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import type { Screen, ContentType, AddContentStep } from '../../types'
 import { getSessionId, getDisplayName, clearCurrentParty } from '../../lib/supabase'
 import { logger } from '../../lib/logger'
@@ -48,6 +48,8 @@ export function PartyRoomScreen({ onNavigate, partyId, partyCode, onLeaveParty }
     toggleComplete,
     lastConflict,
     clearConflict,
+    pendingItems: memoizedPendingItems,
+    showingItem,
   } = useParty(partyId)
 
   // Modal/sheet visibility states
@@ -87,8 +89,9 @@ export function PartyRoomScreen({ onNavigate, partyId, partyCode, onLeaveParty }
   const currentUserDisplayName = getDisplayName() || 'You'
   const isHost = partyInfo?.hostSessionId === sessionId
 
-  const currentItem = queue.find(v => v.status === 'showing')
-  const pendingItems = queue.filter(v => v.status === 'pending')
+  // Use memoized values from useParty hook
+  const currentItem = showingItem
+  const pendingItems = memoizedPendingItems
 
   // Refs to prevent stale closures
   const addToQueueRef = useRef(addToQueue)
@@ -305,17 +308,17 @@ export function PartyRoomScreen({ onNavigate, partyId, partyCode, onLeaveParty }
     setFetchError(null)
   }
 
-  // Note editing handlers
-  const handleOpenEditNote = (item: QueueItem) => {
+  // Note editing handlers - wrapped with useCallback
+  const handleOpenEditNote = useCallback((item: QueueItem) => {
     if (item.type === 'note') {
       setEditNoteText(item.noteContent || '')
       setEditingNoteId(item.id)
       setShowEditNote(true)
       setSelectedItem(null)
     }
-  }
+  }, [])
 
-  const handleSaveNote = async () => {
+  const handleSaveNote = useCallback(async () => {
     if (editingNoteId && editNoteText.trim()) {
       try {
         await updateNoteContent(editingNoteId, editNoteText.trim())
@@ -326,46 +329,69 @@ export function PartyRoomScreen({ onNavigate, partyId, partyCode, onLeaveParty }
         log.error('Failed to update note', err)
       }
     }
-  }
+  }, [editingNoteId, editNoteText, updateNoteContent])
 
-  const handleCancelEditNote = () => {
+  const handleCancelEditNote = useCallback(() => {
     setShowEditNote(false)
     setEditNoteText('')
     setEditingNoteId(null)
-  }
+  }, [])
 
-  // Note viewing handlers
-  const handleViewNote = (item: QueueItem) => {
+  // Note viewing handlers - wrapped with useCallback
+  const handleViewNote = useCallback((item: QueueItem) => {
     if (item.type === 'note') {
       setViewingNote(item)
       setShowViewNote(true)
       setSelectedItem(null)
     }
-  }
+  }, [])
 
-  // Queue item actions
-  const handleMoveUp = async (itemId: string) => {
+  // Queue item actions - wrapped with useCallback
+  const handleMoveUp = useCallback(async (itemId: string) => {
     await moveItem(itemId, 'up')
     setSelectedItem(null)
-  }
+  }, [moveItem])
 
-  const handleMoveDown = async (itemId: string) => {
+  const handleMoveDown = useCallback(async (itemId: string) => {
     await moveItem(itemId, 'down')
     setSelectedItem(null)
-  }
+  }, [moveItem])
 
-  const handleShowNext = async (itemId: string) => {
+  // Handle drag-and-drop reorder - wrapped with useCallback
+  const handleReorder = useCallback(async (activeId: string, overId: string) => {
+    const oldIndex = pendingItems.findIndex(item => item.id === activeId)
+    const newIndex = pendingItems.findIndex(item => item.id === overId)
+
+    if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) return
+
+    const direction = newIndex > oldIndex ? 'down' : 'up'
+    const steps = Math.abs(newIndex - oldIndex)
+
+    await moveItem(activeId, direction, steps)
+  }, [pendingItems, moveItem])
+
+  const handleShowNext = useCallback(async (itemId: string) => {
     await showNext(itemId)
     setSelectedItem(null)
-  }
+  }, [showNext])
 
-  // Party actions
-  const handleLeave = () => {
+  // Party actions - wrapped with useCallback
+  const handleLeave = useCallback(() => {
     clearCurrentParty()
     onLeaveParty()
-  }
+  }, [onLeaveParty])
 
-  const handleShare = async () => {
+  const copyToClipboard = useCallback(async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text)
+      setShowCopied(true)
+      setTimeout(() => setShowCopied(false), 2000)
+    } catch (err) {
+      log.error('Failed to copy to clipboard', err)
+    }
+  }, [])
+
+  const handleShare = useCallback(async () => {
     const shareUrl = `${window.location.origin}?join=${partyCode}`
 
     if (navigator.share) {
@@ -383,17 +409,61 @@ export function PartyRoomScreen({ onNavigate, partyId, partyCode, onLeaveParty }
     } else {
       await copyToClipboard(shareUrl)
     }
-  }
+  }, [partyCode, partyInfo, copyToClipboard])
 
-  const copyToClipboard = async (text: string) => {
-    try {
-      await navigator.clipboard.writeText(text)
-      setShowCopied(true)
-      setTimeout(() => setShowCopied(false), 2000)
-    } catch (err) {
-      log.error('Failed to copy to clipboard', err)
-    }
-  }
+  // Modal handlers - wrapped with useCallback
+  const handleOpenAddContent = useCallback(() => {
+    setShowAddContent(true)
+  }, [])
+
+  const handleCloseAddContent = useCallback(() => {
+    setShowAddContent(false)
+  }, [])
+
+  const handleCloseSelectedItem = useCallback(() => {
+    setSelectedItem(null)
+  }, [])
+
+  const handleOpenDeleteConfirm = useCallback(() => {
+    setShowDeleteConfirm(true)
+  }, [])
+
+  const handleCancelDelete = useCallback(() => {
+    setShowDeleteConfirm(false)
+    setSelectedItem(null)
+  }, [])
+
+  const handleCloseViewNote = useCallback(() => {
+    setShowViewNote(false)
+    setViewingNote(null)
+  }, [])
+
+  const handleEditFromView = useCallback(() => {
+    setShowViewNote(false)
+    if (viewingNote) handleOpenEditNote(viewingNote)
+    setViewingNote(null)
+  }, [viewingNote, handleOpenEditNote])
+
+  const handleCloseLightbox = useCallback(() => {
+    setLightboxImage(null)
+  }, [])
+
+  const handleImageClick = useCallback((url: string, caption?: string) => {
+    setLightboxImage({ url, caption })
+  }, [])
+
+  const handleDismissUploadToast = useCallback(() => {
+    setShowUploadToast(false)
+    imageUpload.clearError()
+  }, [imageUpload])
+
+  const handleTvMode = useCallback(() => {
+    onNavigate('tv')
+  }, [onNavigate])
+
+  const handleGoToNoteStep = useCallback(() => {
+    setAddContentStep('note')
+  }, [])
 
   if (isLoading) {
     return (
@@ -410,7 +480,7 @@ export function PartyRoomScreen({ onNavigate, partyId, partyCode, onLeaveParty }
         partyName={partyInfo?.name || 'Party'}
         partyCode={partyCode}
         onLeave={handleLeave}
-        onTvMode={() => onNavigate('tv')}
+        onTvMode={handleTvMode}
         onShare={handleShare}
       />
 
@@ -419,7 +489,7 @@ export function PartyRoomScreen({ onNavigate, partyId, partyCode, onLeaveParty }
           currentItem={currentItem}
           isHost={isHost}
           onNext={advanceQueue}
-          onImageClick={(url, caption) => setLightboxImage({ url, caption })}
+          onImageClick={handleImageClick}
         />
       )}
 
@@ -433,11 +503,12 @@ export function PartyRoomScreen({ onNavigate, partyId, partyCode, onLeaveParty }
         currentSessionId={sessionId}
         onItemClick={setSelectedItem}
         onToggleComplete={toggleComplete}
+        onReorder={handleReorder}
       />
 
       {/* Add Content FAB */}
       <button
-        onClick={() => setShowAddContent(true)}
+        onClick={handleOpenAddContent}
         className="fab bg-accent-500 hover:bg-accent-400 transition-all hover:scale-105 animate-pulse-glow"
       >
         <PlusIcon />
@@ -458,7 +529,7 @@ export function PartyRoomScreen({ onNavigate, partyId, partyCode, onLeaveParty }
         imageValidationError={imageValidationError}
         selectedImageFile={selectedImageFile}
         pendingItemsCount={pendingItems.length}
-        onClose={() => setShowAddContent(false)}
+        onClose={handleCloseAddContent}
         onContentUrlChange={setContentUrl}
         onNoteTextChange={setNoteText}
         onNoteDueDateChange={setNoteDueDate}
@@ -469,7 +540,7 @@ export function PartyRoomScreen({ onNavigate, partyId, partyCode, onLeaveParty }
         onImageUpload={handleImageUpload}
         onImageCancel={handleImageCancel}
         onFileSelect={handleFileSelect}
-        onGoToNoteStep={() => setAddContentStep('note')}
+        onGoToNoteStep={handleGoToNoteStep}
         onResetToInput={handleResetToInput}
       />
 
@@ -478,11 +549,11 @@ export function PartyRoomScreen({ onNavigate, partyId, partyCode, onLeaveParty }
         <QueueItemActionsSheet
           item={selectedItem}
           isOwnItem={selectedItem.addedBySessionId === sessionId}
-          onClose={() => setSelectedItem(null)}
+          onClose={handleCloseSelectedItem}
           onShowNext={handleShowNext}
           onMoveUp={handleMoveUp}
           onMoveDown={handleMoveDown}
-          onDelete={() => setShowDeleteConfirm(true)}
+          onDelete={handleOpenDeleteConfirm}
           onToggleComplete={toggleComplete}
           onViewNote={handleViewNote}
           onEditNote={handleOpenEditNote}
@@ -493,7 +564,7 @@ export function PartyRoomScreen({ onNavigate, partyId, partyCode, onLeaveParty }
       <DeleteConfirmDialog
         isOpen={showDeleteConfirm && !!selectedItem}
         onConfirm={handleDeleteWithCleanup}
-        onCancel={() => { setShowDeleteConfirm(false); setSelectedItem(null); }}
+        onCancel={handleCancelDelete}
       />
 
       {/* View Note Modal */}
@@ -501,12 +572,8 @@ export function PartyRoomScreen({ onNavigate, partyId, partyCode, onLeaveParty }
         isOpen={showViewNote}
         note={viewingNote}
         isOwnNote={viewingNote?.addedBySessionId === sessionId}
-        onClose={() => { setShowViewNote(false); setViewingNote(null); }}
-        onEdit={() => {
-          setShowViewNote(false)
-          if (viewingNote) handleOpenEditNote(viewingNote)
-          setViewingNote(null)
-        }}
+        onClose={handleCloseViewNote}
+        onEdit={handleEditFromView}
       />
 
       {/* Edit Note Modal */}
@@ -536,10 +603,7 @@ export function PartyRoomScreen({ onNavigate, partyId, partyCode, onLeaveParty }
         progress={imageUpload.uploadProgress}
         error={imageUpload.error}
         onRetry={imageUpload.retry}
-        onDismiss={() => {
-          setShowUploadToast(false)
-          imageUpload.clearError()
-        }}
+        onDismiss={handleDismissUploadToast}
       />
 
       {/* Image Lightbox */}
@@ -548,7 +612,7 @@ export function PartyRoomScreen({ onNavigate, partyId, partyCode, onLeaveParty }
           imageUrl={lightboxImage.url}
           caption={lightboxImage.caption}
           isOpen={!!lightboxImage}
-          onClose={() => setLightboxImage(null)}
+          onClose={handleCloseLightbox}
         />
       )}
     </div>

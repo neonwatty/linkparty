@@ -1,8 +1,21 @@
-import { memo, useCallback } from 'react'
+import { memo, useCallback, useState } from 'react'
 import type { QueueItem } from '../../hooks/useParty'
 import { getContentTypeBadge } from '../../utils/contentHelpers'
 import { getQueueItemTitle, getQueueItemSubtitle } from '../../utils/queueHelpers'
 import { isItemOverdue } from '../../utils/dateHelpers'
+import {
+  DndContext,
+  closestCenter,
+  DragOverlay,
+  type DragStartEvent,
+  type DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  useSortable,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import {
   DragIcon,
   EditIcon,
@@ -17,6 +30,8 @@ interface QueueListItemProps {
   isOwnItem: boolean
   onItemClick: (item: QueueItem) => void
   onToggleComplete: (itemId: string) => void
+  isDragging?: boolean
+  isOverlay?: boolean
 }
 
 const QueueListItem = memo(function QueueListItem({
@@ -25,10 +40,27 @@ const QueueListItem = memo(function QueueListItem({
   isOwnItem,
   onItemClick,
   onToggleComplete,
+  isDragging = false,
+  isOverlay = false,
 }: QueueListItemProps) {
   const badge = getContentTypeBadge(item.type)
   const BadgeIcon = badge.icon
   const overdue = isItemOverdue(item)
+
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+  } = useSortable({ id: item.id })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    animationDelay: isOverlay ? undefined : `${index * 50}ms`,
+    opacity: isDragging ? 0.5 : 1,
+  }
 
   const handleClick = useCallback(() => {
     onItemClick(item)
@@ -44,11 +76,12 @@ const QueueListItem = memo(function QueueListItem({
 
   return (
     <div
+      ref={setNodeRef}
+      style={style}
       onClick={handleClick}
-      className={`queue-item cursor-pointer active:bg-surface-700 ${item.isCompleted ? 'opacity-60' : ''}`}
-      style={{ animationDelay: `${index * 50}ms` }}
+      className={`queue-item cursor-pointer active:bg-surface-700 ${item.isCompleted ? 'opacity-60' : ''} ${isDragging ? 'z-10' : ''} ${isOverlay ? 'shadow-2xl bg-surface-800 rounded-lg' : ''}`}
     >
-      {/* Completion checkbox for notes */}
+      {/* Completion checkbox for notes, drag handle for other types */}
       {item.type === 'note' ? (
         <div
           role="button"
@@ -60,7 +93,13 @@ const QueueListItem = memo(function QueueListItem({
           <CheckCircleIcon size={24} filled={item.isCompleted} />
         </div>
       ) : (
-        <DragIcon />
+        <div
+          {...attributes}
+          {...listeners}
+          className="touch-none cursor-grab active:cursor-grabbing"
+        >
+          <DragIcon />
+        </div>
       )}
 
       {/* Content type badge/preview */}
@@ -127,6 +166,7 @@ interface QueueListProps {
   currentSessionId: string
   onItemClick: (item: QueueItem) => void
   onToggleComplete: (itemId: string) => void
+  onReorder?: (activeId: string, overId: string) => void
 }
 
 export function QueueList({
@@ -134,7 +174,29 @@ export function QueueList({
   currentSessionId,
   onItemClick,
   onToggleComplete,
+  onReorder,
 }: QueueListProps) {
+  const [activeId, setActiveId] = useState<string | null>(null)
+
+  const handleDragStart = useCallback((event: DragStartEvent) => {
+    setActiveId(event.active.id as string)
+  }, [])
+
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
+    const { active, over } = event
+    setActiveId(null)
+
+    if (over && active.id !== over.id && onReorder) {
+      onReorder(active.id as string, over.id as string)
+    }
+  }, [onReorder])
+
+  const handleDragCancel = useCallback(() => {
+    setActiveId(null)
+  }, [])
+
+  const activeItem = activeId ? items.find(item => item.id === activeId) : null
+
   return (
     <div className="flex-1 overflow-auto">
       <div className="px-4 py-3 flex items-center justify-between sticky top-0 bg-surface-950/95 backdrop-blur z-10">
@@ -144,18 +206,41 @@ export function QueueList({
         <div className="text-xs text-text-muted">Tap to edit</div>
       </div>
 
-      <div className="px-4 pb-24">
-        {items.map((item, index) => (
-          <QueueListItem
-            key={item.id}
-            item={item}
-            index={index}
-            isOwnItem={item.addedBySessionId === currentSessionId}
-            onItemClick={onItemClick}
-            onToggleComplete={onToggleComplete}
-          />
-        ))}
-      </div>
+      <DndContext
+        collisionDetection={closestCenter}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+        onDragCancel={handleDragCancel}
+      >
+        <SortableContext items={items.map(item => item.id)} strategy={verticalListSortingStrategy}>
+          <div className="px-4 pb-24">
+            {items.map((item, index) => (
+              <QueueListItem
+                key={item.id}
+                item={item}
+                index={index}
+                isOwnItem={item.addedBySessionId === currentSessionId}
+                onItemClick={onItemClick}
+                onToggleComplete={onToggleComplete}
+                isDragging={item.id === activeId}
+              />
+            ))}
+          </div>
+        </SortableContext>
+
+        <DragOverlay>
+          {activeItem ? (
+            <QueueListItem
+              item={activeItem}
+              index={0}
+              isOwnItem={activeItem.addedBySessionId === currentSessionId}
+              onItemClick={() => {}}
+              onToggleComplete={() => {}}
+              isOverlay
+            />
+          ) : null}
+        </DragOverlay>
+      </DndContext>
     </div>
   )
 }

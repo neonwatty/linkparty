@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { supabase, getSessionId } from '../lib/supabase'
 import { logger } from '../lib/logger'
 import { triggerItemAddedNotification, areNotificationsEnabled } from '../lib/notificationTriggers'
@@ -540,130 +540,205 @@ export function useParty(partyId: string | null) {
   )
 
   const moveItem = useCallback(
-    async (itemId: string, direction: 'up' | 'down') => {
+    async (itemId: string, direction: 'up' | 'down', steps: number = 1) => {
       if (!partyId) return
 
       const itemIndex = queue.findIndex((q) => q.id === itemId)
       if (itemIndex === -1) return
 
-      // Find the target index
-      let targetIndex: number
+      // Get only pending items for reordering
+      const pendingItems = queue.filter(q => q.status === 'pending')
+      const pendingItemIndex = pendingItems.findIndex(q => q.id === itemId)
+      if (pendingItemIndex === -1) return
+
+      // Calculate target index in pending items
+      let targetPendingIndex: number
       if (direction === 'up') {
-        // Find the first pending item before this one
-        targetIndex = -1
-        for (let i = itemIndex - 1; i >= 0; i--) {
-          if (queue[i].status === 'pending') {
-            targetIndex = i
-            break
-          }
-        }
+        targetPendingIndex = Math.max(0, pendingItemIndex - steps)
       } else {
-        // Find the first pending item after this one
-        targetIndex = -1
-        for (let i = itemIndex + 1; i < queue.length; i++) {
-          if (queue[i].status === 'pending') {
-            targetIndex = i
-            break
-          }
-        }
+        targetPendingIndex = Math.min(pendingItems.length - 1, pendingItemIndex + steps)
       }
 
-      if (targetIndex === -1) return
+      if (targetPendingIndex === pendingItemIndex) return
 
-      const item = queue[itemIndex]
-      const targetItem = queue[targetIndex]
+      const item = pendingItems[pendingItemIndex]
+      const targetItem = pendingItems[targetPendingIndex]
 
-      // Track pending changes for conflict detection
-      pendingChanges.addChange({
-        itemId: item.id,
-        field: 'position',
-        oldValue: item.position,
-        newValue: targetItem.position,
-        timestamp: Date.now(),
-      })
-      pendingChanges.addChange({
-        itemId: targetItem.id,
-        field: 'position',
-        oldValue: targetItem.position,
-        newValue: item.position,
-        timestamp: Date.now(),
-      })
+      // For single step moves, use the simple swap logic
+      if (steps === 1) {
+        // Track pending changes for conflict detection
+        pendingChanges.addChange({
+          itemId: item.id,
+          field: 'position',
+          oldValue: item.position,
+          newValue: targetItem.position,
+          timestamp: Date.now(),
+        })
+        pendingChanges.addChange({
+          itemId: targetItem.id,
+          field: 'position',
+          oldValue: targetItem.position,
+          newValue: item.position,
+          timestamp: Date.now(),
+        })
 
-      // Store original positions for rollback
-      const originalItemPos = item.position
-      const originalTargetPos = targetItem.position
+        // Store original positions for rollback
+        const originalItemPos = item.position
+        const originalTargetPos = targetItem.position
 
-      // Optimistic update: swap items immediately
-      setQueue(prev => {
-        const newQueue = [...prev]
-        const idx = newQueue.findIndex(q => q.id === item.id)
-        const targetIdx = newQueue.findIndex(q => q.id === targetItem.id)
-        if (idx !== -1 && targetIdx !== -1) {
-          newQueue[idx] = { ...newQueue[idx], position: originalTargetPos }
-          newQueue[targetIdx] = { ...newQueue[targetIdx], position: originalItemPos }
-        }
-        return newQueue.sort((a, b) => a.position - b.position)
-      })
-      setSyncingItemIds(prev => {
-        const next = new Set(prev)
-        next.add(item.id)
-        next.add(targetItem.id)
-        return next
-      })
-
-      if (IS_MOCK_MODE) {
-        pendingChanges.clearChanges(item.id)
-        pendingChanges.clearChanges(targetItem.id)
+        // Optimistic update: swap items immediately
+        setQueue(prev => {
+          const newQueue = [...prev]
+          const idx = newQueue.findIndex(q => q.id === item.id)
+          const targetIdx = newQueue.findIndex(q => q.id === targetItem.id)
+          if (idx !== -1 && targetIdx !== -1) {
+            newQueue[idx] = { ...newQueue[idx], position: originalTargetPos }
+            newQueue[targetIdx] = { ...newQueue[targetIdx], position: originalItemPos }
+          }
+          return newQueue.sort((a, b) => a.position - b.position)
+        })
         setSyncingItemIds(prev => {
           const next = new Set(prev)
-          next.delete(item.id)
-          next.delete(targetItem.id)
+          next.add(item.id)
+          next.add(targetItem.id)
           return next
         })
-        return
-      }
 
-      try {
-        // Swap positions on server
-        const { error: error1 } = await supabase
-          .from('queue_items')
-          .update({ position: originalTargetPos })
-          .eq('id', item.id)
-
-        if (error1) {
-          // Rollback on error
-          setQueue(prev => {
-            const newQueue = [...prev]
-            const idx = newQueue.findIndex(q => q.id === item.id)
-            const targetIdx = newQueue.findIndex(q => q.id === targetItem.id)
-            if (idx !== -1 && targetIdx !== -1) {
-              newQueue[idx] = { ...newQueue[idx], position: originalItemPos }
-              newQueue[targetIdx] = { ...newQueue[targetIdx], position: originalTargetPos }
-            }
-            return newQueue.sort((a, b) => a.position - b.position)
+        if (IS_MOCK_MODE) {
+          pendingChanges.clearChanges(item.id)
+          pendingChanges.clearChanges(targetItem.id)
+          setSyncingItemIds(prev => {
+            const next = new Set(prev)
+            next.delete(item.id)
+            next.delete(targetItem.id)
+            return next
           })
-          log.error('Failed to move item', error1)
           return
         }
 
-        const { error: error2 } = await supabase
-          .from('queue_items')
-          .update({ position: originalItemPos })
-          .eq('id', targetItem.id)
+        try {
+          // Swap positions on server
+          const { error: error1 } = await supabase
+            .from('queue_items')
+            .update({ position: originalTargetPos })
+            .eq('id', item.id)
 
-        if (error2) {
-          log.error('Failed to move target item', error2)
+          if (error1) {
+            // Rollback on error
+            setQueue(prev => {
+              const newQueue = [...prev]
+              const idx = newQueue.findIndex(q => q.id === item.id)
+              const targetIdx = newQueue.findIndex(q => q.id === targetItem.id)
+              if (idx !== -1 && targetIdx !== -1) {
+                newQueue[idx] = { ...newQueue[idx], position: originalItemPos }
+                newQueue[targetIdx] = { ...newQueue[targetIdx], position: originalTargetPos }
+              }
+              return newQueue.sort((a, b) => a.position - b.position)
+            })
+            log.error('Failed to move item', error1)
+            return
+          }
+
+          const { error: error2 } = await supabase
+            .from('queue_items')
+            .update({ position: originalItemPos })
+            .eq('id', targetItem.id)
+
+          if (error2) {
+            log.error('Failed to move target item', error2)
+          }
+        } finally {
+          // Clear pending changes and syncing state
+          pendingChanges.clearChanges(item.id)
+          pendingChanges.clearChanges(targetItem.id)
+          setSyncingItemIds(prev => {
+            const next = new Set(prev)
+            next.delete(item.id)
+            next.delete(targetItem.id)
+            return next
+          })
         }
-      } finally {
-        // Clear pending changes and syncing state
-        pendingChanges.clearChanges(item.id)
-        pendingChanges.clearChanges(targetItem.id)
+      } else {
+        // Multi-step move: shift all items between old and new position
+        const movedItem = pendingItems[pendingItemIndex]
+        const newPendingItems = [...pendingItems]
+        newPendingItems.splice(pendingItemIndex, 1)
+        newPendingItems.splice(targetPendingIndex, 0, movedItem)
+
+        // Calculate new positions for all affected items
+        const positionUpdates: { id: string; oldPosition: number; newPosition: number }[] = []
+        const minIndex = Math.min(pendingItemIndex, targetPendingIndex)
+        const maxIndex = Math.max(pendingItemIndex, targetPendingIndex)
+
+        for (let i = minIndex; i <= maxIndex; i++) {
+          const itemToUpdate = newPendingItems[i]
+          const originalItem = pendingItems[i]
+          if (itemToUpdate.position !== originalItem.position) {
+            positionUpdates.push({
+              id: itemToUpdate.id,
+              oldPosition: itemToUpdate.position,
+              newPosition: originalItem.position,
+            })
+            pendingChanges.addChange({
+              itemId: itemToUpdate.id,
+              field: 'position',
+              oldValue: itemToUpdate.position,
+              newValue: originalItem.position,
+              timestamp: Date.now(),
+            })
+          }
+        }
+
+        // Track syncing items
+        const syncingIds = positionUpdates.map(u => u.id)
         setSyncingItemIds(prev => {
           const next = new Set(prev)
-          next.delete(item.id)
-          next.delete(targetItem.id)
+          syncingIds.forEach(id => next.add(id))
           return next
         })
+
+        // Optimistic update
+        setQueue(prev => {
+          const newQueue = [...prev]
+          for (const update of positionUpdates) {
+            const idx = newQueue.findIndex(q => q.id === update.id)
+            if (idx !== -1) {
+              newQueue[idx] = { ...newQueue[idx], position: update.newPosition }
+            }
+          }
+          return newQueue.sort((a, b) => a.position - b.position)
+        })
+
+        if (IS_MOCK_MODE) {
+          syncingIds.forEach(id => pendingChanges.clearChanges(id))
+          setSyncingItemIds(prev => {
+            const next = new Set(prev)
+            syncingIds.forEach(id => next.delete(id))
+            return next
+          })
+          return
+        }
+
+        try {
+          // Update all positions on server
+          for (const update of positionUpdates) {
+            const { error } = await supabase
+              .from('queue_items')
+              .update({ position: update.newPosition })
+              .eq('id', update.id)
+
+            if (error) {
+              log.error('Failed to update position for item', { itemId: update.id, error: error.message })
+            }
+          }
+        } finally {
+          syncingIds.forEach(id => pendingChanges.clearChanges(id))
+          setSyncingItemIds(prev => {
+            const next = new Set(prev)
+            syncingIds.forEach(id => next.delete(id))
+            return next
+          })
+        }
       }
     },
     [partyId, queue]
@@ -948,6 +1023,22 @@ export function useParty(partyId: string | null) {
   // Helper to check if a specific item is syncing
   const isSyncing = useCallback((itemId: string) => syncingItemIds.has(itemId), [syncingItemIds])
 
+  // Memoize filtered queue items by status to prevent unnecessary re-computations
+  const pendingItems = useMemo(
+    () => queue.filter(item => item.status === 'pending'),
+    [queue]
+  )
+
+  const showingItem = useMemo(
+    () => queue.find(item => item.status === 'showing') ?? null,
+    [queue]
+  )
+
+  const shownItems = useMemo(
+    () => queue.filter(item => item.status === 'shown'),
+    [queue]
+  )
+
   return {
     queue,
     members,
@@ -967,5 +1058,9 @@ export function useParty(partyId: string | null) {
     toggleComplete,
     updateDueDate,
     refetch: fetchData,
+    // Memoized filtered queue items
+    pendingItems,
+    showingItem,
+    shownItems,
   }
 }

@@ -1,3 +1,4 @@
+import { memo, useMemo, useCallback } from 'react'
 import type { QueueItem } from '../../hooks/useParty'
 import {
   PlayIcon,
@@ -15,12 +16,45 @@ interface NowShowingSectionProps {
   onImageClick: (url: string, caption?: string) => void
 }
 
-export function NowShowingSection({
+export const NowShowingSection = memo(function NowShowingSection({
   currentItem,
   isHost,
   onNext,
   onImageClick,
 }: NowShowingSectionProps) {
+  // Memoize content type badge/icon calculation
+  const contentTypeInfo = useMemo(() => {
+    switch (currentItem.type) {
+      case 'youtube':
+        return { icon: PlayIcon, label: 'YouTube' }
+      case 'tweet':
+        return { icon: TwitterIcon, label: 'Tweet' }
+      case 'reddit':
+        return { icon: RedditIcon, label: 'Reddit' }
+      case 'note':
+        return { icon: NoteIcon, label: 'Note' }
+      case 'image':
+        return { icon: ImageIcon, label: 'Image' }
+      default:
+        return null
+    }
+  }, [currentItem.type])
+
+  // Memoize the image click handler to prevent unnecessary re-renders
+  const handleImageClick = useCallback(() => {
+    if (currentItem.imageUrl) {
+      onImageClick(currentItem.imageUrl, currentItem.imageCaption)
+    }
+  }, [currentItem.imageUrl, currentItem.imageCaption, onImageClick])
+
+  // Memoize the next handler
+  const handleNext = useCallback(() => {
+    onNext()
+  }, [onNext])
+
+  // Suppress unused variable warning - contentTypeInfo is available for future use
+  void contentTypeInfo
+
   return (
     <div className="p-4 bg-gradient-to-b from-surface-900 to-surface-950">
       <div className="text-xs text-accent-500 font-mono mb-2 flex items-center gap-2">
@@ -105,7 +139,7 @@ export function NowShowingSection({
         <div className="mb-4">
           <div
             className="relative rounded-xl overflow-hidden cursor-pointer"
-            onClick={() => currentItem.imageUrl && onImageClick(currentItem.imageUrl, currentItem.imageCaption)}
+            onClick={handleImageClick}
           >
             {currentItem.imageUrl ? (
               <img
@@ -134,7 +168,7 @@ export function NowShowingSection({
       {isHost && (
         <div className="flex items-center justify-center mt-4">
           <button
-            onClick={onNext}
+            onClick={handleNext}
             className="flex items-center gap-2 px-6 py-3 rounded-full bg-accent-500 hover:bg-accent-400 transition-colors font-medium"
           >
             <SkipIcon />
@@ -144,4 +178,4 @@ export function NowShowingSection({
       )}
     </div>
   )
-}
+})
