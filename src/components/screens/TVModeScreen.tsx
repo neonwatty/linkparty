@@ -32,6 +32,7 @@ export function TVModeScreen({ onNavigate, partyId, partyCode }: TVModeScreenPro
       <button
         onClick={() => onNavigate('party')}
         className="absolute top-12 left-4 z-10 bg-surface-800/90 backdrop-blur-sm border border-white/20 px-4 py-2 rounded-full text-sm text-white font-medium cursor-pointer hover:bg-surface-700 active:scale-95 transition-all flex items-center gap-2"
+        aria-label="Exit TV mode"
       >
         <ChevronLeftIcon />
         Exit

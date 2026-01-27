@@ -1,8 +1,12 @@
 import { useState } from 'react'
 import type { Screen } from '../../types'
 import { supabase, generatePartyCode, getSessionId, getDisplayName, setDisplayName, getAvatar, setCurrentParty } from '../../lib/supabase'
+import { logger } from '../../lib/logger'
+import { tryAction } from '../../lib/rateLimit'
 import { useAuth } from '../../contexts/AuthContext'
 import { ChevronLeftIcon, LoaderIcon } from '../icons'
+
+const log = logger.createLogger('CreateParty')
 
 interface CreatePartyScreenProps {
   onNavigate: (screen: Screen) => void
@@ -16,9 +20,23 @@ export function CreatePartyScreen({ onNavigate, onPartyCreated }: CreatePartyScr
   const [isCreating, setIsCreating] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !isCreating) {
+      e.preventDefault()
+      handleCreate()
+    }
+  }
+
   const handleCreate = async () => {
     if (!displayName.trim()) {
       setError('Please enter a display name')
+      return
+    }
+
+    // Check rate limit for party creation
+    const rateLimitError = tryAction('partyCreation')
+    if (rateLimitError) {
+      setError(rateLimitError)
       return
     }
 
@@ -80,7 +98,7 @@ export function CreatePartyScreen({ onNavigate, onPartyCreated }: CreatePartyScr
 
       onPartyCreated(party.id, code)
     } catch (err) {
-      console.error('Error creating party:', err)
+      log.error('Failed to create party', err)
       setError('Failed to create party. Please try again.')
     } finally {
       setIsCreating(false)
@@ -93,6 +111,7 @@ export function CreatePartyScreen({ onNavigate, onPartyCreated }: CreatePartyScr
         onClick={() => onNavigate('home')}
         className="btn-ghost p-2 -ml-2 w-fit rounded-full mb-8"
         disabled={isCreating}
+        aria-label="Go back to home"
       >
         <ChevronLeftIcon />
       </button>
@@ -115,9 +134,19 @@ export function CreatePartyScreen({ onNavigate, onPartyCreated }: CreatePartyScr
               placeholder="Enter your display name"
               value={displayName}
               onChange={(e) => setDisplayNameInput(e.target.value)}
+              onKeyDown={handleKeyDown}
               className="input"
               disabled={isCreating}
+              maxLength={50}
             />
+            <div className="flex justify-between mt-1">
+              <span className={`text-xs ${displayName.trim().length > 0 && displayName.trim().length < 2 ? 'text-red-400' : 'text-text-muted'}`}>
+                {displayName.trim().length > 0 && displayName.trim().length < 2 ? 'Min 2 characters' : ''}
+              </span>
+              <span className={`text-xs ${displayName.length >= 45 ? 'text-yellow-400' : 'text-text-muted'}`}>
+                {displayName.length}/50
+              </span>
+            </div>
           </div>
 
           <div>
@@ -129,9 +158,18 @@ export function CreatePartyScreen({ onNavigate, onPartyCreated }: CreatePartyScr
               placeholder="Saturday Night Hangout"
               value={partyName}
               onChange={(e) => setPartyName(e.target.value)}
+              onKeyDown={handleKeyDown}
               className="input"
               disabled={isCreating}
+              maxLength={100}
             />
+            {partyName.length > 0 && (
+              <div className="flex justify-end mt-1">
+                <span className={`text-xs ${partyName.length >= 90 ? 'text-yellow-400' : 'text-text-muted'}`}>
+                  {partyName.length}/100
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Settings preview */}

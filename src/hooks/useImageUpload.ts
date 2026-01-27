@@ -1,5 +1,9 @@
 import { useState, useCallback, useRef } from 'react'
-import { validateImage, uploadImage, type ImageUploadResult } from '../lib/imageUpload'
+import { validateImage, uploadImage, optimizeImage, type ImageUploadResult } from '../lib/imageUpload'
+import { logger } from '../lib/logger'
+import { tryAction } from '../lib/rateLimit'
+
+const log = logger.createLogger('useImageUpload')
 
 export interface UseImageUploadOptions {
   onSuccess?: (result: ImageUploadResult, caption?: string) => void
@@ -8,6 +12,7 @@ export interface UseImageUploadOptions {
 
 export interface UseImageUploadReturn {
   isUploading: boolean
+  isOptimizing: boolean
   uploadProgress: number
   error: string | null
   selectedFile: File | null
@@ -21,6 +26,7 @@ export function useImageUpload(options: UseImageUploadOptions = {}): UseImageUpl
   const { onSuccess, onError } = options
 
   const [isUploading, setIsUploading] = useState(false)
+  const [isOptimizing, setIsOptimizing] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
@@ -34,6 +40,14 @@ export function useImageUpload(options: UseImageUploadOptions = {}): UseImageUpl
 
   const startUpload = useCallback(
     async (file: File, partyId: string, caption?: string) => {
+      // Check rate limit for image uploads
+      const rateLimitError = tryAction('imageUpload')
+      if (rateLimitError) {
+        setError(rateLimitError)
+        onError?.(rateLimitError)
+        return
+      }
+
       // Validate the file first
       const validation = validateImage(file)
       if (!validation.valid) {
@@ -45,11 +59,30 @@ export function useImageUpload(options: UseImageUploadOptions = {}): UseImageUpl
       // Store params for potential retry
       lastUploadRef.current = { file, partyId, caption }
       setSelectedFile(file)
-      setIsUploading(true)
-      setUploadProgress(0)
       setError(null)
 
       try {
+        // Step 1: Optimize the image
+        setIsOptimizing(true)
+        log.debug('Starting image optimization', { originalSize: file.size })
+
+        const optimizationResult = await optimizeImage(file)
+        const fileToUpload = optimizationResult.file
+
+        if (optimizationResult.wasOptimized) {
+          const savings = ((1 - optimizationResult.optimizedSize / optimizationResult.originalSize) * 100).toFixed(1)
+          log.info(`Image optimized: ${savings}% smaller`, {
+            originalSize: optimizationResult.originalSize,
+            optimizedSize: optimizationResult.optimizedSize,
+          })
+        }
+
+        setIsOptimizing(false)
+
+        // Step 2: Upload the optimized image
+        setIsUploading(true)
+        setUploadProgress(0)
+
         // Simulate progress since Supabase doesn't provide upload progress
         const progressInterval = setInterval(() => {
           setUploadProgress((prev) => {
@@ -61,7 +94,7 @@ export function useImageUpload(options: UseImageUploadOptions = {}): UseImageUpl
           })
         }, 200)
 
-        const result = await uploadImage(file, partyId)
+        const result = await uploadImage(fileToUpload, partyId)
 
         clearInterval(progressInterval)
         setUploadProgress(100)
@@ -74,11 +107,13 @@ export function useImageUpload(options: UseImageUploadOptions = {}): UseImageUpl
           await onSuccess?.(result, caption)
         }, 300)
       } catch (err) {
+        setIsOptimizing(false)
         setIsUploading(false)
         setUploadProgress(0)
         const errorMessage = err instanceof Error ? err.message : 'Upload failed'
         setError(errorMessage)
         onError?.(errorMessage)
+        log.error('Image upload failed', err)
       }
     },
     [onSuccess, onError]
@@ -92,6 +127,7 @@ export function useImageUpload(options: UseImageUploadOptions = {}): UseImageUpl
   }, [startUpload])
 
   const cancel = useCallback(() => {
+    setIsOptimizing(false)
     setIsUploading(false)
     setUploadProgress(0)
     setError(null)
@@ -105,6 +141,7 @@ export function useImageUpload(options: UseImageUploadOptions = {}): UseImageUpl
 
   return {
     isUploading,
+    isOptimizing,
     uploadProgress,
     error,
     selectedFile,

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import './App.css'
 import { getCurrentParty } from './lib/supabase'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
+import { ErrorBoundary } from './components/ErrorBoundary'
 import type { Screen } from './types'
 import { LoaderIcon } from './components/icons'
 import {
@@ -116,12 +117,14 @@ function AppContent() {
   return screens[currentScreen]
 }
 
-// Main App with AuthProvider wrapper
+// Main App with AuthProvider wrapper and ErrorBoundary
 function App() {
   return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </ErrorBoundary>
   )
 }
 

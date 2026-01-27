@@ -1,5 +1,8 @@
 import { supabase } from './supabase'
+import { logger } from './logger'
 import type { User, Session } from '@supabase/supabase-js'
+
+const log = logger.createLogger('Auth')
 
 export type AuthUser = User
 export type AuthSession = Session
@@ -13,7 +16,7 @@ export async function signInWithGoogle() {
   })
 
   if (error) {
-    console.error('Google sign in error:', error)
+    log.error('Google sign in failed', error)
     throw error
   }
 
@@ -24,7 +27,7 @@ export async function signOut() {
   const { error } = await supabase.auth.signOut()
 
   if (error) {
-    console.error('Sign out error:', error)
+    log.error('Sign out failed', error)
     throw error
   }
 }
@@ -33,7 +36,7 @@ export async function getCurrentSession(): Promise<Session | null> {
   const { data: { session }, error } = await supabase.auth.getSession()
 
   if (error) {
-    console.error('Get session error:', error)
+    log.error('Failed to get session', error)
     return null
   }
 
@@ -93,7 +96,7 @@ export async function signUpWithEmail(
   })
 
   if (error) {
-    console.error('Email sign up error:', error)
+    log.error('Email sign up failed', error)
     return { success: false, error: mapSupabaseError(error) }
   }
 
@@ -110,7 +113,7 @@ export async function signInWithEmail(
   })
 
   if (error) {
-    console.error('Email sign in error:', error)
+    log.error('Email sign in failed', error)
     return { success: false, error: mapSupabaseError(error) }
   }
 
@@ -123,7 +126,7 @@ export async function resetPassword(email: string): Promise<AuthResult> {
   })
 
   if (error) {
-    console.error('Password reset error:', error)
+    log.error('Password reset failed', error)
     return { success: false, error: mapSupabaseError(error) }
   }
 
@@ -136,7 +139,7 @@ export async function updatePassword(newPassword: string): Promise<AuthResult> {
   })
 
   if (error) {
-    console.error('Update password error:', error)
+    log.error('Update password failed', error)
     return { success: false, error: mapSupabaseError(error) }
   }
 

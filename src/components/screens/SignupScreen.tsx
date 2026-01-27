@@ -15,6 +15,13 @@ export function SignupScreen({ onNavigate }: { onNavigate: (screen: Screen) => v
   const [passwordError, setPasswordError] = useState<string | null>(null)
   const [signupSuccess, setSignupSuccess] = useState(false)
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !isLoading) {
+      e.preventDefault()
+      handleEmailSignUp()
+    }
+  }
+
   const handleGoogleSignIn = async () => {
     setIsLoading(true)
     setError(null)
@@ -94,6 +101,7 @@ export function SignupScreen({ onNavigate }: { onNavigate: (screen: Screen) => v
         onClick={() => onNavigate('home')}
         className="btn-ghost p-2 -ml-2 w-fit rounded-full mb-8"
         disabled={isLoading}
+        aria-label="Go back to home"
       >
         <ChevronLeftIcon />
       </button>
@@ -141,12 +149,23 @@ export function SignupScreen({ onNavigate }: { onNavigate: (screen: Screen) => v
               placeholder="Display name"
               value={displayName}
               onChange={(e) => setDisplayNameInput(e.target.value)}
+              onKeyDown={handleKeyDown}
               className={`input ${nameError ? 'input-error' : ''}`}
               disabled={isLoading}
+              maxLength={50}
             />
-            {nameError && (
-              <p className="text-red-400 text-sm mt-1">{nameError}</p>
-            )}
+            <div className="flex justify-between mt-1">
+              {nameError ? (
+                <span className="text-red-400 text-xs">{nameError}</span>
+              ) : (
+                <span className={`text-xs ${displayName.trim().length > 0 && displayName.trim().length < 2 ? 'text-red-400' : 'text-text-muted'}`}>
+                  {displayName.trim().length > 0 && displayName.trim().length < 2 ? 'Min 2 characters' : ''}
+                </span>
+              )}
+              <span className={`text-xs ${displayName.length >= 45 ? 'text-yellow-400' : 'text-text-muted'}`}>
+                {displayName.length}/50
+              </span>
+            </div>
           </div>
           <div>
             <input
@@ -154,6 +173,7 @@ export function SignupScreen({ onNavigate }: { onNavigate: (screen: Screen) => v
               placeholder="Email address"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              onKeyDown={handleKeyDown}
               className={`input ${emailError ? 'input-error' : ''}`}
               disabled={isLoading}
             />
@@ -167,6 +187,7 @@ export function SignupScreen({ onNavigate }: { onNavigate: (screen: Screen) => v
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              onKeyDown={handleKeyDown}
               className={`input ${passwordError ? 'input-error' : ''}`}
               disabled={isLoading}
             />

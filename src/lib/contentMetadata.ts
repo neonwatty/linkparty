@@ -1,6 +1,10 @@
 // Content metadata fetching service
 // Calls Supabase Edge Function or returns mock data in development
 
+import { logger } from './logger'
+
+const log = logger.createLogger('ContentMetadata')
+
 export interface ContentMetadataResponse {
   success: boolean
   type?: 'youtube' | 'tweet' | 'reddit'
@@ -105,7 +109,7 @@ export async function fetchContentMetadata(url: string): Promise<ContentMetadata
 
     return await response.json()
   } catch (err) {
-    console.error('Content metadata fetch error:', err)
+    log.error('Content metadata fetch failed', err)
     return {
       success: false,
       error: err instanceof Error ? err.message : 'Network error',

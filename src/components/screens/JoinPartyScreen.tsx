@@ -1,8 +1,11 @@
 import { useState } from 'react'
 import type { Screen } from '../../types'
 import { supabase, getSessionId, getDisplayName, setDisplayName, getAvatar, setCurrentParty } from '../../lib/supabase'
+import { logger } from '../../lib/logger'
 import { useAuth } from '../../contexts/AuthContext'
 import { ChevronLeftIcon, LoaderIcon } from '../icons'
+
+const log = logger.createLogger('JoinParty')
 
 interface JoinPartyScreenProps {
   onNavigate: (screen: Screen) => void
@@ -16,6 +19,13 @@ export function JoinPartyScreen({ onNavigate, onPartyJoined, initialCode = '' }:
   const [displayName, setDisplayNameInput] = useState(getDisplayName() || '')
   const [isJoining, setIsJoining] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !isJoining && code.length === 6 && displayName.trim()) {
+      e.preventDefault()
+      handleJoin()
+    }
+  }
 
   const handleJoin = async () => {
     if (!displayName.trim()) {
@@ -77,7 +87,7 @@ export function JoinPartyScreen({ onNavigate, onPartyJoined, initialCode = '' }:
 
       onPartyJoined(party.id, party.code)
     } catch (err) {
-      console.error('Error joining party:', err)
+      log.error('Failed to join party', err)
       setError('Failed to join party. Please try again.')
     } finally {
       setIsJoining(false)
@@ -90,6 +100,7 @@ export function JoinPartyScreen({ onNavigate, onPartyJoined, initialCode = '' }:
         onClick={() => onNavigate('home')}
         className="btn-ghost p-2 -ml-2 w-fit rounded-full mb-8"
         disabled={isJoining}
+        aria-label="Go back to home"
       >
         <ChevronLeftIcon />
       </button>
@@ -112,9 +123,19 @@ export function JoinPartyScreen({ onNavigate, onPartyJoined, initialCode = '' }:
               placeholder="Enter your display name"
               value={displayName}
               onChange={(e) => setDisplayNameInput(e.target.value)}
+              onKeyDown={handleKeyDown}
               className="input"
               disabled={isJoining}
+              maxLength={50}
             />
+            <div className="flex justify-between mt-1">
+              <span className={`text-xs ${displayName.trim().length > 0 && displayName.trim().length < 2 ? 'text-red-400' : 'text-text-muted'}`}>
+                {displayName.trim().length > 0 && displayName.trim().length < 2 ? 'Min 2 characters' : ''}
+              </span>
+              <span className={`text-xs ${displayName.length >= 45 ? 'text-yellow-400' : 'text-text-muted'}`}>
+                {displayName.length}/50
+              </span>
+            </div>
           </div>
 
           <div>
@@ -126,6 +147,7 @@ export function JoinPartyScreen({ onNavigate, onPartyJoined, initialCode = '' }:
               placeholder="ABC123"
               value={code}
               onChange={(e) => setCode(e.target.value.toUpperCase())}
+              onKeyDown={handleKeyDown}
               maxLength={6}
               className="input text-center text-2xl font-mono tracking-[0.3em] uppercase"
               disabled={isJoining}

@@ -14,6 +14,17 @@ export function LoginScreen({ onNavigate }: { onNavigate: (screen: Screen) => vo
   const [showForgotPassword, setShowForgotPassword] = useState(false)
   const [resetEmailSent, setResetEmailSent] = useState(false)
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !isLoading) {
+      e.preventDefault()
+      if (showForgotPassword) {
+        handleForgotPassword()
+      } else {
+        handleEmailSignIn()
+      }
+    }
+  }
+
   const handleGoogleSignIn = async () => {
     setIsLoading(true)
     setError(null)
@@ -84,6 +95,7 @@ export function LoginScreen({ onNavigate }: { onNavigate: (screen: Screen) => vo
           }}
           className="btn-ghost p-2 -ml-2 w-fit rounded-full mb-8"
           disabled={isLoading}
+          aria-label="Go back to sign in"
         >
           <ChevronLeftIcon />
         </button>
@@ -127,6 +139,7 @@ export function LoginScreen({ onNavigate }: { onNavigate: (screen: Screen) => vo
                     placeholder="Email address"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    onKeyDown={handleKeyDown}
                     className={`input ${emailError ? 'input-error' : ''}`}
                     disabled={isLoading}
                   />
@@ -156,6 +169,7 @@ export function LoginScreen({ onNavigate }: { onNavigate: (screen: Screen) => vo
         onClick={() => onNavigate('home')}
         className="btn-ghost p-2 -ml-2 w-fit rounded-full mb-8"
         disabled={isLoading}
+        aria-label="Go back to home"
       >
         <ChevronLeftIcon />
       </button>
@@ -204,6 +218,7 @@ export function LoginScreen({ onNavigate }: { onNavigate: (screen: Screen) => vo
               placeholder="Email address"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              onKeyDown={handleKeyDown}
               className={`input ${emailError ? 'input-error' : ''}`}
               disabled={isLoading}
             />
@@ -217,6 +232,7 @@ export function LoginScreen({ onNavigate }: { onNavigate: (screen: Screen) => vo
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              onKeyDown={handleKeyDown}
               className={`input ${passwordError ? 'input-error' : ''}`}
               disabled={isLoading}
             />

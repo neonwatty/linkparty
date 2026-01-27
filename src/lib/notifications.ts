@@ -2,6 +2,9 @@ import { PushNotifications } from '@capacitor/push-notifications'
 import { Capacitor } from '@capacitor/core'
 import { supabase } from './supabase'
 import { getSessionId } from './supabase'
+import { logger } from './logger'
+
+const log = logger.createLogger('Notifications')
 
 // Check if we're running on a native platform
 export const isNativePlatform = () => Capacitor.isNativePlatform()
@@ -9,7 +12,7 @@ export const isNativePlatform = () => Capacitor.isNativePlatform()
 // Request permission and register for push notifications
 export async function registerPushNotifications(): Promise<string | null> {
   if (!isNativePlatform()) {
-    console.log('Push notifications only available on native platforms')
+    log.debug('Push notifications only available on native platforms')
     return null
   }
 
@@ -18,7 +21,7 @@ export async function registerPushNotifications(): Promise<string | null> {
     const permStatus = await PushNotifications.requestPermissions()
 
     if (permStatus.receive !== 'granted') {
-      console.log('Push notification permission not granted')
+      log.info('Push notification permission not granted')
       return null
     }
 
@@ -28,7 +31,7 @@ export async function registerPushNotifications(): Promise<string | null> {
     // Get the token via listener
     return new Promise((resolve) => {
       PushNotifications.addListener('registration', async (token) => {
-        console.log('Push registration success, token:', token.value)
+        log.info('Push registration success')
 
         // Save token to Supabase
         await savePushToken(token.value)
@@ -36,12 +39,12 @@ export async function registerPushNotifications(): Promise<string | null> {
       })
 
       PushNotifications.addListener('registrationError', (error) => {
-        console.error('Push registration error:', error)
+        log.error('Push registration failed', error)
         resolve(null)
       })
     })
   } catch (error) {
-    console.error('Error registering push notifications:', error)
+    log.error('Failed to register push notifications', error)
     return null
   }
 }
@@ -66,7 +69,7 @@ async function savePushToken(token: string): Promise<void> {
     )
 
   if (error) {
-    console.error('Error saving push token:', error)
+    log.error('Failed to save push token', error)
   }
 }
 
@@ -78,7 +81,7 @@ export function setupNotificationListeners(
 
   // Notification received while app is in foreground
   PushNotifications.addListener('pushNotificationReceived', (notification) => {
-    console.log('Push notification received:', notification)
+    log.debug('Push notification received')
     onNotificationReceived?.({
       title: notification.title,
       body: notification.body,
@@ -88,12 +91,12 @@ export function setupNotificationListeners(
 
   // Notification tapped (app opened from notification)
   PushNotifications.addListener('pushNotificationActionPerformed', (action) => {
-    console.log('Push notification action performed:', action)
+    log.debug('Push notification action performed')
     // Handle navigation based on notification data
     const data = action.notification.data
     if (data?.partyId) {
       // Navigate to party - this would need to be connected to app routing
-      console.log('Navigate to party:', data.partyId)
+      log.debug('Navigate to party from notification')
     }
   })
 }
@@ -108,7 +111,7 @@ export async function removePushToken(): Promise<void> {
     .eq('session_id', sessionId)
 
   if (error) {
-    console.error('Error removing push token:', error)
+    log.error('Failed to remove push token', error)
   }
 }
 

@@ -1,7 +1,12 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase, getSessionId } from '../lib/supabase'
+import { logger } from '../lib/logger'
+import { triggerItemAddedNotification, areNotificationsEnabled } from '../lib/notificationTriggers'
+import { tryAction } from '../lib/rateLimit'
 import type { DbParty, DbPartyMember, DbQueueItem } from '../lib/supabase'
 import type { RealtimeChannel } from '@supabase/supabase-js'
+
+const log = logger.createLogger('useParty')
 
 // Check if we're in mock mode (no real Supabase credentials)
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
@@ -172,6 +177,10 @@ export function useParty(partyId: string | null) {
   const partyIdRef = useRef(partyId)
   partyIdRef.current = partyId
 
+  // Keep a ref to members for notification triggers
+  const membersRef = useRef(members)
+  membersRef.current = members
+
   // Fetch initial data (skip in mock mode)
   const fetchData = useCallback(async () => {
     if (IS_MOCK_MODE) {
@@ -229,7 +238,7 @@ export function useParty(partyId: string | null) {
 
       setMembers((membersData as DbPartyMember[]).map(transformMember))
     } catch (err) {
-      console.error('Error fetching party data:', err)
+      log.error('Failed to fetch party data', err)
       setError(err instanceof Error ? err.message : 'Failed to load party')
     } finally {
       setIsLoading(false)
@@ -297,7 +306,7 @@ export function useParty(partyId: string | null) {
         if (membersError) throw membersError
         setMembers((membersData as DbPartyMember[]).map(transformMember))
       } catch (err) {
-        console.error('Error fetching party data:', err)
+        log.error('Failed to fetch party data', err)
         setError(err instanceof Error ? err.message : 'Failed to load party')
       } finally {
         setIsLoading(false)
@@ -332,7 +341,7 @@ export function useParty(partyId: string | null) {
               .order('position', { ascending: true })
 
             if (error) {
-              console.error('Error refetching queue:', error)
+              log.error('Failed to refetch queue', error)
               return
             }
 
@@ -340,7 +349,7 @@ export function useParty(partyId: string | null) {
               setQueue((data as DbQueueItem[]).map(transformQueueItem))
             }
           } catch (err) {
-            console.error('Error in queue subscription callback:', err)
+            log.error('Queue subscription callback failed', err)
           }
         }
       )
@@ -370,7 +379,7 @@ export function useParty(partyId: string | null) {
               .order('joined_at', { ascending: true })
 
             if (error) {
-              console.error('Error refetching members:', error)
+              log.error('Failed to refetch members', error)
               return
             }
 
@@ -378,7 +387,7 @@ export function useParty(partyId: string | null) {
               setMembers((data as DbPartyMember[]).map(transformMember))
             }
           } catch (err) {
-            console.error('Error in members subscription callback:', err)
+            log.error('Members subscription callback failed', err)
           }
         }
       )
@@ -395,6 +404,12 @@ export function useParty(partyId: string | null) {
   const addToQueue = useCallback(
     async (item: Omit<QueueItem, 'id' | 'position' | 'addedBySessionId'>) => {
       if (!partyId) return
+
+      // Check rate limit for queue items
+      const rateLimitError = tryAction('queueItem')
+      if (rateLimitError) {
+        throw new Error(rateLimitError)
+      }
 
       const currentSessionId = getSessionId()
 
@@ -454,8 +469,20 @@ export function useParty(partyId: string | null) {
       const { error } = await supabase.from('queue_items').insert(dbItem)
 
       if (error) {
-        console.error('Error adding to queue:', error)
+        log.error('Failed to add to queue', error)
         throw error
+      }
+
+      // Trigger notifications for other party members
+      if (areNotificationsEnabled()) {
+        const sessionId = getSessionId()
+        const membersList = membersRef.current.map(m => ({
+          sessionId: m.sessionId,
+          name: m.name,
+        }))
+        triggerItemAddedNotification(partyId, item, sessionId, membersList).catch(err => {
+          log.error('Failed to trigger notification', err)
+        })
       }
     },
     [partyId, queue]
@@ -514,7 +541,7 @@ export function useParty(partyId: string | null) {
         .eq('id', item.id)
 
       if (error1) {
-        console.error('Error moving item:', error1)
+        log.error('Failed to move item', error1)
         return
       }
 
@@ -524,7 +551,7 @@ export function useParty(partyId: string | null) {
         .eq('id', targetItem.id)
 
       if (error2) {
-        console.error('Error moving target item:', error2)
+        log.error('Failed to move target item', error2)
       }
     },
     [partyId, queue]
@@ -543,7 +570,7 @@ export function useParty(partyId: string | null) {
       const { error } = await supabase.from('queue_items').delete().eq('id', itemId)
 
       if (error) {
-        console.error('Error deleting item:', error)
+        log.error('Failed to delete item', error)
         throw error
       }
     },
@@ -597,7 +624,7 @@ export function useParty(partyId: string | null) {
         .eq('id', itemId)
 
       if (error) {
-        console.error('Error moving item to next:', error)
+        log.error('Failed to move item to next', error)
       }
     },
     [partyId, queue]
@@ -631,7 +658,7 @@ export function useParty(partyId: string | null) {
         .eq('id', itemId)
 
       if (error) {
-        console.error('Error updating note:', error)
+        log.error('Failed to update note', error)
         throw error
       }
     },
@@ -675,7 +702,7 @@ export function useParty(partyId: string | null) {
         .eq('id', itemId)
 
       if (error) {
-        console.error('Error toggling completion:', error)
+        log.error('Failed to toggle completion', error)
         // Revert optimistic update on error
         setQueue(prev => prev.map(q =>
           q.id === itemId ? {
@@ -701,7 +728,7 @@ export function useParty(partyId: string | null) {
         .eq('id', itemId)
 
       if (error) {
-        console.error('Error updating due date:', error)
+        log.error('Failed to update due date', error)
         throw error
       }
     },

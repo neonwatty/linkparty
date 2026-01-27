@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react'
 import type { Screen } from '../../types'
 import { supabase, getSessionId } from '../../lib/supabase'
+import { logger } from '../../lib/logger'
 import { ChevronLeftIcon } from '../icons'
+
+const log = logger.createLogger('History')
 
 interface PartyHistoryItem {
   id: string
@@ -101,7 +104,7 @@ export function HistoryScreen({ onNavigate }: { onNavigate: (screen: Screen) => 
 
         setParties(formattedParties)
       } catch (err) {
-        console.error('Error fetching party history:', err)
+        log.error('Failed to fetch party history', err)
         setError('Failed to load party history')
       } finally {
         setLoading(false)
@@ -116,6 +119,7 @@ export function HistoryScreen({ onNavigate }: { onNavigate: (screen: Screen) => 
       <button
         onClick={() => onNavigate('home')}
         className="btn-ghost p-2 -ml-2 w-fit rounded-full mb-8"
+        aria-label="Go back to home"
       >
         <ChevronLeftIcon />
       </button>
