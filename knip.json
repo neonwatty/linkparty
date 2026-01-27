@@ -4,7 +4,12 @@
   "project": ["src/**/*.{ts,tsx}"],
   "ignore": [
     "src/vite-env.d.ts",
-    "src/lib/notifications.ts"
+    "src/lib/notifications.ts",
+    "src/lib/analytics.ts",
+    "src/lib/retry.ts",
+    "src/hooks/useAnalytics.ts",
+    "src/hooks/useError.ts",
+    "src/hooks/useErrorHandler.ts"
   ],
   "ignoreDependencies": [
     "@capacitor/core",

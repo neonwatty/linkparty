@@ -12,6 +12,7 @@ import { useImageUpload } from '../../hooks/useImageUpload'
 import { validateImage, createPreviewUrl, revokePreviewUrl, deleteImage } from '../../lib/imageUpload'
 import { UploadToast } from '../ui/UploadToast'
 import { ImageLightbox } from '../ui/ImageLightbox'
+import { ConflictToast } from '../ui/ConflictToast'
 import { PlusIcon, LoaderIcon } from '../icons'
 import {
   PartyHeader,
@@ -45,6 +46,8 @@ export function PartyRoomScreen({ onNavigate, partyId, partyCode, onLeaveParty }
     showNext,
     updateNoteContent,
     toggleComplete,
+    lastConflict,
+    clearConflict,
   } = useParty(partyId)
 
   // Modal/sheet visibility states
@@ -514,6 +517,9 @@ export function PartyRoomScreen({ onNavigate, partyId, partyCode, onLeaveParty }
         onSave={handleSaveNote}
         onCancel={handleCancelEditNote}
       />
+
+      {/* Conflict Toast */}
+      <ConflictToast conflicts={lastConflict} onDismiss={clearConflict} />
 
       {/* Share toast notification */}
       {showCopied && (

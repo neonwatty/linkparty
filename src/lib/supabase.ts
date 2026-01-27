@@ -127,6 +127,7 @@ export interface DbQueueItem {
   added_by_name: string
   added_by_session_id: string
   created_at: string
+  updated_at: string
   // YouTube fields
   title: string | null
   channel: string | null

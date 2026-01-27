@@ -1,8 +1,12 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import './App.css'
 import { getCurrentParty } from './lib/supabase'
+import { initAnalytics } from './lib/analytics'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
+import { ErrorProvider } from './contexts/ErrorContext'
 import { ErrorBoundary } from './components/ErrorBoundary'
+import { OfflineIndicator } from './components/ui/OfflineIndicator'
+import { InstallPrompt } from './components/ui/InstallPrompt'
 import type { Screen } from './types'
 import { LoaderIcon } from './components/icons'
 import {
@@ -114,15 +118,28 @@ function AppContent() {
     'reset-password': <ResetPasswordScreen onNavigate={setCurrentScreen} />,
   }
 
-  return screens[currentScreen]
+  return (
+    <>
+      <OfflineIndicator />
+      {screens[currentScreen]}
+      <InstallPrompt />
+    </>
+  )
 }
 
-// Main App with AuthProvider wrapper and ErrorBoundary
+// Main App with providers and ErrorBoundary
 function App() {
+  // Initialize analytics on mount
+  useEffect(() => {
+    initAnalytics()
+  }, [])
+
   return (
     <ErrorBoundary>
       <AuthProvider>
-        <AppContent />
+        <ErrorProvider>
+          <AppContent />
+        </ErrorProvider>
       </AuthProvider>
     </ErrorBoundary>
   )
