@@ -190,6 +190,12 @@ export function TVModeScreen({ onNavigate, partyId, partyCode }: TVModeScreenPro
                           className="w-full h-full object-cover opacity-70"
                           loading="lazy"
                         />
+                      ) : item.type === 'image' && item.imageUrl ? (
+                        <img
+                          src={item.imageUrl}
+                          alt={item.imageCaption || item.imageName || 'Image'}
+                          className="w-full h-full object-cover opacity-70"
+                        />
                       ) : (
                         <span className={`${badge.color} opacity-70`}>
                           <BadgeIcon size={24} />
