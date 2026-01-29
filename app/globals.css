@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* Fonts loaded via index.html with preload and display=swap for non-blocking load */
+/* Fonts loaded via layout.tsx or index.html with preload and display=swap for non-blocking load */
 
 /*
  * Design Tokens Configuration
@@ -100,18 +100,6 @@ body {
 
 .safe-area-top {
   padding-top: env(safe-area-inset-top, 0px);
-}
-
-#root {
-  min-height: 100vh;
-  min-height: 100dvh;
-  height: 100vh;
-  height: 100dvh;
-}
-
-/* Utility for mono text */
-.font-mono {
-  font-family: var(--font-mono);
 }
 
 /* Gradient backgrounds for depth */

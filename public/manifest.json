@@ -9,27 +9,28 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/icons/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/icons/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "src": "/vite.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
     }
   ],
   "categories": ["lifestyle", "productivity"],
   "screenshots": [],
   "shortcuts": [
     {
-      "name": "Add Note",
-      "short_name": "Add",
-      "description": "Add a new note or reminder",
-      "url": "/?action=add",
-      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+      "name": "Start Party",
+      "short_name": "Start",
+      "description": "Start a new party",
+      "url": "/create",
+      "icons": [{ "src": "/vite.svg", "sizes": "any" }]
+    },
+    {
+      "name": "Join Party",
+      "short_name": "Join",
+      "description": "Join an existing party",
+      "url": "/join",
+      "icons": [{ "src": "/vite.svg", "sizes": "any" }]
     }
   ]
 }
