@@ -1,28 +1,49 @@
 {
   "$schema": "https://unpkg.com/knip@5/schema.json",
-  "entry": ["src/main.tsx"],
-  "project": ["src/**/*.{ts,tsx}"],
+  "project": [
+    "app/**/*.{ts,tsx}",
+    "lib/**/*.{ts,tsx}",
+    "components/**/*.{ts,tsx}",
+    "hooks/**/*.{ts,tsx}",
+    "contexts/**/*.{ts,tsx}",
+    "types/**/*.{ts,tsx}",
+    "utils/**/*.{ts,tsx}"
+  ],
   "ignore": [
-    "src/vite-env.d.ts",
-    "src/lib/notifications.ts",
-    "src/lib/analytics.ts",
-    "src/lib/retry.ts",
-    "src/hooks/useAnalytics.ts",
-    "src/hooks/useError.ts",
-    "src/hooks/useErrorHandler.ts"
+    "lib/notifications.ts",
+    "lib/analytics.ts",
+    "lib/retry.ts",
+    "lib/supabase/client.ts",
+    "lib/supabase/server.ts",
+    "hooks/useAnalytics.ts",
+    "hooks/useError.ts",
+    "hooks/useErrorHandler.ts",
+    "hooks/useOnlineStatus.ts",
+    "hooks/usePWAInstall.ts",
+    "components/ui/index.ts",
+    "components/ui/InstallPrompt.tsx",
+    "components/ui/OfflineIndicator.tsx",
+    "types/index.ts"
   ],
   "ignoreDependencies": [
     "@capacitor/core",
     "@capacitor/ios",
     "@capacitor/push-notifications",
-    "@testing-library/react",
     "@testing-library/user-event",
     "@vitest/coverage-v8",
-    "tailwindcss"
+    "tailwindcss",
+    "postcss",
+    "@supabase/ssr"
   ],
   "ignoreBinaries": ["doppler"],
   "ignoreExportsUsedInFile": true,
+  "rules": {
+    "exports": "off"
+  },
+  "next": {
+    "entry": ["app/**/*.{ts,tsx}", "next.config.ts"]
+  },
   "vitest": {
-    "entry": ["src/**/*.{test,spec}.{ts,tsx}", "vitest.config.ts"]
+    "entry": ["**/*.{test,spec}.{ts,tsx}", "vitest.config.ts"]
   }
 }
