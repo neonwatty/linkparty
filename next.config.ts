@@ -1,11 +1,12 @@
 import type { NextConfig } from 'next'
 
-const isProd = process.env.NODE_ENV === 'production'
+// Use static export only for Capacitor iOS builds (set STATIC_EXPORT=true)
+// Vercel deployments need server mode for API routes
+const useStaticExport = process.env.STATIC_EXPORT === 'true'
 
 const nextConfig: NextConfig = {
-  // Static export for Capacitor iOS builds (only in production)
-  // In dev mode, we use normal server rendering for dynamic routes
-  ...(isProd && { output: 'export' }),
+  // Static export for Capacitor iOS builds only
+  ...(useStaticExport && { output: 'export' }),
 
   // Disable image optimization for static export
   images: {
