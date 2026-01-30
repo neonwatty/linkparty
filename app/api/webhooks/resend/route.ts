@@ -67,7 +67,7 @@ async function verifyWebhookSignature(
 
   const key = await crypto.subtle.importKey(
     'raw',
-    secretBytes,
+    secretBytes.buffer as ArrayBuffer,
     { name: 'HMAC', hash: 'SHA-256' },
     false,
     ['sign']
