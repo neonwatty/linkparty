@@ -1,18 +1,20 @@
 import type { Metadata, Viewport } from 'next'
-import { Space_Grotesk, JetBrains_Mono } from 'next/font/google'
+import { Fraunces, Source_Sans_3 } from 'next/font/google'
 import { Providers } from './providers'
 import './globals.css'
 
-const spaceGrotesk = Space_Grotesk({
+const fraunces = Fraunces({
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-display',
+  weight: ['300', '400', '500', '600'],
 })
 
-const jetbrainsMono = JetBrains_Mono({
+const sourceSans3 = Source_Sans_3({
   subsets: ['latin'],
   display: 'swap',
-  variable: '--font-mono',
+  variable: '--font-body',
+  weight: ['300', '400', '500', '600'],
 })
 
 export const metadata: Metadata = {
@@ -36,7 +38,7 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
   viewportFit: 'cover',
-  themeColor: '#6366f1',
+  themeColor: '#6b8f71',
 }
 
 export default function RootLayout({
@@ -45,7 +47,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={`${spaceGrotesk.variable} ${jetbrainsMono.variable}`}>
+    <html lang="en" className={`${fraunces.variable} ${sourceSans3.variable}`}>
       <body>
         <Providers>
           {children}
