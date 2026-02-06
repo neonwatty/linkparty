@@ -472,42 +472,116 @@ export function useParty(partyId: string | null) {
       }
 
       try {
-        const dbItem: Partial<DbQueueItem> = {
-          party_id: partyId,
+        // Prepare the request body for the API
+        const apiRequestBody = {
+          partyId,
+          sessionId: currentSessionId,
           type: item.type,
           status: item.status,
           position: newPosition,
-          added_by_name: item.addedBy,
-          added_by_session_id: currentSessionId,
-          title: item.title ?? null,
-          channel: item.channel ?? null,
-          duration: item.duration ?? null,
-          thumbnail: item.thumbnail ?? null,
-          tweet_author: item.tweetAuthor ?? null,
-          tweet_handle: item.tweetHandle ?? null,
-          tweet_content: item.tweetContent ?? null,
-          tweet_timestamp: item.tweetTimestamp ?? null,
-          subreddit: item.subreddit ?? null,
-          reddit_title: item.redditTitle ?? null,
-          reddit_body: item.redditBody ?? null,
-          upvotes: item.upvotes ?? null,
-          comment_count: item.commentCount ?? null,
-          note_content: item.noteContent ?? null,
-          image_name: item.imageName ?? null,
-          image_url: item.imageUrl ?? null,
-          image_storage_path: item.imageStoragePath ?? null,
-          image_caption: item.imageCaption ?? null,
-          due_date: item.dueDate ?? null,
-          is_completed: false,
+          addedByName: item.addedBy,
+          title: item.title,
+          channel: item.channel,
+          duration: item.duration,
+          thumbnail: item.thumbnail,
+          tweetAuthor: item.tweetAuthor,
+          tweetHandle: item.tweetHandle,
+          tweetContent: item.tweetContent,
+          tweetTimestamp: item.tweetTimestamp,
+          subreddit: item.subreddit,
+          redditTitle: item.redditTitle,
+          redditBody: item.redditBody,
+          upvotes: item.upvotes,
+          commentCount: item.commentCount,
+          noteContent: item.noteContent,
+          imageName: item.imageName,
+          imageUrl: item.imageUrl,
+          imageStoragePath: item.imageStoragePath,
+          imageCaption: item.imageCaption,
+          dueDate: item.dueDate,
         }
 
-        const { error } = await supabase.from('queue_items').insert(dbItem)
+        // Try the server-side API first for rate limiting enforcement
+        let useDirectSupabase = false
+        try {
+          const apiResponse = await fetch('/api/queue/items', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(apiRequestBody),
+          })
 
-        if (error) {
-          // Rollback: remove optimistic item
-          setQueue(prev => prev.filter(q => q.id !== tempId))
-          log.error('Failed to add to queue', error)
-          throw error
+          if (apiResponse.status === 429) {
+            // Server-side rate limit exceeded
+            const errorData = await apiResponse.json()
+            setQueue(prev => prev.filter(q => q.id !== tempId))
+            throw new Error(errorData.error || 'Rate limit exceeded. Please wait before adding more items.')
+          }
+
+          if (!apiResponse.ok) {
+            const errorData = await apiResponse.json()
+            // For 4xx errors (except 429), throw the error
+            if (apiResponse.status >= 400 && apiResponse.status < 500) {
+              setQueue(prev => prev.filter(q => q.id !== tempId))
+              throw new Error(errorData.error || 'Failed to add item to queue')
+            }
+            // For 5xx errors, fall back to direct Supabase
+            log.warn('API error, falling back to direct Supabase', errorData)
+            useDirectSupabase = true
+          } else {
+            const responseData = await apiResponse.json()
+            // If API skipped server-side validation, use direct Supabase
+            if (responseData.skipped) {
+              useDirectSupabase = true
+            }
+          }
+        } catch (fetchError) {
+          // Network error or API unavailable, fall back to direct Supabase
+          if (fetchError instanceof Error && fetchError.message.includes('Rate limit')) {
+            throw fetchError
+          }
+          log.warn('API unavailable, falling back to direct Supabase', { error: String(fetchError) })
+          useDirectSupabase = true
+        }
+
+        // Fall back to direct Supabase if needed
+        if (useDirectSupabase) {
+          const dbItem: Partial<DbQueueItem> = {
+            party_id: partyId,
+            type: item.type,
+            status: item.status,
+            position: newPosition,
+            added_by_name: item.addedBy,
+            added_by_session_id: currentSessionId,
+            title: item.title ?? null,
+            channel: item.channel ?? null,
+            duration: item.duration ?? null,
+            thumbnail: item.thumbnail ?? null,
+            tweet_author: item.tweetAuthor ?? null,
+            tweet_handle: item.tweetHandle ?? null,
+            tweet_content: item.tweetContent ?? null,
+            tweet_timestamp: item.tweetTimestamp ?? null,
+            subreddit: item.subreddit ?? null,
+            reddit_title: item.redditTitle ?? null,
+            reddit_body: item.redditBody ?? null,
+            upvotes: item.upvotes ?? null,
+            comment_count: item.commentCount ?? null,
+            note_content: item.noteContent ?? null,
+            image_name: item.imageName ?? null,
+            image_url: item.imageUrl ?? null,
+            image_storage_path: item.imageStoragePath ?? null,
+            image_caption: item.imageCaption ?? null,
+            due_date: item.dueDate ?? null,
+            is_completed: false,
+          }
+
+          const { error } = await supabase.from('queue_items').insert(dbItem)
+
+          if (error) {
+            // Rollback: remove optimistic item
+            setQueue(prev => prev.filter(q => q.id !== tempId))
+            log.error('Failed to add to queue', error)
+            throw error
+          }
         }
 
         // Clear syncing state (real-time subscription will update with real ID)
