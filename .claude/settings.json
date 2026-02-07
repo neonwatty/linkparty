@@ -17,6 +17,10 @@
         "hooks": [
           {
             "type": "command",
+            "command": "FILE_PATH=$(jq -r '.tool_input.file_path // empty' < /dev/stdin) && if [ -n \"$FILE_PATH\" ] && echo \"$FILE_PATH\" | grep -qE '\\.(ts|tsx|js|jsx)$'; then npx eslint --fix \"$FILE_PATH\" 2>/dev/null; fi"
+          },
+          {
+            "type": "command",
             "command": "FILE_PATH=$(jq -r '.tool_input.file_path // empty' < /dev/stdin) && if [ -n \"$FILE_PATH\" ] && echo \"$FILE_PATH\" | grep -qE '\\.(ts|tsx|js|jsx|json|css|md)$'; then npx prettier --write \"$FILE_PATH\" 2>/dev/null; fi"
           }
         ]
