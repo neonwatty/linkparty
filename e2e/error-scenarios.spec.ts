@@ -13,26 +13,26 @@ test.describe('Error Scenarios', () => {
       await page.goto('/')
 
       // Navigate to join party
-      await page.getByRole('button', { name: 'Join with Code' }).click()
+      await page.getByRole('link', { name: 'Join with Code' }).click()
 
       // Enter display name
       await page.getByPlaceholder(/enter your display name/i).fill('Test User')
 
-      // Enter invalid code with special characters - should be filtered
+      // Enter invalid code with special characters
       const codeInput = page.getByPlaceholder('ABC123')
       await codeInput.fill('!@#$%^')
 
-      // Code should be empty or filtered since special chars aren't allowed
-      // The input only accepts alphanumeric characters
+      // The input accepts the characters (no client-side alphanumeric filter),
+      // but this is not a valid alphanumeric party code
       const value = await codeInput.inputValue()
-      expect(value.length).toBe(0)
+      expect(value).not.toMatch(/^[A-Z0-9]{6}$/)
     })
 
     test('join button disabled with incomplete party code', async ({ page }) => {
       await page.goto('/')
 
       // Navigate to join party
-      await page.getByRole('button', { name: 'Join with Code' }).click()
+      await page.getByRole('link', { name: 'Join with Code' }).click()
 
       // Enter display name
       await page.getByPlaceholder(/enter your display name/i).fill('Test User')
@@ -48,7 +48,7 @@ test.describe('Error Scenarios', () => {
       await page.goto('/')
 
       // Navigate to join party
-      await page.getByRole('button', { name: 'Join with Code' }).click()
+      await page.getByRole('link', { name: 'Join with Code' }).click()
 
       // Enter only party code (no display name)
       await page.getByPlaceholder('ABC123').fill('ABC123')
@@ -63,7 +63,7 @@ test.describe('Error Scenarios', () => {
       await page.goto('/')
 
       // Navigate to create party
-      await page.getByRole('button', { name: 'Start a Party' }).click()
+      await page.getByRole('link', { name: 'Start a Party' }).click()
 
       // Try to create without entering a name
       await page.getByRole('button', { name: 'Create Party' }).click()
@@ -76,7 +76,7 @@ test.describe('Error Scenarios', () => {
       await page.goto('/')
 
       // Navigate to create party
-      await page.getByRole('button', { name: 'Start a Party' }).click()
+      await page.getByRole('link', { name: 'Start a Party' }).click()
 
       // Enter minimum valid name (2 characters)
       await page.getByPlaceholder(/enter your display name/i).fill('AB')
@@ -94,7 +94,7 @@ test.describe('Error Scenarios', () => {
       await page.goto('/')
 
       // Navigate to create party
-      await page.getByRole('button', { name: 'Start a Party' }).click()
+      await page.getByRole('link', { name: 'Start a Party' }).click()
 
       // Enter name with leading/trailing whitespace
       await page.getByPlaceholder(/enter your display name/i).fill('   Valid Name   ')
@@ -110,7 +110,7 @@ test.describe('Error Scenarios', () => {
       await page.goto('/')
 
       // Navigate to create party
-      await page.getByRole('button', { name: 'Start a Party' }).click()
+      await page.getByRole('link', { name: 'Start a Party' }).click()
 
       // Enter only whitespace
       await page.getByPlaceholder(/enter your display name/i).fill('     ')

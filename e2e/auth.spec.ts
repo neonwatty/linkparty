@@ -146,7 +146,7 @@ test.describe('Authentication Flows', () => {
       await page.getByRole('link', { name: /go back to home/i }).click()
 
       // Should be on home page
-      await expect(page.getByRole('button', { name: 'Start a Party' })).toBeVisible()
+      await expect(page.getByRole('link', { name: 'Start a Party' })).toBeVisible()
     })
   })
 
@@ -298,7 +298,7 @@ test.describe('Authentication Flows', () => {
       await page.getByRole('link', { name: /go back to home/i }).click()
 
       // Should be on home page
-      await expect(page.getByRole('button', { name: 'Start a Party' })).toBeVisible()
+      await expect(page.getByRole('link', { name: 'Start a Party' })).toBeVisible()
     })
   })
 

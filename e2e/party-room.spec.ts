@@ -8,7 +8,7 @@ test.describe('Party Room', () => {
     await page.reload()
 
     // Navigate to create party
-    await page.getByRole('button', { name: 'Start a Party' }).click()
+    await page.getByRole('link', { name: 'Start a Party' }).click()
 
     // Enter display name and create party
     await page.getByPlaceholder(/enter your display name/i).fill('Test Host')

@@ -12,7 +12,7 @@ test.describe('Create Party Flow', () => {
     await page.goto('/')
 
     // Navigate to create party
-    await page.getByRole('button', { name: 'Start a Party' }).click()
+    await page.getByRole('link', { name: 'Start a Party' }).click()
 
     // Try to create without entering a name
     await page.getByRole('button', { name: 'Create Party' }).click()
@@ -25,7 +25,7 @@ test.describe('Create Party Flow', () => {
     await page.goto('/')
 
     // Navigate to create party
-    await page.getByRole('button', { name: 'Start a Party' }).click()
+    await page.getByRole('link', { name: 'Start a Party' }).click()
 
     // Enter display name
     await page.getByPlaceholder(/enter your display name/i).fill('Test User')
@@ -45,7 +45,7 @@ test.describe('Create Party Flow', () => {
     await page.goto('/')
 
     // Navigate to create party
-    await page.getByRole('button', { name: 'Start a Party' }).click()
+    await page.getByRole('link', { name: 'Start a Party' }).click()
 
     // Enter display name
     await page.getByPlaceholder(/enter your display name/i).fill('Host User')
@@ -61,15 +61,15 @@ test.describe('Create Party Flow', () => {
     await page.goto('/')
 
     // Navigate to create party
-    await page.getByRole('button', { name: 'Start a Party' }).click()
+    await page.getByRole('link', { name: 'Start a Party' }).click()
 
     // Should be on create party screen
     await expect(page.getByRole('heading', { name: /start a party/i })).toBeVisible()
 
-    // Click back button (first button in the UI)
-    await page.locator('button').first().click()
+    // Click back link
+    await page.getByRole('link', { name: /go back to home/i }).click()
 
-    // Should be back on home screen - look for the Start a Party button
-    await expect(page.getByRole('button', { name: 'Start a Party' })).toBeVisible()
+    // Should be back on home screen - look for the Start a Party link
+    await expect(page.getByRole('link', { name: 'Start a Party' })).toBeVisible()
   })
 })

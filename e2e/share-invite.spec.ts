@@ -8,7 +8,7 @@ test.describe('Share and Invite Flows', () => {
     await page.reload()
 
     // Navigate to create party
-    await page.getByRole('button', { name: 'Start a Party' }).click()
+    await page.getByRole('link', { name: 'Start a Party' }).click()
 
     // Enter display name and create party
     await page.getByPlaceholder(/enter your display name/i).fill('Test Host')
@@ -76,7 +76,7 @@ test.describe('Share and Invite Flows', () => {
       await newPage.evaluate(() => localStorage.clear())
 
       // Navigate to join party
-      await newPage.getByRole('button', { name: 'Join with Code' }).click()
+      await newPage.getByRole('link', { name: 'Join with Code' }).click()
 
       // Enter display name and party code
       await newPage.getByPlaceholder(/enter your display name/i).fill('Guest User')

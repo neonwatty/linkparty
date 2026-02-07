@@ -12,7 +12,7 @@ test.describe('Join Party Flow', () => {
     await page.goto('/')
 
     // Navigate to join party
-    await page.getByRole('button', { name: 'Join with Code' }).click()
+    await page.getByRole('link', { name: 'Join with Code' }).click()
 
     // Enter only party code (no display name)
     await page.getByPlaceholder('ABC123').fill('XYZ789')
@@ -25,7 +25,7 @@ test.describe('Join Party Flow', () => {
     await page.goto('/')
 
     // Navigate to join party
-    await page.getByRole('button', { name: 'Join with Code' }).click()
+    await page.getByRole('link', { name: 'Join with Code' }).click()
 
     // Enter display name but incomplete party code
     await page.getByPlaceholder(/enter your display name/i).fill('Test User')
@@ -39,7 +39,7 @@ test.describe('Join Party Flow', () => {
     await page.goto('/')
 
     // Navigate to join party
-    await page.getByRole('button', { name: 'Join with Code' }).click()
+    await page.getByRole('link', { name: 'Join with Code' }).click()
 
     // Enter lowercase party code
     const codeInput = page.getByPlaceholder('ABC123')
@@ -53,7 +53,7 @@ test.describe('Join Party Flow', () => {
     await page.goto('/')
 
     // Navigate to join party
-    await page.getByRole('button', { name: 'Join with Code' }).click()
+    await page.getByRole('link', { name: 'Join with Code' }).click()
 
     // Enter more than 6 characters
     const codeInput = page.getByPlaceholder('ABC123')
@@ -67,15 +67,15 @@ test.describe('Join Party Flow', () => {
     await page.goto('/')
 
     // Navigate to join party
-    await page.getByRole('button', { name: 'Join with Code' }).click()
+    await page.getByRole('link', { name: 'Join with Code' }).click()
 
     // Should be on join party screen
     await expect(page.getByRole('heading', { name: /join a party/i })).toBeVisible()
 
-    // Click back button
-    await page.locator('button').first().click()
+    // Click back link
+    await page.getByRole('link', { name: /go back to home/i }).click()
 
-    // Should be back on home screen - look for the Start a Party button
-    await expect(page.getByRole('button', { name: 'Start a Party' })).toBeVisible()
+    // Should be back on home screen - look for the Start a Party link
+    await expect(page.getByRole('link', { name: 'Start a Party' })).toBeVisible()
   })
 })
