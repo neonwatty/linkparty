@@ -1,7 +1,7 @@
 # Browser Workflows
 
 > Auto-generated workflow documentation for Link Party
-> Last updated: 2026-01-31
+> Last updated: 2026-02-07
 > Base URL: https://linkparty.app (production) or http://localhost:3000 (development)
 > Platform: Desktop web browsers (Chrome, Safari, Firefox, Edge)
 
@@ -9,22 +9,22 @@
 
 | #   | Workflow               | Purpose                | Steps | Status |
 | --- | ---------------------- | ---------------------- | ----- | ------ |
-| 1   | App Launch (Fresh)     | First-time app open    | 4     | ⬜     |
-| 2   | Create a New Party     | Party creation flow    | 8     | ⬜     |
-| 3   | Join an Existing Party | Join with code         | 7     | ⬜     |
+| 1   | App Launch (Fresh)     | First-time app open    | 4     | ✅     |
+| 2   | Create a New Party     | Party creation flow    | 8     | ✅     |
+| 3   | Join an Existing Party | Join with code         | 7     | ✅     |
 | 4   | Join via Deep Link     | Join using URL param   | 4     | ⬜     |
 | 5   | Leave Party            | Exit to home           | 4     | ⬜     |
 | 6   | Add YouTube Content    | Add video to queue     | 7     | ⬜     |
 | 7   | Add Tweet Content      | Add tweet to queue     | 7     | ⬜     |
 | 8   | Add Reddit Content     | Add post to queue      | 7     | ⬜     |
-| 9   | Add Simple Note        | Add text note          | 6     | ⬜     |
+| 9   | Add Simple Note        | Add text note          | 6     | ✅     |
 | 10  | Add Note with Due Date | Add reminder           | 7     | ⬜     |
 | 11  | Mark Note Complete     | Toggle completion      | 4     | ⬜     |
 | 12  | View and Edit Note     | Open and modify note   | 8     | ⬜     |
 | 13  | Add Image Content      | Upload image to queue  | 8     | ⬜     |
 | 14  | View Image in Lightbox | Full-screen image view | 4     | ⬜     |
 | 15  | Reorder Queue Items    | Move items up/down     | 6     | ⬜     |
-| 16  | Show Item Next         | Bump to show next      | 5     | ⬜     |
+| 16  | Show Item Next         | Bump to show next      | 5     | ✅     |
 | 17  | Remove Queue Item      | Delete from queue      | 6     | ⬜     |
 | 18  | TV Mode                | Enter TV display       | 5     | ⬜     |
 | 19  | View History           | View past parties      | 4     | ⬜     |
@@ -52,31 +52,32 @@
 
 ---
 
-## Visual Design Reference (Sage & Cream Theme)
+## Visual Design Reference (Campfire Dark Theme)
 
-The app uses a **light "Sage & Cream" theme** with the following design tokens:
+The app uses a **dark "Campfire" theme** with deep navy backgrounds and warm orange/golden accents:
 
 ### Colors
 
-| Token          | Hex     | Usage                         |
-| -------------- | ------- | ----------------------------- |
-| surface-950    | #faf8f3 | Main background (cream)       |
-| surface-900    | #f2efe8 | Card backgrounds (soft beige) |
-| surface-800    | #e8e5dc | Elevated surfaces             |
-| surface-700    | #d8d4c8 | Borders, dividers             |
-| accent-500     | #6b8f71 | Primary sage green            |
-| accent-600     | #4a6b4f | Darker sage (hover/active)    |
-| teal-500       | #4a9e8f | Secondary accent              |
-| text-primary   | #2d3a2e | Deep forest (main text)       |
-| text-secondary | #5a6b5c | Warm gray                     |
-| text-muted     | #8a9a8c | Muted sage-gray               |
+| Token          | Hex     | Usage                        |
+| -------------- | ------- | ---------------------------- |
+| surface-950    | #1a1d2e | Main background (deep navy)  |
+| surface-900    | #242838 | Card backgrounds (dark card) |
+| surface-800    | #2d3244 | Elevated surfaces            |
+| surface-700    | #3a3f52 | Borders, dividers            |
+| primary        | #ff8a5c | Primary warm orange          |
+| primary-hover  | #e86b3a | Darker orange (hover/active) |
+| secondary      | #f4c95d | Golden yellow accent         |
+| lavender       | #a8a4ce | Note/tertiary accent         |
+| text-primary   | #f5f0e8 | Warm white (main text)       |
+| text-secondary | #b8b2a8 | Muted cream                  |
+| text-muted     | #7a756c | Dim text                     |
 
 ### Typography
 
-| Font    | Family                     | Usage                     |
-| ------- | -------------------------- | ------------------------- |
-| Display | Fraunces (serif)           | Headings, buttons, inputs |
-| Body    | Source Sans 3 (sans-serif) | Body text, paragraphs     |
+| Font    | Family                        | Usage                     |
+| ------- | ----------------------------- | ------------------------- |
+| Display | Instrument Serif (Georgia)    | Headings, buttons, inputs |
+| Body    | Inter (system-ui, sans-serif) | Body text, paragraphs     |
 
 ---
 
@@ -96,13 +97,13 @@ The app uses a **light "Sage & Cream" theme** with the following design tokens:
 2. Verify home screen branding
    - Verify "Link Party" title is visible
    - Verify tagline text is displayed
-   - Verify cream gradient background (#faf8f3) renders correctly
-   - Verify fonts load properly (Fraunces for headings, Source Sans 3 for body)
+   - Verify dark navy background (#1a1d2e) with animated stars renders correctly
+   - Verify fonts load properly (Instrument Serif for headings, Inter for body)
 
 3. Verify primary CTAs
-   - Verify "Start a Party" button is visible (sage green #6b8f71)
+   - Verify "Start a Party" button is visible (warm orange #ff8a5c)
    - Verify "Join with Code" button is visible (secondary style)
-   - Verify buttons have hover states (test by hovering - darker sage #4a6b4f)
+   - Verify buttons have hover states (test by hovering - darker orange #e86b3a)
 
 4. Verify navigation elements
    - Verify history icon button in top-right corner
@@ -127,13 +128,13 @@ The app uses a **light "Sage & Cream" theme** with the following design tokens:
    - Verify "Your Name" input field has focus (autofocus)
    - Verify "Party Name" optional input is present
    - Verify settings display shows queue limit (100) and rate limit (5/min)
-   - Verify inputs use Fraunces font with cream/beige styling
+   - Verify inputs use dark theme styling with warm text (#f5f0e8)
 
 3. Enter display name
    - Click the "Your Name" text field
    - Type "TestUser1"
    - Verify text appears in field
-   - Verify input has sage green focus ring styling (#6b8f71)
+   - Verify input has orange focus ring styling (#ff8a5c)
 
 4. Enter party name (optional)
    - Click the "Party Name" text field
@@ -154,7 +155,7 @@ The app uses a **light "Sage & Cream" theme** with the following design tokens:
    - Verify "Now Showing" section (empty state or content)
    - Verify "Members" section shows "TestUser1" with host badge
    - Verify "Up Next" queue section is present
-   - Verify floating "+" button for adding content (sage green with glow)
+   - Verify floating "+" button for adding content (warm orange with glow)
 
 8. Note the party code
    - Record the 6-character code displayed in header
@@ -266,7 +267,7 @@ The app uses a **light "Sage & Cream" theme** with the following design tokens:
 **Prerequisites:** In an active party room
 
 1. Open add content modal
-   - Click the floating "+" button (bottom-right, sage green)
+   - Click the floating "+" button (bottom-right, warm orange)
    - Verify bottom sheet modal slides up
    - Verify URL input field has focus (autofocus)
    - Verify "Write a note" and "Upload an image" buttons present
@@ -884,12 +885,12 @@ When testing workflows, verify these web conventions are followed:
 
 - All interactive elements have hover states
 - Buttons show cursor: pointer
-- Primary buttons darken on hover (sage #6b8f71 → darker #4a6b4f)
+- Primary buttons darken on hover (orange #ff8a5c → darker #e86b3a)
 - Cards/list items have hover feedback
 
 ### Focus States
 
-- All focusable elements have visible focus rings (sage green)
+- All focusable elements have visible focus rings (orange)
 - Tab order is logical
 - Keyboard navigation works throughout
 
@@ -905,11 +906,11 @@ When testing workflows, verify these web conventions are followed:
 - Fast initial load (<3 seconds)
 - No layout shifts during load
 - Images lazy load appropriately
-- Fonts load without FOUT/FOIT issues (Fraunces + Source Sans 3)
+- Fonts load without FOUT/FOIT issues (Instrument Serif + Inter)
 
 ### Accessibility
 
-- Color contrast meets WCAG AA (dark text on cream background)
+- Color contrast meets WCAG AA (light text on dark navy background)
 - All images have alt text
 - Form inputs have labels
 - Screen reader announces state changes
@@ -931,3 +932,28 @@ Some workflows require state from previous workflows:
 | 18 (TV Mode)           | 2 or 3 (active party)               |
 
 **Suggested execution order:** 1 → 2 → 6 → 9 → 10 → 11 → 12 → 13 → 14 → 15 → 16 → 17 → 18 → 5 → 3 → 4 → 19 → 20 → 21 → 22
+
+---
+
+## Test Results Log
+
+### 2026-02-07: Multi-User Realtime Testing (Production)
+
+**Environment:** Chrome (Host) + Playwright (Guest) on https://linkparty.app
+**Party:** "Realtime Test Party" (KXE3NY)
+
+| Test                                  | Result | Notes                                                   |
+| ------------------------------------- | ------ | ------------------------------------------------------- |
+| Create party (Host)                   | PASS   | Party created, code generated, room loaded              |
+| Join party (Guest)                    | PASS   | Joined via code, member list updated on both            |
+| Add note (Guest)                      | PASS   | INSERT event received by Host in real-time              |
+| Queue advance (Host clicks Next)      | PASS   | UPDATE event received by Guest in real-time             |
+| Full cycle (Guest add + Host advance) | PASS   | Both INSERT and UPDATE propagate instantly              |
+| Member presence                       | PASS   | Both browsers show "2 watching" with correct identities |
+| notification_logs INSERT              | PASS   | No 403 errors after RLS policy fix                      |
+
+**Infrastructure fixes applied during testing:**
+
+1. `.trim()` on env vars in `lib/supabase.ts` — fixed WebSocket 401 from trailing `\n` in anon key
+2. `REPLICA IDENTITY FULL` on parties, party_members, queue_items — enables UPDATE/DELETE realtime events
+3. INSERT RLS policy on notification_logs — fixes 403 on queue item addition
