@@ -13,7 +13,7 @@ export async function signInWithGoogle() {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: typeof window !== 'undefined' ? `${window.location.origin}` : undefined,
+      redirectTo: typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : undefined,
     },
   })
 
@@ -92,7 +92,7 @@ export async function signUpWithEmail(email: string, password: string, displayNa
       data: {
         display_name: displayName,
       },
-      emailRedirectTo: typeof window !== 'undefined' ? `${window.location.origin}` : undefined,
+      emailRedirectTo: typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : undefined,
     },
   })
 
@@ -120,7 +120,7 @@ export async function signInWithEmail(email: string, password: string): Promise<
 
 export async function resetPassword(email: string): Promise<AuthResult> {
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: typeof window !== 'undefined' ? `${window.location.origin}` : undefined,
+    redirectTo: typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : undefined,
   })
 
   if (error) {
