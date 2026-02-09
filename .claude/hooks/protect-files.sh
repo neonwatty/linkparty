@@ -10,7 +10,7 @@ echo "$FILE_PATH" | grep -qE '\.env($|\.)' && echo "BLOCKED: .env files should n
 # Block package lock files
 [[ "$FILE_PATH" == *"package-lock.json" ]] && echo "BLOCKED: package-lock.json is auto-generated — use npm install" >&2 && exit 2
 
-# Block migration files (create new ones instead)
-[[ "$FILE_PATH" == *"supabase/migrations/"*.sql ]] && echo "BLOCKED: migrations are immutable — create new ones instead of editing existing" >&2 && exit 2
+# Block existing migration files (new ones are allowed)
+[[ "$FILE_PATH" == *"supabase/migrations/"*.sql ]] && [[ -f "$FILE_PATH" ]] && echo "BLOCKED: existing migrations are immutable — create new ones instead" >&2 && exit 2
 
 exit 0
