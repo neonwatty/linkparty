@@ -31,7 +31,7 @@ const getBaseUrl = () => {
 
 // Email configuration
 const RESEND_API_URL = 'https://api.resend.com/emails'
-const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'Link Party <noreply@linkparty.com>'
+const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'Link Party <noreply@linkparty.app>'
 
 interface SendEmailOptions {
   to: string | string[]
