@@ -8,7 +8,7 @@ test.describe('Share and Invite Flows', () => {
     await page.reload()
 
     // Navigate to create party
-    await page.getByRole('link', { name: 'Start a Party' }).click()
+    await page.getByRole('link', { name: 'Start a Party' }).first().click()
 
     // Enter display name and create party
     await page.getByPlaceholder(/enter your display name/i).fill('Test Host')

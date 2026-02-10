@@ -4,21 +4,27 @@ import Link from 'next/link'
 import { PlusIcon, LinkIcon, TvIcon } from '@/components/icons'
 import { TwinklingStars } from '@/components/ui/TwinklingStars'
 
+const problems = [
+  'Someone drops a video. Three memes later, it\u2019s gone.',
+  'You share a link. Two people react. Nobody clicks.',
+  '\u2018What should we watch?\u2019 Forty minutes later, still deciding.',
+]
+
 const steps = [
   {
     icon: PlusIcon,
-    title: 'Create a room',
-    description: 'Start a party and get a shareable code. No account required.',
+    title: 'Start a party',
+    description: 'Get a code. Share it. No signups.',
   },
   {
     icon: LinkIcon,
-    title: 'Queue your content',
-    description: 'Drop in YouTube links, tweets, Reddit posts, notes, or images. Drag to reorder.',
+    title: 'Drop your links',
+    description: 'YouTube, tweets, Reddit, notes, images \u2014 one queue.',
   },
   {
     icon: TvIcon,
     title: 'Watch together',
-    description: 'Hit TV mode and enjoy everything in sync on the big screen. Real-time for everyone.',
+    description: 'TV mode. Big screen. One tap to advance.',
   },
 ]
 
@@ -53,11 +59,11 @@ export function LandingPage() {
             className="text-4xl sm:text-5xl md:text-6xl font-bold leading-tight mb-6"
             style={{ fontFamily: 'var(--font-display)' }}
           >
-            Watch together, <span className="text-accent-500">not alone</span>
+            Stop losing links <span className="text-accent-500">in chat</span>
           </h1>
           <p className="text-text-secondary text-lg sm:text-xl max-w-2xl mx-auto mb-10">
-            Queue up YouTube videos, tweets, Reddit posts, notes, and images — then enjoy them in sync with your friends
-            on the big screen.
+            Great links get buried in group chats. Link Party gives your crew one shared queue &mdash; so nothing gets
+            missed.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -77,6 +83,25 @@ export function LandingPage() {
         </div>
       </section>
 
+      {/* Sound Familiar? */}
+      <section className="relative z-10 max-w-4xl mx-auto px-6 pb-16 sm:pb-24">
+        <h2 className="text-2xl sm:text-3xl font-bold text-center mb-10" style={{ fontFamily: 'var(--font-display)' }}>
+          Sound familiar?
+        </h2>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {problems.map((text, i) => (
+            <div
+              key={i}
+              className="card p-6 text-center animate-fade-in-up opacity-0"
+              style={{ animationDelay: `${(i + 1) * 100}ms` }}
+            >
+              <p className="text-text-secondary text-sm leading-relaxed">{text}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* How It Works */}
       <section className="relative z-10 max-w-4xl mx-auto px-6 pb-16 sm:pb-24">
         <h2 className="text-2xl sm:text-3xl font-bold text-center mb-12" style={{ fontFamily: 'var(--font-display)' }}>
@@ -87,8 +112,8 @@ export function LandingPage() {
           {steps.map((step, i) => (
             <div
               key={step.title}
-              className={`card p-6 text-center animate-fade-in-up opacity-0`}
-              style={{ animationDelay: `${(i + 1) * 100}ms` }}
+              className="card p-6 text-center animate-fade-in-up opacity-0"
+              style={{ animationDelay: `${(i + 1) * 100 + 300}ms` }}
             >
               <div className="w-12 h-12 rounded-full bg-accent-500/20 flex items-center justify-center mx-auto mb-4 text-accent-400">
                 <step.icon />
@@ -102,14 +127,14 @@ export function LandingPage() {
 
       {/* Final CTA */}
       <section className="relative z-10 max-w-4xl mx-auto px-6 pb-16 sm:pb-24 text-center">
-        <div className="card p-8 sm:p-12 animate-fade-in-up opacity-0" style={{ animationDelay: '400ms' }}>
+        <div className="card p-8 sm:p-12 animate-fade-in-up opacity-0" style={{ animationDelay: '700ms' }}>
           <h2 className="text-2xl sm:text-3xl font-bold mb-4" style={{ fontFamily: 'var(--font-display)' }}>
-            Ready to gather around the <span className="text-accent-500">campfire</span>?
+            Your links are <span className="text-accent-500">piling up</span>.
           </h2>
-          <p className="text-text-secondary mb-8">Works on mobile, desktop, and TV. No downloads needed.</p>
+          <p className="text-text-secondary mb-8">Start a party and actually watch them.</p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link href="/create" className="btn btn-primary text-lg px-8 py-3">
-              Get Started
+              Start a Party
             </Link>
             <Link href="/login" className="text-sm text-text-muted hover:text-text-secondary transition-colors">
               Already have an account?

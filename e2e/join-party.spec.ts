@@ -76,6 +76,6 @@ test.describe('Join Party Flow', () => {
     await page.getByRole('link', { name: /go back to home/i }).click()
 
     // Should be back on home screen - look for the Start a Party link
-    await expect(page.getByRole('link', { name: 'Start a Party' })).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Start a Party' }).first()).toBeVisible()
   })
 })

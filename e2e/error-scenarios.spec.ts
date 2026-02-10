@@ -63,7 +63,7 @@ test.describe('Error Scenarios', () => {
       await page.goto('/')
 
       // Navigate to create party
-      await page.getByRole('link', { name: 'Start a Party' }).click()
+      await page.getByRole('link', { name: 'Start a Party' }).first().click()
 
       // Try to create without entering a name
       await page.getByRole('button', { name: 'Create Party' }).click()
@@ -76,7 +76,7 @@ test.describe('Error Scenarios', () => {
       await page.goto('/')
 
       // Navigate to create party
-      await page.getByRole('link', { name: 'Start a Party' }).click()
+      await page.getByRole('link', { name: 'Start a Party' }).first().click()
 
       // Enter minimum valid name (2 characters)
       await page.getByPlaceholder(/enter your display name/i).fill('AB')
@@ -94,7 +94,7 @@ test.describe('Error Scenarios', () => {
       await page.goto('/')
 
       // Navigate to create party
-      await page.getByRole('link', { name: 'Start a Party' }).click()
+      await page.getByRole('link', { name: 'Start a Party' }).first().click()
 
       // Enter name with leading/trailing whitespace
       await page.getByPlaceholder(/enter your display name/i).fill('   Valid Name   ')
@@ -110,7 +110,7 @@ test.describe('Error Scenarios', () => {
       await page.goto('/')
 
       // Navigate to create party
-      await page.getByRole('link', { name: 'Start a Party' }).click()
+      await page.getByRole('link', { name: 'Start a Party' }).first().click()
 
       // Enter only whitespace
       await page.getByPlaceholder(/enter your display name/i).fill('     ')
@@ -188,7 +188,7 @@ test.describe('Error Scenarios', () => {
 
       // Navigate away to home
       await page.getByRole('link', { name: /go back to home/i }).click()
-      await expect(page.getByRole('link', { name: 'Start a Party' })).toBeVisible()
+      await expect(page.getByRole('link', { name: 'Start a Party' }).first()).toBeVisible()
 
       // Navigate back to login
       await page.goto('/login', { waitUntil: 'domcontentloaded' })

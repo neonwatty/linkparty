@@ -5,7 +5,7 @@ test.describe('Home Screen', () => {
     await page.goto('/')
 
     // Check for Start a Party button
-    await expect(page.getByRole('link', { name: 'Start a Party' })).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Start a Party' }).first()).toBeVisible()
 
     // Check for Join with Code link
     await expect(page.getByRole('link', { name: 'Join with Code' })).toBeVisible()
@@ -15,7 +15,7 @@ test.describe('Home Screen', () => {
     await page.goto('/')
 
     // Click Start a Party link
-    await page.getByRole('link', { name: 'Start a Party' }).click()
+    await page.getByRole('link', { name: 'Start a Party' }).first().click()
 
     // Should show the create party form
     await expect(page.getByRole('heading', { name: /start a party/i })).toBeVisible()
