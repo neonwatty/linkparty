@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import { Instrument_Serif, Inter } from 'next/font/google'
+import { Analytics } from '@vercel/analytics/next'
 import { Providers } from './providers'
 import './globals.css'
 
@@ -18,8 +19,10 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  title: 'Link Party',
-  description: 'Queue YouTube videos, tweets, and Reddit posts together in real-time',
+  metadataBase: new URL('https://linkparty.app'),
+  title: 'Link Party — Stop losing links in chat',
+  description:
+    'Great links get buried in group chats. Link Party gives your crew one shared queue — so every link actually gets watched.',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
@@ -29,6 +32,20 @@ export const metadata: Metadata = {
   icons: {
     icon: '/vite.svg',
     apple: '/icons/icon-192.png',
+  },
+  openGraph: {
+    title: 'Link Party — Stop losing links in chat',
+    description:
+      'Great links get buried in group chats. Link Party gives your crew one shared queue — so every link actually gets watched.',
+    type: 'website',
+    url: 'https://linkparty.app',
+    siteName: 'Link Party',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Link Party — Stop losing links in chat',
+    description:
+      'Great links get buried in group chats. Link Party gives your crew one shared queue — so every link actually gets watched.',
   },
 }
 
@@ -46,6 +63,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={`${instrumentSerif.variable} ${inter.variable}`}>
       <body>
         <Providers>{children}</Providers>
+        <Analytics />
       </body>
     </html>
   )

@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { track } from '@vercel/analytics'
 import { PlusIcon, LinkIcon, TvIcon } from '@/components/icons'
 import { TwinklingStars } from '@/components/ui/TwinklingStars'
 
@@ -47,7 +48,11 @@ export function LandingPage() {
             Link Party
           </span>
         </div>
-        <Link href="/login" className="text-sm text-text-muted hover:text-text-secondary transition-colors">
+        <Link
+          href="/login"
+          onClick={() => track('nav_sign_in')}
+          className="text-sm text-text-muted hover:text-text-secondary transition-colors"
+        >
           Sign in
         </Link>
       </nav>
@@ -67,13 +72,21 @@ export function LandingPage() {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link href="/create" className="btn btn-primary text-lg px-8 py-3 flex items-center justify-center gap-3">
+            <Link
+              href="/create"
+              onClick={() => track('cta_start_party_hero')}
+              className="btn btn-primary text-lg px-8 py-3 flex items-center justify-center gap-3"
+            >
               <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M12 5v14M5 12h14" />
               </svg>
               Start a Party
             </Link>
-            <Link href="/join" className="btn btn-secondary text-lg px-8 py-3 flex items-center justify-center gap-3">
+            <Link
+              href="/join"
+              onClick={() => track('cta_join_with_code')}
+              className="btn btn-secondary text-lg px-8 py-3 flex items-center justify-center gap-3"
+            >
               <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M15 3h4a2 2 0 012 2v4M9 21H5a2 2 0 01-2-2v-4M21 9v6M3 9v6" />
               </svg>
@@ -133,7 +146,11 @@ export function LandingPage() {
           </h2>
           <p className="text-text-secondary mb-8">Start a party and actually watch them.</p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link href="/create" className="btn btn-primary text-lg px-8 py-3">
+            <Link
+              href="/create"
+              onClick={() => track('cta_start_party_bottom')}
+              className="btn btn-primary text-lg px-8 py-3"
+            >
               Start a Party
             </Link>
             <Link href="/login" className="text-sm text-text-muted hover:text-text-secondary transition-colors">
