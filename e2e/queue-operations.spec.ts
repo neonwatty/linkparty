@@ -107,10 +107,11 @@ test.describe('Queue Operations', () => {
   })
 
   test('click a queue item to open actions sheet', async ({ page }) => {
-    // Add a note first so we have a queue item to interact with
+    // Add two notes: the first occupies "NOW SHOWING", the second goes to "Up next" queue list
+    await addNoteToQueue(page, 'First note occupies now showing')
     await addNoteToQueue(page, 'Test note for actions sheet')
 
-    // Click on the queue item to open the actions sheet
+    // Click on the queue item in "Up next" to open the actions sheet
     await page.getByText('Test note for actions sheet').click()
 
     // The actions sheet should be visible
@@ -127,11 +128,12 @@ test.describe('Queue Operations', () => {
   })
 
   test('delete a queue item via actions sheet', async ({ page }) => {
-    // Add notes so we have items to delete
+    // Add notes: first occupies "NOW SHOWING", others go to "Up next" queue list
+    await addNoteToQueue(page, 'First note occupies now showing')
     await addNoteToQueue(page, 'Note to be deleted')
     await addNoteToQueue(page, 'Note to keep in queue')
 
-    // Click on the item to open the actions sheet
+    // Click on the item in "Up next" to open the actions sheet
     await page.getByText('Note to be deleted').click()
 
     // The actions sheet should be visible
@@ -156,7 +158,8 @@ test.describe('Queue Operations', () => {
   })
 
   test('cancel delete does not remove the item', async ({ page }) => {
-    // Add a note to interact with
+    // Add two notes: first occupies "NOW SHOWING", second goes to "Up next"
+    await addNoteToQueue(page, 'First note occupies now showing')
     await addNoteToQueue(page, 'Note for cancel delete test')
 
     // Click on the item to open the actions sheet
@@ -182,7 +185,8 @@ test.describe('Queue Operations', () => {
   })
 
   test('close actions sheet with Cancel button', async ({ page }) => {
-    // Add a note to interact with
+    // Add two notes: first occupies "NOW SHOWING", second goes to "Up next"
+    await addNoteToQueue(page, 'First note occupies now showing')
     await addNoteToQueue(page, 'Note for close actions test')
 
     // Click on a queue item
