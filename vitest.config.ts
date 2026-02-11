@@ -17,6 +17,7 @@ export default defineConfig({
       'src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
       'app/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
       'components/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
+      'lib/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
     ],
     coverage: {
       reporter: ['text', 'json', 'html'],

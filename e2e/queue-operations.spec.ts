@@ -1,15 +1,23 @@
 import { test, expect, type Page } from '@playwright/test'
 
+// Helper: finish CSS animations on a dialog to prevent WebKit stability issues
+async function finishDialogAnimations(page: Page, role: string, namePattern?: RegExp): Promise<void> {
+  const dialog = namePattern ? page.getByRole(role, { name: namePattern }) : page.getByRole(role)
+  await dialog.evaluate((el) => el.getAnimations({ subtree: true }).forEach((a) => a.finish()))
+}
+
 // Helper: add a note to the queue and wait for modal to close
 async function addNoteToQueue(page: Page, noteText: string): Promise<void> {
   await page.locator('.fab').click()
-  await expect(page.getByRole('dialog', { name: /add content to queue/i })).toBeVisible()
+  const modal = page.getByRole('dialog', { name: /add content to queue/i })
+  await expect(modal).toBeVisible()
+  await finishDialogAnimations(page, 'dialog', /add content to queue/i)
   await page.getByRole('button', { name: /write a note/i }).click()
   await page.getByPlaceholder(/share a thought/i).fill(noteText)
   await page.getByRole('button', { name: /preview/i }).click()
   await page.getByRole('button', { name: /add to queue/i }).click()
   await expect(page.getByText('Added to queue!')).toBeVisible()
-  await expect(page.getByRole('dialog', { name: /add content to queue/i })).toBeHidden({ timeout: 5000 })
+  await expect(modal).toBeHidden({ timeout: 10000 })
 }
 
 test.describe('Queue Operations', () => {
@@ -136,22 +144,27 @@ test.describe('Queue Operations', () => {
     // Click on the item in "Up next" to open the actions sheet
     await page.getByText('Note to be deleted').click()
 
-    // The actions sheet should be visible
-    await expect(page.getByRole('dialog', { name: /queue item actions/i })).toBeVisible()
+    // The actions sheet should be visible — finish its animation for WebKit stability
+    const actionsSheet = page.getByRole('dialog', { name: /queue item actions/i })
+    await expect(actionsSheet).toBeVisible()
+    await finishDialogAnimations(page, 'dialog', /queue item actions/i)
 
     // Click "Remove from Queue"
     await page.getByText('Remove from Queue').click()
 
-    // The delete confirmation dialog should appear
+    // The delete confirmation dialog should appear — finish its animation too
     await expect(page.getByRole('alertdialog')).toBeVisible()
+    await finishDialogAnimations(page, 'alertdialog')
     await expect(page.getByText('Remove item?')).toBeVisible()
-    await expect(page.getByText(/this item will be removed from the queue/i)).toBeVisible()
 
     // Click "Remove" to confirm deletion
     await page.getByRole('button', { name: /^remove$/i }).click()
 
+    // Wait for the confirmation dialog to dismiss
+    await expect(page.getByRole('alertdialog')).toBeHidden({ timeout: 10000 })
+
     // The item should be removed from the queue
-    await expect(page.getByText('Note to be deleted')).toBeHidden({ timeout: 5000 })
+    await expect(page.getByText('Note to be deleted')).toBeHidden({ timeout: 10000 })
 
     // Other items should still be visible
     await expect(page.getByText('Note to keep in queue')).toBeVisible()

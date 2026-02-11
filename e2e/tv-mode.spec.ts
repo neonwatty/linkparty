@@ -114,8 +114,9 @@ test.describe('TV Mode', () => {
     await page.getByRole('button', { name: 'Open TV mode' }).click()
     await expect(page).toHaveURL(/\/party\/[^/]+\/tv/, { timeout: 10000 })
 
-    // Verify the root container has a black background (bg-black class)
-    const rootDiv = page.locator('.min-h-screen.bg-black')
-    await expect(rootDiv).toBeVisible()
+    // Verify the TV mode root container is present and has a black background
+    const rootDiv = page.getByTestId('tv-mode-root')
+    await expect(rootDiv).toBeVisible({ timeout: 10000 })
+    await expect(rootDiv).toHaveCSS('background-color', 'rgb(0, 0, 0)')
   })
 })

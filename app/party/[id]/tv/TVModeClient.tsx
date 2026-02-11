@@ -31,7 +31,7 @@ export default function TVModeClient() {
   }
 
   return (
-    <div className="min-h-screen bg-black flex flex-col">
+    <div data-testid="tv-mode-root" className="min-h-screen bg-black flex flex-col">
       {/* Exit button - clearly visible */}
       <button
         onClick={handleExit}

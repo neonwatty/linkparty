@@ -14,8 +14,9 @@ import {
 } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { tryAction } from '@/lib/rateLimit'
+import { hashPassword } from '@/lib/passwordHash'
 import { useAuth } from '@/contexts/AuthContext'
-import { ChevronLeftIcon, LoaderIcon } from '@/components/icons'
+import { ChevronLeftIcon, LoaderIcon, LockIcon } from '@/components/icons'
 import { TwinklingStars } from '@/components/ui/TwinklingStars'
 
 const log = logger.createLogger('CreateParty')
@@ -25,6 +26,8 @@ export default function CreatePartyPage() {
   const { user } = useAuth()
   const [partyName, setPartyName] = useState('')
   const [displayName, setDisplayNameInput] = useState(getDisplayName() || '')
+  const [passwordEnabled, setPasswordEnabled] = useState(false)
+  const [password, setPassword] = useState('')
   const [isCreating, setIsCreating] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -73,16 +76,18 @@ export default function CreatePartyPage() {
         return
       }
 
+      // Hash password if enabled
+      const passwordHash = passwordEnabled && password ? await hashPassword(password) : null
+
       // Create the party
-      const { data: party, error: partyError } = await supabase
-        .from('parties')
-        .insert({
-          code,
-          name: partyName.trim() || null,
-          host_session_id: sessionId,
-        })
-        .select()
-        .single()
+      const insertData: Record<string, unknown> = {
+        code,
+        name: partyName.trim() || null,
+        host_session_id: sessionId,
+      }
+      if (passwordHash) insertData.password_hash = passwordHash
+
+      const { data: party, error: partyError } = await supabase.from('parties').insert(insertData).select().single()
 
       if (partyError) throw partyError
 
@@ -175,8 +180,45 @@ export default function CreatePartyPage() {
             )}
           </div>
 
-          {/* Settings preview */}
+          {/* Settings */}
           <div className="card p-4 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <LockIcon size={16} />
+                <div>
+                  <div className="text-sm font-medium">Password protect</div>
+                  <div className="text-xs text-text-muted">Require a password to join</div>
+                </div>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={passwordEnabled}
+                onClick={() => {
+                  setPasswordEnabled(!passwordEnabled)
+                  if (passwordEnabled) setPassword('')
+                }}
+                className={`relative w-11 h-6 rounded-full transition-colors ${passwordEnabled ? 'bg-primary' : 'bg-surface-600'}`}
+              >
+                <span
+                  className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${passwordEnabled ? 'translate-x-5' : ''}`}
+                />
+              </button>
+            </div>
+            {passwordEnabled && (
+              <input
+                type="password"
+                placeholder="Enter party password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                onKeyDown={handleKeyDown}
+                className="input"
+                disabled={isCreating}
+                maxLength={50}
+                autoComplete="off"
+              />
+            )}
+            <div className="h-px bg-surface-700"></div>
             <div className="flex items-center justify-between">
               <div>
                 <div className="text-sm font-medium">Queue limit</div>

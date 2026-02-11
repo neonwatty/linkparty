@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { supabase, getSessionId } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
-import { ChevronLeftIcon } from '@/components/icons'
+import { ChevronLeftIcon, LockIcon } from '@/components/icons'
 import { TwinklingStars } from '@/components/ui/TwinklingStars'
 
 const log = logger.createLogger('History')
@@ -15,6 +15,7 @@ interface PartyHistoryItem {
   date: string
   members: number
   items: number
+  hasPassword: boolean
 }
 
 export default function HistoryPage() {
@@ -40,7 +41,7 @@ export default function HistoryPage() {
             `
             party_id,
             joined_at,
-            parties (id, code, name, created_at)
+            parties (id, code, name, created_at, password_hash)
           `,
           )
           .eq('session_id', sessionId)
@@ -95,7 +96,13 @@ export default function HistoryPage() {
         const formattedParties: PartyHistoryItem[] = memberData
           .filter((m) => m.parties)
           .map((m) => {
-            const party = m.parties as unknown as { id: string; code: string; name: string | null; created_at: string }
+            const party = m.parties as unknown as {
+              id: string
+              code: string
+              name: string | null
+              created_at: string
+              password_hash: string | null
+            }
             const createdAt = new Date(party.created_at)
             const dateStr = createdAt.toLocaleDateString('en-US', {
               month: 'short',
@@ -108,6 +115,7 @@ export default function HistoryPage() {
               date: dateStr,
               members: memberCountMap[party.id] || 1,
               items: itemCountMap[party.id] || 0,
+              hasPassword: !!party.password_hash,
             }
           })
 
@@ -161,7 +169,10 @@ export default function HistoryPage() {
             >
               <div className="flex items-start justify-between">
                 <div>
-                  <div className="font-semibold">{party.name}</div>
+                  <div className="flex items-center gap-1.5 font-semibold">
+                    {party.hasPassword && <LockIcon size={14} />}
+                    {party.name}
+                  </div>
                   <div className="text-text-muted text-sm mt-1">{party.date}</div>
                 </div>
                 <div className="text-right text-sm">

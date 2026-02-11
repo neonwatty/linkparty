@@ -13,8 +13,9 @@ import {
   IS_MOCK_MODE,
 } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import { hashPassword, verifyHash } from '@/lib/passwordHash'
 import { useAuth } from '@/contexts/AuthContext'
-import { ChevronLeftIcon, LoaderIcon } from '@/components/icons'
+import { ChevronLeftIcon, LoaderIcon, LockIcon } from '@/components/icons'
 import { TwinklingStars } from '@/components/ui/TwinklingStars'
 
 const log = logger.createLogger('JoinParty')
@@ -24,6 +25,9 @@ export default function JoinPartyPage() {
   const { user } = useAuth()
   const [code, setCode] = useState('')
   const [displayName, setDisplayNameInput] = useState(getDisplayName() || '')
+  const [password, setPassword] = useState('')
+  const [needsPassword, setNeedsPassword] = useState(false)
+  const [pendingParty, setPendingParty] = useState<{ id: string; code: string; password_hash: string } | null>(null)
   const [isJoining, setIsJoining] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -72,19 +76,48 @@ export default function JoinPartyPage() {
       }
 
       // Look up party by code
-      const { data: party, error: partyError } = await supabase
-        .from('parties')
-        .select('*')
-        .eq('code', code.toUpperCase())
-        .single()
+      let party = pendingParty
+      if (!party) {
+        const { data, error: partyError } = await supabase
+          .from('parties')
+          .select('*')
+          .eq('code', code.toUpperCase())
+          .single()
 
-      if (partyError) {
-        if (partyError.code === 'PGRST116') {
-          setError('Party not found. Check the code and try again.')
-        } else {
-          throw partyError
+        if (partyError) {
+          if (partyError.code === 'PGRST116') {
+            setError('Party not found. Check the code and try again.')
+          } else {
+            throw partyError
+          }
+          return
         }
-        return
+        party = data
+
+        // If password protected, prompt for password
+        if (data.password_hash && !needsPassword) {
+          setPendingParty(data)
+          setNeedsPassword(true)
+          setIsJoining(false)
+          return
+        }
+      }
+
+      if (!party) return
+
+      // Verify password if required
+      if (party.password_hash) {
+        if (!password) {
+          setError('Please enter the party password')
+          setIsJoining(false)
+          return
+        }
+        const hash = await hashPassword(password)
+        if (!verifyHash(hash, party.password_hash)) {
+          setError('Incorrect password')
+          setIsJoining(false)
+          return
+        }
       }
 
       // Upsert member (in case they've joined before)
@@ -169,12 +202,33 @@ export default function JoinPartyPage() {
             />
           </div>
 
+          {needsPassword && (
+            <div>
+              <label className="flex items-center gap-2 text-sm text-text-secondary mb-2">
+                <LockIcon size={14} />
+                Party password
+              </label>
+              <input
+                type="password"
+                placeholder="Enter party password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                onKeyDown={handleKeyDown}
+                className="input"
+                disabled={isJoining}
+                maxLength={50}
+                autoComplete="off"
+                autoFocus
+              />
+            </div>
+          )}
+
           {error && <div className="text-red-400 text-sm text-center">{error}</div>}
 
           <button
             onClick={handleJoin}
             className="btn btn-primary w-full text-lg disabled:opacity-50"
-            disabled={code.length !== 6 || !displayName.trim() || isJoining}
+            disabled={code.length !== 6 || !displayName.trim() || isJoining || (needsPassword && !password)}
           >
             {isJoining ? (
               <span className="flex items-center justify-center gap-2">

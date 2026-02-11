@@ -12,8 +12,8 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
-  /* Opt out of parallel tests on CI */
-  workers: process.env.CI ? 1 : undefined,
+  /* Use half available CPUs on CI (sharding handles the rest) */
+  workers: process.env.CI ? '50%' : undefined,
   /* Reporter to use */
   reporter: [['html', { open: 'never' }], ['list']],
   /* Shared settings for all the projects below */
@@ -28,7 +28,14 @@ export default defineConfig({
     screenshot: 'only-on-failure',
   },
 
-  /* Configure projects for major browsers */
+  /* Configure projects for major browsers
+   * - chromium: Desktop Chrome (covers Chromium engine + desktop viewport)
+   * - firefox: Desktop Firefox (covers Gecko engine)
+   * - Mobile Safari: iPhone 12 / WebKit (covers WebKit engine + mobile viewport)
+   *
+   * Dropped: 'webkit' desktop (same engine as Mobile Safari, redundant)
+   *          'Mobile Chrome' (same engine as chromium, viewport coverage via Mobile Safari)
+   */
   projects: [
     {
       name: 'chromium',
@@ -37,15 +44,6 @@ export default defineConfig({
     {
       name: 'firefox',
       use: { ...devices['Desktop Firefox'] },
-    },
-    {
-      name: 'webkit',
-      use: { ...devices['Desktop Safari'] },
-    },
-    /* Test against mobile viewports */
-    {
-      name: 'Mobile Chrome',
-      use: { ...devices['Pixel 5'] },
     },
     {
       name: 'Mobile Safari',
