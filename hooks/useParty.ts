@@ -68,6 +68,7 @@ export interface PartyInfo {
   name: string | null
   hostSessionId: string
   createdAt: string
+  expiresAt: string
 }
 
 // Transform DB queue item to app queue item
@@ -181,6 +182,7 @@ export function useParty(partyId: string | null) {
           name: 'Test Party',
           hostSessionId: sessionId,
           createdAt: new Date().toISOString(),
+          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
         }
       : null,
   )
@@ -239,6 +241,7 @@ export function useParty(partyId: string | null) {
         name: party.name,
         hostSessionId: party.host_session_id,
         createdAt: party.created_at,
+        expiresAt: party.expires_at,
       })
 
       // Fetch queue items
@@ -286,6 +289,7 @@ export function useParty(partyId: string | null) {
         name: 'Test Party',
         hostSessionId: currentSessionId,
         createdAt: new Date().toISOString(),
+        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
       })
       setIsLoading(false)
       return
@@ -311,6 +315,7 @@ export function useParty(partyId: string | null) {
           name: party.name,
           hostSessionId: party.host_session_id,
           createdAt: party.created_at,
+          expiresAt: party.expires_at,
         })
 
         const { data: queueData, error: queueError } = await supabase

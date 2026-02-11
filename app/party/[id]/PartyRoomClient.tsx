@@ -508,6 +508,7 @@ export default function PartyRoomClient() {
       <PartyHeader
         partyName={partyInfo?.name || 'Party'}
         partyCode={partyCode}
+        expiresAt={partyInfo?.expiresAt}
         onLeave={handleLeave}
         onTvMode={handleTvMode}
         onShare={handleShare}
