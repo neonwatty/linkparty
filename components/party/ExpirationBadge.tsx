@@ -34,15 +34,13 @@ function getTimeRemaining(expiresAt: string) {
 }
 
 export function ExpirationBadge({ expiresAt }: ExpirationBadgeProps) {
-  const [time, setTime] = useState(() => getTimeRemaining(expiresAt))
+  const [, setTick] = useState(0)
+  const time = getTimeRemaining(expiresAt)
 
   useEffect(() => {
-    setTime(getTimeRemaining(expiresAt))
-    const interval = setInterval(() => {
-      setTime(getTimeRemaining(expiresAt))
-    }, 60_000)
+    const interval = setInterval(() => setTick((t) => t + 1), 60_000)
     return () => clearInterval(interval)
-  }, [expiresAt])
+  }, [])
 
   return (
     <span
