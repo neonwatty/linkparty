@@ -1,20 +1,16 @@
 // Link Party Service Worker
-// Version updated to bust cache after performance optimizations
-const CACHE_NAME = 'link-party-v2'
+const CACHE_NAME = 'link-party-v3'
 const OFFLINE_URL = '/offline.html'
 
-// Only cache static assets that don't change often
-// DO NOT cache index.html or hashed JS bundles - they have their own cache busting
-const PRECACHE_ASSETS = ['/manifest.json']
+// Pre-cache: offline fallback + manifest
+const PRECACHE_ASSETS = [OFFLINE_URL, '/manifest.json']
+
+// Static asset extensions that benefit from cache-first
+const CACHE_FIRST_EXTENSIONS = /\.(png|jpg|jpeg|gif|webp|svg|ico|woff|woff2|ttf|otf)$/
 
 // Install event - cache core assets
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(PRECACHE_ASSETS)
-    }),
-  )
-  // Activate immediately
+  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE_ASSETS)))
   self.skipWaiting()
 })
 
@@ -25,60 +21,55 @@ self.addEventListener('activate', (event) => {
       return Promise.all(cacheNames.filter((name) => name !== CACHE_NAME).map((name) => caches.delete(name)))
     }),
   )
-  // Take control of all pages immediately
   self.clients.claim()
 })
 
-// Fetch event - network first, fallback to cache
+// Fetch event - strategy depends on request type
 self.addEventListener('fetch', (event) => {
-  // Skip non-GET requests
   if (event.request.method !== 'GET') return
-
-  // Skip cross-origin requests
   if (!event.request.url.startsWith(self.location.origin)) return
 
-  // Skip API requests (Supabase)
-  if (event.request.url.includes('supabase')) return
-
-  // Skip hashed assets - they already have cache-busting hashes in filenames
-  // and browser cache handles them correctly
   const url = new URL(event.request.url)
-  if (url.pathname.match(/\.[a-f0-9]{8,}\.(js|css)$/)) {
+
+  // Skip API/Supabase requests — always go to network
+  if (url.pathname.startsWith('/api/') || event.request.url.includes('supabase')) return
+
+  // Cache-first for static assets (images, fonts, icons)
+  if (CACHE_FIRST_EXTENSIONS.test(url.pathname)) {
+    event.respondWith(
+      caches.match(event.request).then((cached) => {
+        if (cached) return cached
+        return fetch(event.request).then((response) => {
+          if (response.status === 200) {
+            const clone = response.clone()
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone))
+          }
+          return response
+        })
+      }),
+    )
     return
   }
 
-  // Skip index.html - always fetch fresh to get latest asset references
-  if (url.pathname === '/' || url.pathname === '/index.html') {
-    return
-  }
+  // Skip hashed JS/CSS bundles — browser cache handles them
+  if (url.pathname.match(/\.[a-f0-9]{8,}\.(js|css)$/)) return
 
+  // Network-first for navigation and other requests
   event.respondWith(
     fetch(event.request)
       .then((response) => {
-        // Clone response for caching
-        const responseClone = response.clone()
-
-        // Cache successful responses
         if (response.status === 200) {
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseClone)
-          })
+          const clone = response.clone()
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone))
         }
-
         return response
       })
       .catch(() => {
-        // Network failed, try cache
-        return caches.match(event.request).then((cachedResponse) => {
-          if (cachedResponse) {
-            return cachedResponse
-          }
-
-          // Return offline page for navigation requests
+        return caches.match(event.request).then((cached) => {
+          if (cached) return cached
           if (event.request.mode === 'navigate') {
             return caches.match(OFFLINE_URL)
           }
-
           return new Response('Offline', { status: 503 })
         })
       }),
@@ -95,9 +86,7 @@ self.addEventListener('push', (event) => {
     icon: '/icons/icon-192.png',
     badge: '/icons/icon-192.png',
     vibrate: [100, 50, 100],
-    data: {
-      url: data.url || '/',
-    },
+    data: { url: data.url || '/' },
   }
 
   event.waitUntil(self.registration.showNotification(data.title || 'Link Party', options))
@@ -109,16 +98,21 @@ self.addEventListener('notificationclick', (event) => {
 
   event.waitUntil(
     clients.matchAll({ type: 'window' }).then((clientList) => {
-      // Focus existing window if available
       for (const client of clientList) {
         if (client.url === event.notification.data.url && 'focus' in client) {
           return client.focus()
         }
       }
-      // Open new window
       if (clients.openWindow) {
         return clients.openWindow(event.notification.data.url)
       }
     }),
   )
+})
+
+// Listen for skip-waiting message from client
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting()
+  }
 })
