@@ -49,7 +49,11 @@ export default defineConfig({
     },
     {
       name: 'Mobile Safari',
-      use: { ...devices['iPhone 12'] },
+      use: {
+        ...devices['iPhone 12'],
+        /* WebKit on Linux CI cold-starts slowly — give navigation extra headroom */
+        ...(process.env.CI ? { navigationTimeout: 45_000, actionTimeout: 15_000 } : {}),
+      },
     },
   ],
 
