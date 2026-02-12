@@ -101,15 +101,15 @@ export function LoginScreen({ onNavigate }: { onNavigate: (screen: Screen) => vo
         </button>
 
         <div className="flex-1 flex flex-col">
-          <h1 className="text-3xl font-bold mb-2 animate-fade-in-up opacity-0">
+          <h1 className="text-3xl font-bold mb-2 animate-fade-in-up">
             Reset password
           </h1>
-          <p className="text-text-secondary mb-8 animate-fade-in-up opacity-0 delay-100">
+          <p className="text-text-secondary mb-8 animate-fade-in-up delay-100">
             Enter your email to receive a reset link
           </p>
 
           {resetEmailSent ? (
-            <div className="animate-fade-in-up opacity-0 delay-200">
+            <div className="animate-fade-in-up delay-200">
               <div className="bg-teal-500/10 border border-teal-500/30 rounded-xl p-4 text-center">
                 <p className="text-teal-400 font-medium mb-2">Check your email</p>
                 <p className="text-text-secondary text-sm">
@@ -132,7 +132,7 @@ export function LoginScreen({ onNavigate }: { onNavigate: (screen: Screen) => vo
                 <div className="text-red-400 text-sm text-center mb-4">{error}</div>
               )}
 
-              <div className="space-y-4 animate-fade-in-up opacity-0 delay-200">
+              <div className="space-y-4 animate-fade-in-up delay-200">
                 <div>
                   <input
                     type="email"
@@ -175,10 +175,10 @@ export function LoginScreen({ onNavigate }: { onNavigate: (screen: Screen) => vo
       </button>
 
       <div className="flex-1 flex flex-col">
-        <h1 className="text-3xl font-bold mb-2 animate-fade-in-up opacity-0">
+        <h1 className="text-3xl font-bold mb-2 animate-fade-in-up">
           Welcome back
         </h1>
-        <p className="text-text-secondary mb-8 animate-fade-in-up opacity-0 delay-100">
+        <p className="text-text-secondary mb-8 animate-fade-in-up delay-100">
           Sign in to access your party history
         </p>
 
@@ -187,7 +187,7 @@ export function LoginScreen({ onNavigate }: { onNavigate: (screen: Screen) => vo
         )}
 
         {/* OAuth buttons */}
-        <div className="space-y-3 mb-8 animate-fade-in-up opacity-0 delay-200">
+        <div className="space-y-3 mb-8 animate-fade-in-up delay-200">
           <button
             onClick={handleGoogleSignIn}
             disabled={isLoading}
@@ -204,14 +204,14 @@ export function LoginScreen({ onNavigate }: { onNavigate: (screen: Screen) => vo
           </button>
         </div>
 
-        <div className="flex items-center gap-4 mb-8 animate-fade-in-up opacity-0 delay-300">
+        <div className="flex items-center gap-4 mb-8 animate-fade-in-up delay-300">
           <div className="flex-1 h-px bg-surface-700"></div>
           <span className="text-text-muted text-sm">or</span>
           <div className="flex-1 h-px bg-surface-700"></div>
         </div>
 
         {/* Email form */}
-        <div className="space-y-4 animate-fade-in-up opacity-0 delay-400">
+        <div className="space-y-4 animate-fade-in-up delay-400">
           <div>
             <input
               type="email"
@@ -249,7 +249,7 @@ export function LoginScreen({ onNavigate }: { onNavigate: (screen: Screen) => vo
           </button>
         </div>
 
-        <div className="mt-4 text-center animate-fade-in-up opacity-0 delay-500">
+        <div className="mt-4 text-center animate-fade-in-up delay-500">
           <button
             onClick={() => setShowForgotPassword(true)}
             className="text-text-muted text-sm hover:text-text-secondary transition-colors"
@@ -258,7 +258,7 @@ export function LoginScreen({ onNavigate }: { onNavigate: (screen: Screen) => vo
           </button>
         </div>
 
-        <div className="mt-4 text-center animate-fade-in-up opacity-0 delay-500">
+        <div className="mt-4 text-center animate-fade-in-up delay-500">
           <button
             onClick={() => onNavigate('signup')}
             className="text-text-muted text-sm hover:text-text-secondary transition-colors"

@@ -124,10 +124,10 @@ export function HistoryScreen({ onNavigate }: { onNavigate: (screen: Screen) => 
         <ChevronLeftIcon />
       </button>
 
-      <h1 className="text-3xl font-bold mb-2 animate-fade-in-up opacity-0">
+      <h1 className="text-3xl font-bold mb-2 animate-fade-in-up">
         Party History
       </h1>
-      <p className="text-text-secondary mb-8 animate-fade-in-up opacity-0 delay-100">
+      <p className="text-text-secondary mb-8 animate-fade-in-up delay-100">
         Your past watch sessions
       </p>
 
@@ -138,13 +138,13 @@ export function HistoryScreen({ onNavigate }: { onNavigate: (screen: Screen) => 
       )}
 
       {error && (
-        <div className="card p-4 text-center text-red-400 animate-fade-in-up opacity-0 delay-150">
+        <div className="card p-4 text-center text-red-400 animate-fade-in-up delay-150">
           {error}
         </div>
       )}
 
       {!loading && !error && parties.length === 0 && (
-        <div className="card p-8 text-center animate-fade-in-up opacity-0 delay-150">
+        <div className="card p-8 text-center animate-fade-in-up delay-150">
           <div className="text-4xl mb-4">🎉</div>
           <div className="text-text-secondary">No party history yet</div>
           <div className="text-text-muted text-sm mt-2">Join or create a party to get started!</div>
@@ -156,7 +156,7 @@ export function HistoryScreen({ onNavigate }: { onNavigate: (screen: Screen) => 
           {parties.map((party, index) => (
             <div
               key={party.id}
-              className="card p-4 cursor-pointer hover:border-surface-600 transition-colors animate-fade-in-up opacity-0"
+              className="card p-4 cursor-pointer hover:border-surface-600 transition-colors animate-fade-in-up"
               style={{ animationDelay: `${150 + index * 50}ms` }}
             >
               <div className="flex items-start justify-between">

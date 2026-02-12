@@ -139,8 +139,8 @@ export default function HistoryPage() {
         <ChevronLeftIcon />
       </Link>
 
-      <h1 className="text-3xl font-bold mb-2 animate-fade-in-up opacity-0 relative z-10">Party History</h1>
-      <p className="text-text-secondary mb-8 animate-fade-in-up opacity-0 delay-100">Your past watch sessions</p>
+      <h1 className="text-3xl font-bold mb-2 animate-fade-in-up relative z-10">Party History</h1>
+      <p className="text-text-secondary mb-8 animate-fade-in-up delay-100">Your past watch sessions</p>
 
       {loading && (
         <div className="flex justify-center py-12">
@@ -148,10 +148,10 @@ export default function HistoryPage() {
         </div>
       )}
 
-      {error && <div className="card p-4 text-center text-red-400 animate-fade-in-up opacity-0 delay-150">{error}</div>}
+      {error && <div className="card p-4 text-center text-red-400 animate-fade-in-up delay-150">{error}</div>}
 
       {!loading && !error && parties.length === 0 && (
-        <div className="card p-8 text-center animate-fade-in-up opacity-0 delay-150">
+        <div className="card p-8 text-center animate-fade-in-up delay-150">
           <div className="text-4xl mb-4">🎉</div>
           <div className="text-text-secondary">No party history yet</div>
           <div className="text-text-muted text-sm mt-2">Join or create a party to get started!</div>
@@ -164,7 +164,7 @@ export default function HistoryPage() {
             <Link
               key={party.id}
               href={`/party/${party.id}`}
-              className="card p-4 block cursor-pointer hover:border-surface-600 transition-colors animate-fade-in-up opacity-0"
+              className="card p-4 block cursor-pointer hover:border-surface-600 transition-colors animate-fade-in-up"
               style={{ animationDelay: `${150 + index * 50}ms` }}
             >
               <div className="flex items-start justify-between">

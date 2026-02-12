@@ -101,12 +101,10 @@ export default function CreatePartyPage() {
       </Link>
 
       <div className="flex-1 flex flex-col">
-        <h1 className="text-3xl font-bold mb-2 animate-fade-in-up opacity-0">Start a party</h1>
-        <p className="text-text-secondary mb-8 animate-fade-in-up opacity-0 delay-100">
-          Create a room and invite your friends
-        </p>
+        <h1 className="text-3xl font-bold mb-2 animate-fade-in-up">Start a party</h1>
+        <p className="text-text-secondary mb-8 animate-fade-in-up delay-100">Create a room and invite your friends</p>
 
-        <div className="space-y-6 animate-fade-in-up opacity-0 delay-200">
+        <div className="space-y-6 animate-fade-in-up delay-200">
           <div>
             <label className="block text-sm text-text-secondary mb-2">Your name</label>
             <input

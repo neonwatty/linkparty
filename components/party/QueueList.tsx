@@ -178,7 +178,7 @@ export function QueueList({
 
   if (items.length === 0 && !hasShowingItem) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center px-4 pb-24 animate-fade-in-up opacity-0">
+      <div className="flex-1 flex flex-col items-center justify-center px-4 pb-24 animate-fade-in-up">
         <div className="text-text-muted mb-4">
           <PlusIcon />
         </div>

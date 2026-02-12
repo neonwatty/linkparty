@@ -59,7 +59,7 @@ export function LandingPage() {
 
       {/* Hero */}
       <section className="relative z-10 max-w-4xl mx-auto px-6 pt-12 pb-16 sm:pt-20 sm:pb-24 text-center">
-        <div className="animate-fade-in-up opacity-0">
+        <div className="animate-fade-in-up">
           <h1
             className="text-4xl sm:text-5xl md:text-6xl font-bold leading-tight mb-6"
             style={{ fontFamily: 'var(--font-display)' }}
@@ -106,7 +106,7 @@ export function LandingPage() {
           {problems.map((text, i) => (
             <div
               key={i}
-              className="card p-6 text-center animate-fade-in-up opacity-0"
+              className="card p-6 text-center animate-fade-in-up"
               style={{ animationDelay: `${(i + 1) * 100}ms` }}
             >
               <p className="text-text-secondary text-sm leading-relaxed">{text}</p>
@@ -125,7 +125,7 @@ export function LandingPage() {
           {steps.map((step, i) => (
             <div
               key={step.title}
-              className="card p-6 text-center animate-fade-in-up opacity-0"
+              className="card p-6 text-center animate-fade-in-up"
               style={{ animationDelay: `${(i + 1) * 100 + 300}ms` }}
             >
               <div className="w-12 h-12 rounded-full bg-accent-500/20 flex items-center justify-center mx-auto mb-4 text-accent-400">
@@ -140,7 +140,7 @@ export function LandingPage() {
 
       {/* Final CTA */}
       <section className="relative z-10 max-w-4xl mx-auto px-6 pb-16 sm:pb-24 text-center">
-        <div className="card p-8 sm:p-12 animate-fade-in-up opacity-0" style={{ animationDelay: '700ms' }}>
+        <div className="card p-8 sm:p-12 animate-fade-in-up" style={{ animationDelay: '700ms' }}>
           <h2 className="text-2xl sm:text-3xl font-bold mb-4" style={{ fontFamily: 'var(--font-display)' }}>
             Your links are <span className="text-accent-500">piling up</span>.
           </h2>

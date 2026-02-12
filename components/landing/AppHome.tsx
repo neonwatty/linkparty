@@ -28,7 +28,7 @@ export function AppHome() {
 
       {/* Hero */}
       <div className="flex-1 flex flex-col justify-center relative z-10">
-        <div className="animate-fade-in-up opacity-0">
+        <div className="animate-fade-in-up">
           {/* Logo Icon */}
           <div className="logo-icon mx-auto mb-6">
             <svg width="40" height="40" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 40 40">

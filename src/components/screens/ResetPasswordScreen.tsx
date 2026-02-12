@@ -44,7 +44,7 @@ export function ResetPasswordScreen({ onNavigate }: { onNavigate: (screen: Scree
     return (
       <div className="container-mobile bg-gradient-party flex flex-col px-6 py-8">
         <div className="flex-1 flex flex-col items-center justify-center text-center">
-          <div className="animate-fade-in-up opacity-0">
+          <div className="animate-fade-in-up">
             <div className="w-16 h-16 rounded-full bg-teal-500/20 flex items-center justify-center mx-auto mb-6">
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-teal-400">
                 <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
@@ -78,10 +78,10 @@ export function ResetPasswordScreen({ onNavigate }: { onNavigate: (screen: Scree
       </button>
 
       <div className="flex-1 flex flex-col">
-        <h1 className="text-3xl font-bold mb-2 animate-fade-in-up opacity-0">
+        <h1 className="text-3xl font-bold mb-2 animate-fade-in-up">
           Set new password
         </h1>
-        <p className="text-text-secondary mb-8 animate-fade-in-up opacity-0 delay-100">
+        <p className="text-text-secondary mb-8 animate-fade-in-up delay-100">
           Enter your new password below
         </p>
 
@@ -89,7 +89,7 @@ export function ResetPasswordScreen({ onNavigate }: { onNavigate: (screen: Scree
           <div className="text-red-400 text-sm text-center mb-4">{error}</div>
         )}
 
-        <div className="space-y-4 animate-fade-in-up opacity-0 delay-200">
+        <div className="space-y-4 animate-fade-in-up delay-200">
           <div>
             <input
               type="password"
