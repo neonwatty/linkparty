@@ -153,14 +153,12 @@ export default function EmailEventsPage() {
         <ChevronLeftIcon />
       </Link>
 
-      <h1 className="text-3xl font-bold mb-2 animate-fade-in-up opacity-0">Email Events</h1>
-      <p className="text-text-secondary mb-8 animate-fade-in-up opacity-0 delay-100">
-        Monitor email delivery and engagement
-      </p>
+      <h1 className="text-3xl font-bold mb-2 animate-fade-in-up">Email Events</h1>
+      <p className="text-text-secondary mb-8 animate-fade-in-up delay-100">Monitor email delivery and engagement</p>
 
       {/* Stats Cards */}
       {stats && (
-        <div className="grid grid-cols-2 gap-3 mb-6 animate-fade-in-up opacity-0 delay-150">
+        <div className="grid grid-cols-2 gap-3 mb-6 animate-fade-in-up delay-150">
           <StatCard
             label="Delivery Rate"
             value={`${stats.deliveryRate}%`}
@@ -187,7 +185,7 @@ export default function EmailEventsPage() {
       )}
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3 mb-6 animate-fade-in-up opacity-0 delay-200">
+      <div className="flex flex-col sm:flex-row gap-3 mb-6 animate-fade-in-up delay-200">
         <input
           type="text"
           placeholder="Search by email..."
@@ -224,7 +222,7 @@ export default function EmailEventsPage() {
 
       {/* Error State */}
       {error && (
-        <div className="card p-4 text-center text-red-400 animate-fade-in-up opacity-0 delay-250">
+        <div className="card p-4 text-center text-red-400 animate-fade-in-up delay-250">
           {error}
           <button onClick={fetchEvents} className="block mx-auto mt-2 text-sm text-primary hover:underline">
             Try again
@@ -234,7 +232,7 @@ export default function EmailEventsPage() {
 
       {/* Empty State */}
       {!loading && !error && events.length === 0 && (
-        <div className="card p-8 text-center animate-fade-in-up opacity-0 delay-250">
+        <div className="card p-8 text-center animate-fade-in-up delay-250">
           <div className="text-4xl mb-4">📧</div>
           <div className="text-text-secondary">No email events found</div>
           <div className="text-text-muted text-sm mt-2">
@@ -257,7 +255,7 @@ export default function EmailEventsPage() {
               return (
                 <div
                   key={event.id}
-                  className="card p-4 animate-fade-in-up opacity-0"
+                  className="card p-4 animate-fade-in-up"
                   style={{ animationDelay: `${250 + index * 30}ms` }}
                 >
                   <div className="flex items-start justify-between gap-3">

@@ -81,7 +81,7 @@ export default function SignupPage() {
         <TwinklingStars count={25} />
 
         <div className="flex-1 flex flex-col items-center justify-center text-center relative z-10">
-          <div className="animate-fade-in-up opacity-0">
+          <div className="animate-fade-in-up">
             <div className="w-16 h-16 rounded-full bg-teal-500/20 flex items-center justify-center mx-auto mb-6">
               <svg
                 width="32"
@@ -119,14 +119,14 @@ export default function SignupPage() {
       </Link>
 
       <div className="flex-1 flex flex-col relative z-10">
-        <h1 className="text-3xl font-bold mb-2 animate-fade-in-up opacity-0">Create account</h1>
-        <p className="text-text-secondary mb-8 animate-fade-in-up opacity-0 delay-100">
+        <h1 className="text-3xl font-bold mb-2 animate-fade-in-up">Create account</h1>
+        <p className="text-text-secondary mb-8 animate-fade-in-up delay-100">
           Join parties and share content with friends
         </p>
 
         {error && <div className="text-red-400 text-sm text-center mb-4">{error}</div>}
 
-        <div className="space-y-3 mb-8 animate-fade-in-up opacity-0 delay-200">
+        <div className="space-y-3 mb-8 animate-fade-in-up delay-200">
           <button
             onClick={handleGoogleSignIn}
             disabled={isLoading}
@@ -143,14 +143,14 @@ export default function SignupPage() {
           </button>
         </div>
 
-        <div className="flex items-center gap-4 mb-8 animate-fade-in-up opacity-0 delay-300">
+        <div className="flex items-center gap-4 mb-8 animate-fade-in-up delay-300">
           <div className="flex-1 h-px bg-surface-700"></div>
           <span className="text-text-muted text-sm">or</span>
           <div className="flex-1 h-px bg-surface-700"></div>
         </div>
 
         {/* Email form */}
-        <div className="space-y-4 animate-fade-in-up opacity-0 delay-400">
+        <div className="space-y-4 animate-fade-in-up delay-400">
           <div>
             <input
               type="text"
@@ -206,7 +206,7 @@ export default function SignupPage() {
           </button>
         </div>
 
-        <div className="mt-6 text-center animate-fade-in-up opacity-0 delay-500">
+        <div className="mt-6 text-center animate-fade-in-up delay-500">
           <Link href="/login" className="text-text-muted text-sm hover:text-text-secondary transition-colors">
             Already have an account? <span className="text-accent-400">Sign in</span>
           </Link>

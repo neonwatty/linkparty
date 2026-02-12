@@ -115,10 +115,10 @@ export default function JoinPartyPage() {
       </Link>
 
       <div className="flex-1 flex flex-col">
-        <h1 className="text-3xl font-bold mb-2 animate-fade-in-up opacity-0">Join a party</h1>
-        <p className="text-text-secondary mb-8 animate-fade-in-up opacity-0 delay-100">Enter the code from your host</p>
+        <h1 className="text-3xl font-bold mb-2 animate-fade-in-up">Join a party</h1>
+        <p className="text-text-secondary mb-8 animate-fade-in-up delay-100">Enter the code from your host</p>
 
-        <div className="space-y-6 animate-fade-in-up opacity-0 delay-200">
+        <div className="space-y-6 animate-fade-in-up delay-200">
           <div>
             <label className="block text-sm text-text-secondary mb-2">Your name</label>
             <input
@@ -196,7 +196,7 @@ export default function JoinPartyPage() {
           </button>
         </div>
 
-        <div className="mt-auto pt-12 text-center animate-fade-in-up opacity-0 delay-300">
+        <div className="mt-auto pt-12 text-center animate-fade-in-up delay-300">
           <p className="text-text-muted text-sm">Ask your host for the 6-character code</p>
           {IS_MOCK_MODE && <p className="text-yellow-500 text-xs mt-2">Dev mode: Any code will work</p>}
         </div>

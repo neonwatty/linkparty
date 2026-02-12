@@ -20,7 +20,7 @@ export function HomeScreen({ onNavigate }: HomeScreenProps) {
 
       {/* Hero */}
       <div className="flex-1 flex flex-col justify-center">
-        <div className="animate-fade-in-up opacity-0">
+        <div className="animate-fade-in-up">
           <div className="text-accent-500 font-mono text-sm tracking-wider mb-4">
             SHARE LINKS TOGETHER
           </div>

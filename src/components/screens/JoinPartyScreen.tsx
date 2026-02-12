@@ -106,14 +106,14 @@ export function JoinPartyScreen({ onNavigate, onPartyJoined, initialCode = '' }:
       </button>
 
       <div className="flex-1 flex flex-col">
-        <h1 className="text-3xl font-bold mb-2 animate-fade-in-up opacity-0">
+        <h1 className="text-3xl font-bold mb-2 animate-fade-in-up">
           Join a party
         </h1>
-        <p className="text-text-secondary mb-8 animate-fade-in-up opacity-0 delay-100">
+        <p className="text-text-secondary mb-8 animate-fade-in-up delay-100">
           Enter the code from your host
         </p>
 
-        <div className="space-y-6 animate-fade-in-up opacity-0 delay-200">
+        <div className="space-y-6 animate-fade-in-up delay-200">
           <div>
             <label className="block text-sm text-text-secondary mb-2">
               Your name
@@ -174,7 +174,7 @@ export function JoinPartyScreen({ onNavigate, onPartyJoined, initialCode = '' }:
           </button>
         </div>
 
-        <div className="mt-auto pt-12 text-center animate-fade-in-up opacity-0 delay-300">
+        <div className="mt-auto pt-12 text-center animate-fade-in-up delay-300">
           <p className="text-text-muted text-sm">
             Ask your host for the 6-character code
           </p>
