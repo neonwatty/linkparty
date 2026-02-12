@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { getSessionId, getDisplayName, setDisplayName, getAvatar, setCurrentParty } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
-import { tryAction } from '@/lib/rateLimit'
 import { useAuth } from '@/contexts/AuthContext'
 import { ChevronLeftIcon, LoaderIcon, LockIcon } from '@/components/icons'
 import { TwinklingStars } from '@/components/ui/TwinklingStars'
@@ -36,13 +35,6 @@ export default function CreatePartyPage() {
   const handleCreate = async () => {
     if (!displayName.trim()) {
       setError('Please enter a display name')
-      return
-    }
-
-    // Check rate limit for party creation
-    const rateLimitError = tryAction('partyCreation')
-    if (rateLimitError) {
-      setError(rateLimitError)
       return
     }
 
