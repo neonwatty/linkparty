@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import type { AuthUser, AuthSession } from '@/lib/auth'
 import { getCurrentSession, onAuthStateChange, signOut as authSignOut } from '@/lib/auth'
+import { setDisplayName } from '@/lib/supabase'
 
 interface AuthContextType {
   user: AuthUser | null
@@ -39,6 +40,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (session.user.id !== currentOwner) {
           localStorage.setItem('link-party-session-id', crypto.randomUUID())
           localStorage.setItem('link-party-session-id-owner', session.user.id)
+        }
+
+        // Sync display name from user metadata to localStorage
+        const metaName = session.user.user_metadata?.display_name
+        if (metaName) {
+          setDisplayName(metaName)
         }
       }
     })
