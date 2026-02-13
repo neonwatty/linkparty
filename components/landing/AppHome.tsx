@@ -6,7 +6,8 @@ import { TwinklingStars } from '@/components/ui/TwinklingStars'
 import { useAuth } from '@/contexts/AuthContext'
 
 export function AppHome() {
-  const { signOut } = useAuth()
+  const { signOut, user } = useAuth()
+  const displayName = user?.user_metadata?.display_name || ''
 
   return (
     <div className="container-mobile bg-gradient-party flex flex-col px-6 py-8 safe-area-bottom relative">
@@ -34,6 +35,9 @@ export function AppHome() {
       {/* Hero */}
       <div className="flex-1 flex flex-col justify-center relative z-10">
         <div className="animate-fade-in-up">
+          {/* Greeting */}
+          {displayName && <p className="text-text-secondary text-center mb-2">Hey, {displayName}</p>}
+
           {/* Logo Icon */}
           <div className="logo-icon mx-auto mb-6">
             <svg width="40" height="40" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 40 40">

@@ -36,7 +36,7 @@ async function resetSession(page: Page): Promise<void> {
   await page.reload()
 }
 
-async function createPartyAsHost(page: Page, _displayName: string): Promise<string> {
+async function createPartyAsHost(page: Page): Promise<string> {
   await resetSession(page)
   await page.getByRole('link', { name: 'Start a Party' }).first().click()
   await page.getByRole('button', { name: 'Create Party' }).click()
@@ -96,7 +96,7 @@ test.describe('WF1: Create and Join Party', () => {
   test('Host creates party, Guest joins, Host sees 2 watching', async () => {
     test.skip(isMockMode, 'Requires real Supabase — skipped in mock mode')
 
-    const partyCode = await createPartyAsHost(hostPage, 'Host User')
+    const partyCode = await createPartyAsHost(hostPage)
     await expect(hostPage.getByText(/1 watching/)).toBeVisible({ timeout: 5000 })
 
     await joinPartyAsGuest(guestPage, 'Guest User', partyCode)
@@ -131,7 +131,7 @@ test.describe('WF2: Realtime Content Sync', () => {
   test('Host adds YouTube link, Guest sees it; Guest adds note, Host sees it', async () => {
     test.skip(isMockMode, 'Requires real Supabase — skipped in mock mode')
 
-    const partyCode = await createPartyAsHost(hostPage, 'Host User')
+    const partyCode = await createPartyAsHost(hostPage)
     await joinPartyAsGuest(guestPage, 'Guest User', partyCode)
     await expect(hostPage.getByText(/2 watching/)).toBeVisible({ timeout: 5000 })
 
@@ -174,7 +174,7 @@ test.describe('WF3: Queue Advance Sync', () => {
   test('Host advances queue, Guest sees NOW SHOWING update', async () => {
     test.skip(isMockMode, 'Requires real Supabase — skipped in mock mode')
 
-    const partyCode = await createPartyAsHost(hostPage, 'Host User')
+    const partyCode = await createPartyAsHost(hostPage)
     await joinPartyAsGuest(guestPage, 'Guest User', partyCode)
 
     // Add two items to the queue
@@ -218,7 +218,7 @@ test.describe('WF4: Toggle Completion Sync', () => {
   test('Host marks note complete, both see strikethrough; Guest unchecks, both see restored', async () => {
     test.skip(isMockMode, 'Requires real Supabase — skipped in mock mode')
 
-    const partyCode = await createPartyAsHost(hostPage, 'Host User')
+    const partyCode = await createPartyAsHost(hostPage)
     await joinPartyAsGuest(guestPage, 'Guest User', partyCode)
 
     // Guest adds a note
@@ -356,7 +356,7 @@ test.describe('WF7: TV Mode Sync', () => {
   test('Host in TV mode advances, Guest sees update; Guest adds note, Host sees it in TV', async () => {
     test.skip(isMockMode, 'Requires real Supabase — skipped in mock mode')
 
-    const partyCode = await createPartyAsHost(hostPage, 'Host User')
+    const partyCode = await createPartyAsHost(hostPage)
     await joinPartyAsGuest(guestPage, 'Guest User', partyCode)
 
     // Add two items to have something in the queue
@@ -407,7 +407,7 @@ test.describe('WF8: Guest Leave and Rejoin', () => {
   test('Guest leaves, Host sees 1 watching; Guest rejoins, Host sees 2 watching', async () => {
     test.skip(isMockMode, 'Requires real Supabase — skipped in mock mode')
 
-    const partyCode = await createPartyAsHost(hostPage, 'Host User')
+    const partyCode = await createPartyAsHost(hostPage)
     await joinPartyAsGuest(guestPage, 'Guest User', partyCode)
 
     await expect(hostPage.getByText(/2 watching/)).toBeVisible({ timeout: 5000 })
@@ -452,7 +452,7 @@ test.describe('WF9: Deep Link Join', () => {
   test('Guest navigates to /join/CODE directly, code pre-filled, joins successfully', async () => {
     test.skip(isMockMode, 'Requires real Supabase — skipped in mock mode')
 
-    const partyCode = await createPartyAsHost(hostPage, 'Host User')
+    const partyCode = await createPartyAsHost(hostPage)
 
     // Guest navigates to deep link
     await resetSession(guestPage)
@@ -494,7 +494,7 @@ test.describe('WF10: Simultaneous Content Adds', () => {
   test('Both users add content simultaneously, both see both items', async () => {
     test.skip(isMockMode, 'Requires real Supabase — skipped in mock mode')
 
-    const partyCode = await createPartyAsHost(hostPage, 'Host User')
+    const partyCode = await createPartyAsHost(hostPage)
     await joinPartyAsGuest(guestPage, 'Guest User', partyCode)
 
     // Both open add content dialogs

@@ -106,7 +106,6 @@ export default function ProfileEditor() {
   // Debounced username availability check
   useEffect(() => {
     if (!username || username.length < 3) {
-      setUsernameAvailable(null)
       return
     }
 
