@@ -369,6 +369,15 @@ _Prerequisite: Workflow 1 completed_
 
 ## Test Results Log
 
-| Workflow | Date | Host Result | Guest Result | Notes |
-| -------- | ---- | ----------- | ------------ | ----- |
-|          |      |             |              |       |
+| Workflow                      | Date       | Host Result | Guest Result | Notes                                                                |
+| ----------------------------- | ---------- | ----------- | ------------ | -------------------------------------------------------------------- |
+| 1. Create and Join Party      | 2026-02-13 | PASS        | PASS         | Party created, guest joined, 2 watching confirmed                    |
+| 2. Realtime Content Sync      | 2026-02-13 | PASS        | PASS         | YouTube + note synced bidirectionally via realtime                   |
+| 3. Queue Advance Sync         | 2026-02-13 | PASS        | PASS         | NOW SHOWING updated on both tabs after advance                       |
+| 4. Toggle Completion Sync     | 2026-02-13 | PASS        | PASS         | Chrome Host + Playwright Guest: complete/uncomplete synced both ways |
+| 5. Drag-and-Drop Reorder      | 2026-02-13 | SKIP        | SKIP         | @dnd-kit PointerSensor cannot be triggered by browser automation     |
+| 6. Password-Protected Join    | 2026-02-13 | PASS        | PASS         | Wrong password rejected, correct password accepted                   |
+| 7. TV Mode Sync               | 2026-02-13 | PASS        | PASS         | Chrome Host TV mode + Playwright Guest: advance + content add synced |
+| 8. Guest Leave and Rejoin     | 2026-02-13 | PASS        | PASS         | Leave navigated home, rejoin worked with password                    |
+| 9. Deep Link Join             | 2026-02-13 | PASS        | PASS         | /join/CODE pre-filled party code, join succeeded                     |
+| 10. Simultaneous Content Adds | 2026-02-13 | PASS        | PASS         | Both items appeared on both tabs within 3s via realtime              |
