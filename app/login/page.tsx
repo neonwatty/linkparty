@@ -71,7 +71,9 @@ export default function LoginPage() {
     if (!result.success) {
       setError(result.error || 'Failed to sign in')
     } else {
-      router.push('/')
+      const params = new URLSearchParams(window.location.search)
+      const redirect = params.get('redirect') || '/'
+      router.push(redirect)
     }
   }
 
