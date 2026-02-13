@@ -102,6 +102,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to send friend request' }, { status: 500 })
     }
 
+    // Create notification for the recipient (fire-and-forget)
+    try {
+      const senderProfile = await supabase.from('user_profiles').select('display_name').eq('id', user.id).single()
+
+      const senderName = senderProfile.data?.display_name || 'Someone'
+
+      const { error: notifError } = await supabase.from('notifications').insert({
+        user_id: friendId,
+        type: 'friend_request',
+        title: `${senderName} sent you a friend request`,
+        data: { friendshipId: friendship.id, senderId: user.id, senderName },
+      })
+
+      if (notifError) {
+        console.error('Failed to create friend request notification:', notifError)
+      }
+    } catch (notifErr) {
+      console.error('Error creating friend request notification:', notifErr)
+    }
+
     return NextResponse.json({ success: true, friendship })
   } catch (err) {
     console.error('Friend request API error:', err)
