@@ -3,10 +3,14 @@
 import Link from 'next/link'
 import { HistoryIcon, UserIcon } from '@/components/icons'
 import { TwinklingStars } from '@/components/ui/TwinklingStars'
+import { NotificationBell } from '@/components/notifications/NotificationBell'
+import { NotificationDropdown } from '@/components/notifications/NotificationDropdown'
 import { useAuth } from '@/contexts/AuthContext'
+import { useNotifications } from '@/hooks/useNotifications'
 
 export function AppHome() {
   const { signOut, user } = useAuth()
+  const { unreadCount, notifications, markAsRead, markAllAsRead, isOpen, setIsOpen } = useNotifications()
   const displayName = user?.user_metadata?.display_name || ''
 
   return (
@@ -26,6 +30,17 @@ export function AppHome() {
           <Link href="/profile" className="icon-btn" aria-label="Profile">
             <UserIcon />
           </Link>
+          <div className="relative">
+            <NotificationBell unreadCount={unreadCount} isOpen={isOpen} onToggle={() => setIsOpen(!isOpen)} />
+            {isOpen && (
+              <NotificationDropdown
+                notifications={notifications}
+                onMarkRead={markAsRead}
+                onMarkAllRead={markAllAsRead}
+                onClose={() => setIsOpen(false)}
+              />
+            )}
+          </div>
           <Link href="/history" className="icon-btn" aria-label="History">
             <HistoryIcon />
           </Link>

@@ -12,6 +12,7 @@ export function NotificationBell({ unreadCount, isOpen, onToggle }: Notification
       onClick={onToggle}
       className="icon-btn relative"
       aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
+      aria-expanded={isOpen}
     >
       {/* Bell SVG icon - simple outline, 20x20 */}
       <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
