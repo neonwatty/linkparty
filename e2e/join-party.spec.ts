@@ -1,24 +1,15 @@
 import { test, expect } from '@playwright/test'
 
+const FAKE_AUTH_COOKIE = { name: 'sb-mock-auth-token', value: 'test-session', domain: 'localhost', path: '/' }
+
 test.describe('Join Party Flow', () => {
   test.beforeEach(async ({ page }) => {
+    // Inject fake auth cookie to pass auth middleware
+    await page.context().addCookies([FAKE_AUTH_COOKIE])
     // Clear localStorage to reset session
     await page.goto('/')
     await page.evaluate(() => localStorage.clear())
     await page.reload()
-  })
-
-  test('shows validation error without display name', async ({ page }) => {
-    await page.goto('/')
-
-    // Navigate to join party
-    await page.getByRole('link', { name: 'Join with Code' }).click()
-
-    // Enter only party code (no display name)
-    await page.getByPlaceholder('ABC123').fill('XYZ789')
-
-    // The Join button is disabled when display name is empty
-    await expect(page.getByRole('button', { name: 'Join Party' })).toBeDisabled()
   })
 
   test('shows validation error without complete party code', async ({ page }) => {
@@ -27,8 +18,7 @@ test.describe('Join Party Flow', () => {
     // Navigate to join party
     await page.getByRole('link', { name: 'Join with Code' }).click()
 
-    // Enter display name but incomplete party code
-    await page.getByPlaceholder(/enter your display name/i).fill('Test User')
+    // Enter incomplete party code
     await page.getByPlaceholder('ABC123').fill('ABC')
 
     // The Join button is disabled when code is not 6 characters

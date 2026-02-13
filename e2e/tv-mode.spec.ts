@@ -1,10 +1,14 @@
 import { test, expect } from '@playwright/test'
 
+const FAKE_AUTH_COOKIE = { name: 'sb-mock-auth-token', value: 'test-session', domain: 'localhost', path: '/' }
+
 test.describe('TV Mode', () => {
   // Run serially to avoid overwhelming the dev server during party creation
   test.describe.configure({ mode: 'serial' })
 
   test.beforeEach(async ({ page }) => {
+    // Inject fake auth cookie to pass auth middleware
+    await page.context().addCookies([FAKE_AUTH_COOKIE])
     // Clear localStorage and create a party first
     await page.goto('/')
     await page.evaluate(() => localStorage.clear())
@@ -13,11 +17,7 @@ test.describe('TV Mode', () => {
     // Navigate to create party (use .first() since responsive layout renders two links)
     await page.getByRole('link', { name: 'Start a Party' }).first().click()
 
-    // Wait for create page to load
-    await expect(page.getByPlaceholder(/enter your display name/i)).toBeVisible({ timeout: 10000 })
-
-    // Enter display name and create party
-    await page.getByPlaceholder(/enter your display name/i).fill('Test Host')
+    // Create party (no display name input — derived from auth user)
     await page.getByRole('button', { name: 'Create Party' }).click()
 
     // Wait for party room to load - look for party code

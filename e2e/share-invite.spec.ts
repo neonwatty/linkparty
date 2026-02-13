@@ -1,7 +1,11 @@
 import { test, expect } from '@playwright/test'
 
+const FAKE_AUTH_COOKIE = { name: 'sb-mock-auth-token', value: 'test-session', domain: 'localhost', path: '/' }
+
 test.describe('Share and Invite Flows', () => {
   test.beforeEach(async ({ page }) => {
+    // Inject fake auth cookie to pass auth middleware
+    await page.context().addCookies([FAKE_AUTH_COOKIE])
     // Clear localStorage and create a party first
     await page.goto('/')
     await page.evaluate(() => localStorage.clear())
@@ -10,8 +14,7 @@ test.describe('Share and Invite Flows', () => {
     // Navigate to create party
     await page.getByRole('link', { name: 'Start a Party' }).first().click()
 
-    // Enter display name and create party
-    await page.getByPlaceholder(/enter your display name/i).fill('Test Host')
+    // Create party (no display name input — derived from auth user)
     await page.getByRole('button', { name: 'Create Party' }).click()
 
     // Wait for party room to load
@@ -78,11 +81,10 @@ test.describe('Share and Invite Flows', () => {
       // Navigate to join party
       await newPage.getByRole('link', { name: 'Join with Code' }).click()
 
-      // Enter display name and party code
-      await newPage.getByPlaceholder(/enter your display name/i).fill('Guest User')
+      // Enter party code
       await newPage.getByPlaceholder('ABC123').fill(partyCode || 'MOCK01')
 
-      // The Join button should be enabled with valid input
+      // The Join button should be enabled with valid code
       await expect(newPage.getByRole('button', { name: 'Join Party' })).toBeEnabled()
 
       await newPage.close()
@@ -152,6 +154,11 @@ test.describe('Email Invitation API', () => {
 })
 
 test.describe('Direct Join Link', () => {
+  test.beforeEach(async ({ page }) => {
+    // Inject fake auth cookie to pass auth middleware
+    await page.context().addCookies([FAKE_AUTH_COOKIE])
+  })
+
   test('navigating to /join/CODE shows join form', async ({ page }) => {
     await page.goto('/join/ABC123')
 
@@ -159,15 +166,11 @@ test.describe('Direct Join Link', () => {
     await expect(page.getByRole('heading', { name: /join a party/i })).toBeVisible()
   })
 
-  test('join page accepts display name input', async ({ page }) => {
+  test('join page has party code pre-filled', async ({ page }) => {
     await page.goto('/join/MOCK01')
 
-    // Should have display name input
-    const nameInput = page.getByPlaceholder(/enter your display name/i)
-    await expect(nameInput).toBeVisible()
-
-    // Fill in name
-    await nameInput.fill('Guest User')
-    await expect(nameInput).toHaveValue('Guest User')
+    // Should have party code pre-filled
+    const codeInput = page.getByPlaceholder('ABC123')
+    await expect(codeInput).toHaveValue('MOCK01')
   })
 })

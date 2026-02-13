@@ -1,6 +1,13 @@
 import { test, expect } from '@playwright/test'
 
+const FAKE_AUTH_COOKIE = { name: 'sb-mock-auth-token', value: 'test-session', domain: 'localhost', path: '/' }
+
 test.describe('Home Screen', () => {
+  test.beforeEach(async ({ page }) => {
+    // Inject fake auth cookie to pass auth middleware
+    await page.context().addCookies([FAKE_AUTH_COOKIE])
+  })
+
   test('displays the home screen with party options', async ({ page }) => {
     await page.goto('/')
 
@@ -19,7 +26,6 @@ test.describe('Home Screen', () => {
 
     // Should show the create party form
     await expect(page.getByRole('heading', { name: /start a party/i })).toBeVisible()
-    await expect(page.getByPlaceholder(/enter your display name/i)).toBeVisible()
   })
 
   test('navigates to join party screen', async ({ page }) => {

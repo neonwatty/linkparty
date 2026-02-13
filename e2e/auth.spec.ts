@@ -1,12 +1,8 @@
 import { test, expect } from '@playwright/test'
 
-test.describe('Authentication Flows', () => {
-  test.beforeEach(async ({ page }) => {
-    // Clear localStorage to reset session
-    await page.goto('/')
-    await page.evaluate(() => localStorage.clear())
-  })
+const FAKE_AUTH_COOKIE = { name: 'sb-mock-auth-token', value: 'test-session', domain: 'localhost', path: '/' }
 
+test.describe('Authentication Flows', () => {
   test.describe('Login Page', () => {
     test('displays login page with all elements', async ({ page }) => {
       await page.goto('/login')
@@ -140,6 +136,8 @@ test.describe('Authentication Flows', () => {
     })
 
     test('can navigate back to home', async ({ page }) => {
+      // Inject auth cookie so home page loads instead of redirecting to login
+      await page.context().addCookies([FAKE_AUTH_COOKIE])
       await page.goto('/login')
 
       // Click back button (first button/link with aria-label)
@@ -292,6 +290,8 @@ test.describe('Authentication Flows', () => {
     })
 
     test('can navigate back to home', async ({ page }) => {
+      // Inject auth cookie so home page loads instead of redirecting to login
+      await page.context().addCookies([FAKE_AUTH_COOKIE])
       await page.goto('/signup')
 
       // Click back button
@@ -303,15 +303,11 @@ test.describe('Authentication Flows', () => {
   })
 
   test.describe('Navigation between auth pages', () => {
-    test('can navigate from home to login', async ({ page }) => {
+    test('unauthenticated user visiting home is redirected to login', async ({ page }) => {
       await page.goto('/')
 
-      // Look for sign in link (if it exists on home page)
-      const signInLink = page.getByRole('link', { name: /sign in/i })
-      if (await signInLink.isVisible()) {
-        await signInLink.click()
-        await expect(page.getByRole('heading', { name: /welcome back/i })).toBeVisible()
-      }
+      // Without auth cookie, user should be redirected to login
+      await expect(page.getByRole('heading', { name: /welcome back/i })).toBeVisible()
     })
 
     test('can navigate login -> signup -> login', async ({ page }) => {

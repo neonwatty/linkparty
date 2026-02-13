@@ -1,5 +1,7 @@
 import { test, expect, type Page } from '@playwright/test'
 
+const FAKE_AUTH_COOKIE = { name: 'sb-mock-auth-token', value: 'test-session', domain: 'localhost', path: '/' }
+
 // Helper: finish CSS animations on a dialog to prevent WebKit stability issues
 async function finishDialogAnimations(page: Page, role: string, namePattern?: RegExp): Promise<void> {
   const dialog = namePattern ? page.getByRole(role, { name: namePattern }) : page.getByRole(role)
@@ -22,6 +24,8 @@ async function addNoteToQueue(page: Page, noteText: string): Promise<void> {
 
 test.describe('Queue Operations', () => {
   test.beforeEach(async ({ page }) => {
+    // Inject fake auth cookie to pass auth middleware
+    await page.context().addCookies([FAKE_AUTH_COOKIE])
     // Clear localStorage and create a party first
     await page.goto('/')
     await page.evaluate(() => localStorage.clear())
@@ -30,8 +34,7 @@ test.describe('Queue Operations', () => {
     // Navigate to create party (use .first() because desktop and mobile versions both exist)
     await page.getByRole('link', { name: 'Start a Party' }).first().click()
 
-    // Enter display name and create party
-    await page.getByPlaceholder(/enter your display name/i).fill('Test Host')
+    // Create party (no display name input — derived from auth user)
     await page.getByRole('button', { name: 'Create Party' }).click()
 
     // Wait for party room to load - look for party code

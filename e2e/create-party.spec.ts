@@ -1,24 +1,15 @@
 import { test, expect } from '@playwright/test'
 
+const FAKE_AUTH_COOKIE = { name: 'sb-mock-auth-token', value: 'test-session', domain: 'localhost', path: '/' }
+
 test.describe('Create Party Flow', () => {
   test.beforeEach(async ({ page }) => {
+    // Inject fake auth cookie to pass auth middleware
+    await page.context().addCookies([FAKE_AUTH_COOKIE])
     // Clear localStorage to reset rate limits and session
     await page.goto('/')
     await page.evaluate(() => localStorage.clear())
     await page.reload()
-  })
-
-  test('shows validation error without display name', async ({ page }) => {
-    await page.goto('/')
-
-    // Navigate to create party
-    await page.getByRole('link', { name: 'Start a Party' }).first().click()
-
-    // Try to create without entering a name
-    await page.getByRole('button', { name: 'Create Party' }).click()
-
-    // Should show validation error
-    await expect(page.getByText(/please enter a display name/i)).toBeVisible()
   })
 
   test('creates a party successfully', async ({ page }) => {
@@ -26,9 +17,6 @@ test.describe('Create Party Flow', () => {
 
     // Navigate to create party
     await page.getByRole('link', { name: 'Start a Party' }).first().click()
-
-    // Enter display name
-    await page.getByPlaceholder(/enter your display name/i).fill('Test User')
 
     // Optionally enter party name
     await page.getByPlaceholder(/saturday night hangout/i).fill('Test Party')
@@ -46,9 +34,6 @@ test.describe('Create Party Flow', () => {
 
     // Navigate to create party
     await page.getByRole('link', { name: 'Start a Party' }).first().click()
-
-    // Enter display name
-    await page.getByPlaceholder(/enter your display name/i).fill('Host User')
 
     // Create the party
     await page.getByRole('button', { name: 'Create Party' }).click()

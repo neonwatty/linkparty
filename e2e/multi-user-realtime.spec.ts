@@ -18,12 +18,16 @@ import { test, expect, type Browser, type BrowserContext, type Page } from '@pla
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const isMockMode = !supabaseUrl || supabaseUrl.includes('placeholder')
 
+const FAKE_AUTH_COOKIE = { name: 'sb-mock-auth-token', value: 'test-session', domain: 'localhost', path: '/' }
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
 async function createUserContext(browser: Browser): Promise<BrowserContext> {
-  return browser.newContext()
+  const context = await browser.newContext()
+  await context.addCookies([FAKE_AUTH_COOKIE])
+  return context
 }
 
 async function resetSession(page: Page): Promise<void> {
@@ -32,20 +36,18 @@ async function resetSession(page: Page): Promise<void> {
   await page.reload()
 }
 
-async function createPartyAsHost(page: Page, displayName: string): Promise<string> {
+async function createPartyAsHost(page: Page, _displayName: string): Promise<string> {
   await resetSession(page)
   await page.getByRole('link', { name: 'Start a Party' }).first().click()
-  await page.getByPlaceholder(/enter your display name/i).fill(displayName)
   await page.getByRole('button', { name: 'Create Party' }).click()
   await expect(page.getByTestId('party-code')).toBeVisible({ timeout: 10000 })
   const codeText = (await page.getByTestId('party-code').textContent())?.trim() || ''
   return codeText
 }
 
-async function joinPartyAsGuest(page: Page, displayName: string, partyCode: string): Promise<void> {
+async function joinPartyAsGuest(page: Page, _displayName: string, partyCode: string): Promise<void> {
   await resetSession(page)
   await page.getByRole('link', { name: 'Join with Code' }).click()
-  await page.getByPlaceholder(/enter your display name/i).fill(displayName)
   await page.getByPlaceholder('ABC123').fill(partyCode)
   await page.getByRole('button', { name: 'Join Party' }).click()
   await expect(page.getByTestId('party-code')).toBeVisible({ timeout: 10000 })
@@ -295,7 +297,6 @@ test.describe('WF6: Password-Protected Join', () => {
     // Host creates party with password
     await resetSession(hostPage)
     await hostPage.getByRole('link', { name: 'Start a Party' }).first().click()
-    await hostPage.getByPlaceholder(/enter your display name/i).fill('Host User')
 
     // Enable password toggle
     await hostPage.locator('button[role="switch"]').click()
@@ -308,7 +309,6 @@ test.describe('WF6: Password-Protected Join', () => {
     // Guest tries to join without password
     await resetSession(guestPage)
     await guestPage.getByRole('link', { name: 'Join with Code' }).click()
-    await guestPage.getByPlaceholder(/enter your display name/i).fill('Guest User')
     await guestPage.getByPlaceholder('ABC123').fill(partyCode)
     await guestPage.getByRole('button', { name: 'Join Party' }).click()
 
@@ -461,8 +461,7 @@ test.describe('WF9: Deep Link Join', () => {
     // Party code should be pre-filled
     await expect(guestPage.getByPlaceholder('ABC123')).toHaveValue(partyCode, { timeout: 5000 })
 
-    // Guest fills name and joins
-    await guestPage.getByPlaceholder(/enter your display name/i).fill('Deep Link Guest')
+    // Guest joins
     await guestPage.getByRole('button', { name: 'Join Party' }).click()
 
     await expect(guestPage.getByTestId('party-code')).toBeVisible({ timeout: 10000 })

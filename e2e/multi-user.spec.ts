@@ -1,5 +1,7 @@
 import { test, expect, type Browser, type BrowserContext, type Page } from '@playwright/test'
 
+const FAKE_AUTH_COOKIE = { name: 'sb-mock-auth-token', value: 'test-session', domain: 'localhost', path: '/' }
+
 /**
  * Multi-user real-time synchronization tests.
  *
@@ -17,9 +19,11 @@ import { test, expect, type Browser, type BrowserContext, type Page } from '@pla
  * navigation flows, UI state rendering, and form interactions across two contexts.
  */
 
-// Helper: create a fresh browser context with cleared localStorage
+// Helper: create a fresh browser context with auth cookie and cleared localStorage
 async function createUserContext(browser: Browser): Promise<BrowserContext> {
-  return browser.newContext()
+  const context = await browser.newContext()
+  await context.addCookies([FAKE_AUTH_COOKIE])
+  return context
 }
 
 // Helper: navigate to home and clear localStorage for a clean session
@@ -30,14 +34,13 @@ async function resetSession(page: Page): Promise<void> {
 }
 
 // Helper: create a party as host and return the party code
-async function createPartyAsHost(page: Page, displayName: string): Promise<string> {
+async function createPartyAsHost(page: Page, _displayName: string): Promise<string> {
   await resetSession(page)
 
   // Navigate to create party (use .first() because landing page has two "Start a Party" links)
   await page.getByRole('link', { name: 'Start a Party' }).first().click()
 
-  // Enter display name and create
-  await page.getByPlaceholder(/enter your display name/i).fill(displayName)
+  // Create party (no display name input — derived from auth user)
   await page.getByRole('button', { name: 'Create Party' }).click()
 
   // Wait for party room to load
@@ -49,14 +52,13 @@ async function createPartyAsHost(page: Page, displayName: string): Promise<strin
 }
 
 // Helper: join a party as guest and wait for the party room
-async function joinPartyAsGuest(page: Page, displayName: string, partyCode: string): Promise<void> {
+async function joinPartyAsGuest(page: Page, _displayName: string, partyCode: string): Promise<void> {
   await resetSession(page)
 
   // Navigate to join party
   await page.getByRole('link', { name: 'Join with Code' }).click()
 
-  // Enter display name and party code
-  await page.getByPlaceholder(/enter your display name/i).fill(displayName)
+  // Enter party code
   await page.getByPlaceholder('ABC123').fill(partyCode)
 
   // Click join

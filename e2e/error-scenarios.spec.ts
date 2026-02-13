@@ -1,7 +1,11 @@
 import { test, expect } from '@playwright/test'
 
+const FAKE_AUTH_COOKIE = { name: 'sb-mock-auth-token', value: 'test-session', domain: 'localhost', path: '/' }
+
 test.describe('Error Scenarios', () => {
   test.beforeEach(async ({ page }) => {
+    // Inject fake auth cookie to pass auth middleware
+    await page.context().addCookies([FAKE_AUTH_COOKIE])
     // Clear localStorage to reset session and rate limits
     await page.goto('/')
     await page.evaluate(() => localStorage.clear())
@@ -14,9 +18,6 @@ test.describe('Error Scenarios', () => {
 
       // Navigate to join party
       await page.getByRole('link', { name: 'Join with Code' }).click()
-
-      // Enter display name
-      await page.getByPlaceholder(/enter your display name/i).fill('Test User')
 
       // Enter invalid code with special characters
       const codeInput = page.getByPlaceholder('ABC123')
@@ -34,9 +35,6 @@ test.describe('Error Scenarios', () => {
       // Navigate to join party
       await page.getByRole('link', { name: 'Join with Code' }).click()
 
-      // Enter display name
-      await page.getByPlaceholder(/enter your display name/i).fill('Test User')
-
       // Enter incomplete code (less than 6 chars)
       await page.getByPlaceholder('ABC123').fill('ABC')
 
@@ -44,82 +42,29 @@ test.describe('Error Scenarios', () => {
       await expect(page.getByRole('button', { name: 'Join Party' })).toBeDisabled()
     })
 
-    test('join button disabled without display name', async ({ page }) => {
+    test('join button enabled with valid 6-character code', async ({ page }) => {
       await page.goto('/')
 
       // Navigate to join party
       await page.getByRole('link', { name: 'Join with Code' }).click()
 
-      // Enter only party code (no display name)
+      // Enter valid party code
       await page.getByPlaceholder('ABC123').fill('ABC123')
 
-      // Join button should be disabled
-      await expect(page.getByRole('button', { name: 'Join Party' })).toBeDisabled()
+      // Join button should be enabled (no display name required — derived from auth)
+      await expect(page.getByRole('button', { name: 'Join Party' })).toBeEnabled()
     })
   })
 
-  test.describe('Create Party Validation', () => {
-    test('shows error when creating party without display name', async ({ page }) => {
+  test.describe('Create Party Flow', () => {
+    test('create party button is enabled without extra input', async ({ page }) => {
       await page.goto('/')
 
       // Navigate to create party
       await page.getByRole('link', { name: 'Start a Party' }).first().click()
 
-      // Try to create without entering a name
-      await page.getByRole('button', { name: 'Create Party' }).click()
-
-      // Should show validation error
-      await expect(page.getByText(/please enter a display name/i)).toBeVisible()
-    })
-
-    test('accepts minimum valid display name', async ({ page }) => {
-      await page.goto('/')
-
-      // Navigate to create party
-      await page.getByRole('link', { name: 'Start a Party' }).first().click()
-
-      // Enter minimum valid name (2 characters)
-      await page.getByPlaceholder(/enter your display name/i).fill('AB')
-
-      // Create the party
-      await page.getByRole('button', { name: 'Create Party' }).click()
-
-      // Should successfully create (navigate to party room)
-      await expect(page.getByTestId('party-code')).toBeVisible({ timeout: 10000 })
-    })
-  })
-
-  test.describe('Form Input Handling', () => {
-    test('trims whitespace from display name on create party', async ({ page }) => {
-      await page.goto('/')
-
-      // Navigate to create party
-      await page.getByRole('link', { name: 'Start a Party' }).first().click()
-
-      // Enter name with leading/trailing whitespace
-      await page.getByPlaceholder(/enter your display name/i).fill('   Valid Name   ')
-
-      // Create the party - should work (whitespace gets trimmed)
-      await page.getByRole('button', { name: 'Create Party' }).click()
-
-      // Should successfully create party
-      await expect(page.getByTestId('party-code')).toBeVisible({ timeout: 10000 })
-    })
-
-    test('whitespace-only display name shows error', async ({ page }) => {
-      await page.goto('/')
-
-      // Navigate to create party
-      await page.getByRole('link', { name: 'Start a Party' }).first().click()
-
-      // Enter only whitespace
-      await page.getByPlaceholder(/enter your display name/i).fill('     ')
-
-      // Try to create
-      await page.getByRole('button', { name: 'Create Party' }).click()
-
-      // Should show validation error (whitespace-only is treated as empty)
-      await expect(page.getByText(/please enter a display name/i)).toBeVisible()
+      // Create button should be enabled (display name derived from auth, party name optional)
+      await expect(page.getByRole('button', { name: 'Create Party' }).first()).toBeEnabled()
     })
   })
 
@@ -186,7 +131,7 @@ test.describe('Error Scenarios', () => {
       await page.getByRole('button', { name: 'Sign In' }).click()
       await expect(page.getByText(/email is required/i)).toBeVisible()
 
-      // Navigate away to home
+      // Navigate away to home (need auth cookie — already set in beforeEach)
       await page.getByRole('link', { name: /go back to home/i }).click()
       await expect(page.getByRole('link', { name: 'Start a Party' }).first()).toBeVisible()
 

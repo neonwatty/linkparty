@@ -15,6 +15,8 @@ import { test, expect, type Page } from '@playwright/test'
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const isMockMode = !supabaseUrl || supabaseUrl.includes('placeholder')
 
+const FAKE_AUTH_COOKIE = { name: 'sb-mock-auth-token', value: 'test-session', domain: 'localhost', path: '/' }
+
 // Unique prefix per run to avoid collisions between parallel shards
 const runId = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`
 
@@ -70,6 +72,7 @@ async function apiAddImage(baseURL: string, partyId: string, sessionId: string, 
 }
 
 async function resetSession(page: Page): Promise<void> {
+  await page.context().addCookies([FAKE_AUTH_COOKIE])
   await page.goto('/')
   await page.evaluate(() => localStorage.clear())
   await page.reload()
@@ -92,12 +95,11 @@ test.describe('Limit: 5 active parties per session', () => {
       expect(body.success, `Party ${i} should be created successfully`).toBe(true)
     }
 
-    await page.goto('/')
+    await resetSession(page)
     await page.evaluate((sid) => localStorage.setItem('link-party-session-id', sid), sessionId)
     await page.reload()
 
     await page.getByRole('link', { name: 'Start a Party' }).first().click()
-    await page.getByPlaceholder(/enter your display name/i).fill('Host 6')
     await page.getByRole('button', { name: 'Create Party' }).click()
 
     await expect(page.getByText(/at most 5 active parties/i)).toBeVisible({ timeout: 10000 })
@@ -139,7 +141,6 @@ test.describe('Limit: 20 members per party', () => {
 
     await resetSession(page)
     await page.getByRole('link', { name: 'Join with Code' }).click()
-    await page.getByPlaceholder(/enter your display name/i).fill('Rejected Guest')
     await page.getByPlaceholder('ABC123').fill(partyCode)
     await page.getByRole('button', { name: 'Join Party' }).click()
 
@@ -228,7 +229,6 @@ test.describe('Limit: Password-protected party join', () => {
 
     await resetSession(page)
     await page.getByRole('link', { name: 'Join with Code' }).click()
-    await page.getByPlaceholder(/enter your display name/i).fill('PWGuest')
     await page.getByPlaceholder('ABC123').fill(partyCode)
     await page.getByRole('button', { name: 'Join Party' }).click()
 
@@ -250,13 +250,13 @@ test.describe('Limit: Password-protected party join', () => {
     expect(createResult.success).toBe(true)
     const partyCode = createResult.party.code
 
+    await page.context().addCookies([FAKE_AUTH_COOKIE])
     await page.goto('/')
     await page.evaluate(() => localStorage.clear())
     await page.goto(`/join/${partyCode}`)
 
     await expect(page.getByRole('textbox', { name: 'ABC123' })).toHaveValue(partyCode)
 
-    await page.getByPlaceholder(/enter your display name/i).fill('DeepGuest')
     await page.getByRole('button', { name: 'Join Party' }).click()
     await expect(page.getByPlaceholder(/enter party password/i)).toBeVisible({ timeout: 10000 })
 
