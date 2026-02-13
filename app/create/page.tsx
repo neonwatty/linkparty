@@ -14,8 +14,8 @@ const log = logger.createLogger('CreateParty')
 export default function CreatePartyPage() {
   const router = useRouter()
   const { user } = useAuth()
+  const displayName = user?.user_metadata?.display_name || getDisplayName() || ''
   const [partyName, setPartyName] = useState('')
-  const [displayName, setDisplayNameInput] = useState(getDisplayName() || '')
   const [passwordEnabled, setPasswordEnabled] = useState(false)
   const [password, setPassword] = useState('')
   const [isCreating, setIsCreating] = useState(false)
@@ -33,11 +33,6 @@ export default function CreatePartyPage() {
   }
 
   const handleCreate = async () => {
-    if (!displayName.trim()) {
-      setError('Please enter a display name')
-      return
-    }
-
     setIsCreating(true)
     setError(null)
 
@@ -105,30 +100,6 @@ export default function CreatePartyPage() {
         <p className="text-text-secondary mb-8 animate-fade-in-up delay-100">Create a room and invite your friends</p>
 
         <div className="space-y-6 animate-fade-in-up delay-200">
-          <div>
-            <label className="block text-sm text-text-secondary mb-2">Your name</label>
-            <input
-              type="text"
-              placeholder="Enter your display name"
-              value={displayName}
-              onChange={(e) => setDisplayNameInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              className="input"
-              disabled={isCreating}
-              maxLength={50}
-            />
-            <div className="flex justify-between mt-1">
-              <span
-                className={`text-xs ${displayName.trim().length > 0 && displayName.trim().length < 2 ? 'text-red-400' : 'text-text-muted'}`}
-              >
-                {displayName.trim().length > 0 && displayName.trim().length < 2 ? 'Min 2 characters' : ''}
-              </span>
-              <span className={`text-xs ${displayName.length >= 45 ? 'text-yellow-400' : 'text-text-muted'}`}>
-                {displayName.length}/50
-              </span>
-            </div>
-          </div>
-
           <div>
             <label className="block text-sm text-text-secondary mb-2">Party name (optional)</label>
             <input

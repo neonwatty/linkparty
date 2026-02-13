@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation'
 import type { ContentType, AddContentStep } from '@/types'
 import { getSessionId, getDisplayName, clearCurrentParty, getCurrentParty } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import { useAuth } from '@/contexts/AuthContext'
 import { useParty } from '@/hooks/useParty'
 import type { QueueItem } from '@/hooks/useParty'
 import { fetchContentMetadata, type ContentMetadataResponse } from '@/lib/contentMetadata'
@@ -35,6 +36,7 @@ const log = logger.createLogger('PartyRoom')
 export default function PartyRoomClient() {
   const router = useRouter()
   const params = useParams()
+  const { user } = useAuth()
   const partyId = params.id as string
   const partyCode = getCurrentParty()?.partyCode || ''
 
@@ -92,7 +94,7 @@ export default function PartyRoomClient() {
   const [showUploadToast, setShowUploadToast] = useState(false)
 
   const sessionId = getSessionId()
-  const currentUserDisplayName = getDisplayName() || 'You'
+  const currentUserDisplayName = user?.user_metadata?.display_name || getDisplayName() || 'You'
   const isHost = partyInfo?.hostSessionId === sessionId
 
   // Use memoized values from useParty hook

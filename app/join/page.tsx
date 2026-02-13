@@ -14,8 +14,8 @@ const log = logger.createLogger('JoinParty')
 export default function JoinPartyPage() {
   const router = useRouter()
   const { user } = useAuth()
+  const displayName = user?.user_metadata?.display_name || getDisplayName() || ''
   const [code, setCode] = useState('')
-  const [displayName, setDisplayNameInput] = useState(getDisplayName() || '')
   const [password, setPassword] = useState('')
   const [needsPassword, setNeedsPassword] = useState(false)
   const [isJoining, setIsJoining] = useState(false)
@@ -26,18 +26,13 @@ export default function JoinPartyPage() {
   }, [])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !isJoining && code.length === 6 && displayName.trim()) {
+    if (e.key === 'Enter' && !isJoining && code.length === 6) {
       e.preventDefault()
       handleJoin()
     }
   }
 
   const handleJoin = async () => {
-    if (!displayName.trim()) {
-      setError('Please enter a display name')
-      return
-    }
-
     if (code.length !== 6) {
       setError('Please enter a 6-character party code')
       return
@@ -120,30 +115,6 @@ export default function JoinPartyPage() {
 
         <div className="space-y-6 animate-fade-in-up delay-200">
           <div>
-            <label className="block text-sm text-text-secondary mb-2">Your name</label>
-            <input
-              type="text"
-              placeholder="Enter your display name"
-              value={displayName}
-              onChange={(e) => setDisplayNameInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              className="input"
-              disabled={isJoining}
-              maxLength={50}
-            />
-            <div className="flex justify-between mt-1">
-              <span
-                className={`text-xs ${displayName.trim().length > 0 && displayName.trim().length < 2 ? 'text-red-400' : 'text-text-muted'}`}
-              >
-                {displayName.trim().length > 0 && displayName.trim().length < 2 ? 'Min 2 characters' : ''}
-              </span>
-              <span className={`text-xs ${displayName.length >= 45 ? 'text-yellow-400' : 'text-text-muted'}`}>
-                {displayName.length}/50
-              </span>
-            </div>
-          </div>
-
-          <div>
             <label className="block text-sm text-text-secondary mb-2">Party code</label>
             <input
               type="text"
@@ -183,7 +154,7 @@ export default function JoinPartyPage() {
           <button
             onClick={handleJoin}
             className="btn btn-primary w-full text-lg disabled:opacity-50"
-            disabled={code.length !== 6 || !displayName.trim() || isJoining || (needsPassword && !password)}
+            disabled={code.length !== 6 || isJoining || (needsPassword && !password)}
           >
             {isJoining ? (
               <span className="flex items-center justify-center gap-2">
