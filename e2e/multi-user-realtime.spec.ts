@@ -17,6 +17,7 @@ import { test, expect, type Browser, type BrowserContext, type Page } from '@pla
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const isMockMode = !supabaseUrl || supabaseUrl.includes('placeholder')
+const shouldSkip = isMockMode || !process.env.SUPABASE_LIVE
 
 const FAKE_AUTH_COOKIE = { name: 'sb-mock-auth-token', value: 'test-session', domain: 'localhost', path: '/' }
 
@@ -97,7 +98,7 @@ test.describe('WF1: Create and Join Party', () => {
   })
 
   test('Host creates party, Guest joins, Host sees 2 watching', async () => {
-    test.skip(isMockMode, 'Requires real Supabase — skipped in mock mode')
+    test.skip(shouldSkip, 'Requires SUPABASE_LIVE=true with real Supabase credentials')
 
     const partyCode = await createPartyAsHost(hostPage)
     await expect(hostPage.getByText(/1 watching/)).toBeVisible({ timeout: 5000 })
@@ -132,7 +133,7 @@ test.describe('WF2: Realtime Content Sync', () => {
   })
 
   test('Host adds YouTube link, Guest sees it; Guest adds note, Host sees it', async () => {
-    test.skip(isMockMode, 'Requires real Supabase — skipped in mock mode')
+    test.skip(shouldSkip, 'Requires SUPABASE_LIVE=true with real Supabase credentials')
 
     const partyCode = await createPartyAsHost(hostPage)
     await joinPartyAsGuest(guestPage, 'Guest User', partyCode)
@@ -175,7 +176,7 @@ test.describe('WF3: Queue Advance Sync', () => {
   })
 
   test('Host advances queue, Guest sees NOW SHOWING update', async () => {
-    test.skip(isMockMode, 'Requires real Supabase — skipped in mock mode')
+    test.skip(shouldSkip, 'Requires SUPABASE_LIVE=true with real Supabase credentials')
 
     const partyCode = await createPartyAsHost(hostPage)
     await joinPartyAsGuest(guestPage, 'Guest User', partyCode)
@@ -219,7 +220,7 @@ test.describe('WF4: Toggle Completion Sync', () => {
   })
 
   test('Host marks note complete, both see strikethrough; Guest unchecks, both see restored', async () => {
-    test.skip(isMockMode, 'Requires real Supabase — skipped in mock mode')
+    test.skip(shouldSkip, 'Requires SUPABASE_LIVE=true with real Supabase credentials')
 
     const partyCode = await createPartyAsHost(hostPage)
     await joinPartyAsGuest(guestPage, 'Guest User', partyCode)
@@ -295,7 +296,7 @@ test.describe('WF6: Password-Protected Join', () => {
   })
 
   test('Wrong password rejected, correct password accepted', async () => {
-    test.skip(isMockMode, 'Requires real Supabase — skipped in mock mode')
+    test.skip(shouldSkip, 'Requires SUPABASE_LIVE=true with real Supabase credentials')
 
     // Host creates party with password
     await resetSession(hostPage)
@@ -357,7 +358,7 @@ test.describe('WF7: TV Mode Sync', () => {
   })
 
   test('Host in TV mode advances, Guest sees update; Guest adds note, Host sees it in TV', async () => {
-    test.skip(isMockMode, 'Requires real Supabase — skipped in mock mode')
+    test.skip(shouldSkip, 'Requires SUPABASE_LIVE=true with real Supabase credentials')
 
     const partyCode = await createPartyAsHost(hostPage)
     await joinPartyAsGuest(guestPage, 'Guest User', partyCode)
@@ -408,7 +409,7 @@ test.describe('WF8: Guest Leave and Rejoin', () => {
   })
 
   test('Guest leaves, Host sees 1 watching; Guest rejoins, Host sees 2 watching', async () => {
-    test.skip(isMockMode, 'Requires real Supabase — skipped in mock mode')
+    test.skip(shouldSkip, 'Requires SUPABASE_LIVE=true with real Supabase credentials')
 
     const partyCode = await createPartyAsHost(hostPage)
     await joinPartyAsGuest(guestPage, 'Guest User', partyCode)
@@ -453,7 +454,7 @@ test.describe('WF9: Deep Link Join', () => {
   })
 
   test('Guest navigates to /join/CODE directly, code pre-filled, joins successfully', async () => {
-    test.skip(isMockMode, 'Requires real Supabase — skipped in mock mode')
+    test.skip(shouldSkip, 'Requires SUPABASE_LIVE=true with real Supabase credentials')
 
     const partyCode = await createPartyAsHost(hostPage)
 
@@ -495,7 +496,7 @@ test.describe('WF10: Simultaneous Content Adds', () => {
   })
 
   test('Both users add content simultaneously, both see both items', async () => {
-    test.skip(isMockMode, 'Requires real Supabase — skipped in mock mode')
+    test.skip(shouldSkip, 'Requires SUPABASE_LIVE=true with real Supabase credentials')
 
     const partyCode = await createPartyAsHost(hostPage)
     await joinPartyAsGuest(guestPage, 'Guest User', partyCode)
