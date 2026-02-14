@@ -60,7 +60,7 @@ test.describe('Phase 6 — Friends List Block Button', () => {
 })
 
 test.describe('Phase 6 — Email Invite Dedup (code review)', () => {
-  test('invite API route has dedup check for existing invite tokens', async ({}) => {
+  test('invite API route has dedup check for existing invite tokens', async () => {
     // Structural verification: the dedup logic exists in the invite API route
     // Actual server-side dedup is tested via integration tests with live Supabase
     const fs = await import('fs')
@@ -72,7 +72,7 @@ test.describe('Phase 6 — Email Invite Dedup (code review)', () => {
 })
 
 test.describe('Phase 6 — Error Messages', () => {
-  test('error messages module exports FRIENDS.RATE_LIMITED', async ({}) => {
+  test('error messages module exports FRIENDS.RATE_LIMITED', async () => {
     // This is a structural test to verify the error messages exist
     // The actual rate limiting is tested server-side
     const errorMessages = await import('../lib/errorMessages')
