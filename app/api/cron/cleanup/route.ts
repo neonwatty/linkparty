@@ -90,12 +90,29 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    console.log(`Cleanup complete: ${totalDeleted} parties deleted, ${totalImagesDeleted} images removed`)
+    // Clean up expired invite tokens
+    let tokensDeleted = 0
+    const { data: deletedTokens, error: tokenError } = await supabase
+      .from('invite_tokens')
+      .delete()
+      .lt('expires_at', new Date().toISOString())
+      .select('id')
+
+    if (tokenError) {
+      console.error('Failed to delete expired invite tokens:', tokenError)
+    } else {
+      tokensDeleted = deletedTokens?.length ?? 0
+    }
+
+    console.log(
+      `Cleanup complete: ${totalDeleted} parties deleted, ${totalImagesDeleted} images removed, ${tokensDeleted} expired tokens deleted`,
+    )
 
     return NextResponse.json({
       success: true,
       deletedCount: totalDeleted,
       imagesDeleted: totalImagesDeleted,
+      tokensDeleted,
     })
   } catch (err) {
     console.error('Cron cleanup error:', err)

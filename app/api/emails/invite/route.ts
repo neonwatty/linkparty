@@ -102,8 +102,23 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'This party has expired' }, { status: 410 })
       }
 
-      // Create invite token for auto-friendship on sign-up
+      // Deduplicate: check if this email was already invited to this party by this user
       if (inviterId) {
+        const { data: existingToken } = await supabase
+          .from('invite_tokens')
+          .select('id')
+          .eq('inviter_id', inviterId)
+          .eq('invitee_email', email.toLowerCase())
+          .eq('party_code', partyCode.toUpperCase())
+          .eq('claimed', false)
+          .limit(1)
+          .maybeSingle()
+
+        if (existingToken) {
+          return NextResponse.json({ error: 'This person has already been invited to this party.' }, { status: 409 })
+        }
+
+        // Create invite token for auto-friendship on sign-up
         const { error: tokenError } = await supabase.from('invite_tokens').insert({
           inviter_id: inviterId,
           invitee_email: email.toLowerCase(),

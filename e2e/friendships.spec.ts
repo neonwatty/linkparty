@@ -8,10 +8,11 @@ test.describe('Profile Page Tabs', () => {
     await page.goto('/profile')
   })
 
-  test('profile page shows tabs: Profile, Friends, Requests', async ({ page }) => {
+  test('profile page shows tabs: Profile, Friends, Requests, Blocked', async ({ page }) => {
     await expect(page.getByRole('button', { name: 'Profile', exact: true })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Friends', exact: true })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Requests', exact: true })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Blocked', exact: true })).toBeVisible()
   })
 
   test('default tab is Profile and shows ProfileEditor', async ({ page }) => {

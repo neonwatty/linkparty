@@ -18,6 +18,8 @@ export const FRIENDS = {
   NOT_AUTHORIZED: 'You are not authorized to perform this action.',
   USER_NOT_FOUND: 'User not found.',
   INVALID_ACTION: 'Invalid action. Use decline, cancel, or unfriend.',
+  RATE_LIMITED: 'Too many friend requests. Please wait before sending more.',
+  BLOCKED: 'You cannot interact with this user.',
 } as const
 
 /**

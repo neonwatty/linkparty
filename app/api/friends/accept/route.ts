@@ -56,6 +56,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: FRIENDS.REQUEST_NOT_FOUND }, { status: 404 })
     }
 
+    // Check if either user has blocked the other
+    const { data: blocks } = await supabase
+      .from('user_blocks')
+      .select('id')
+      .or(
+        `and(blocker_id.eq.${user.id},blocked_id.eq.${friendship.user_id}),and(blocker_id.eq.${friendship.user_id},blocked_id.eq.${user.id})`,
+      )
+      .limit(1)
+
+    if (blocks && blocks.length > 0) {
+      return NextResponse.json({ error: FRIENDS.BLOCKED }, { status: 403 })
+    }
+
     // Validate: must be pending and current user must be the recipient
     if (friendship.status !== 'pending') {
       return NextResponse.json({ error: FRIENDS.REQUEST_NOT_FOUND }, { status: 404 })

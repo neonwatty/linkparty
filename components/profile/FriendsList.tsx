@@ -8,11 +8,13 @@ interface Props {
   friends: FriendWithProfile[]
   loading: boolean
   onRemoveFriend: (friendshipId: string) => void
+  onBlockUser?: (userId: string) => void
 }
 
-export default function FriendsList({ friends, loading, onRemoveFriend }: Props) {
+export default function FriendsList({ friends, loading, onRemoveFriend, onBlockUser }: Props) {
   const [search, setSearch] = useState('')
   const [confirmId, setConfirmId] = useState<string | null>(null)
+  const [confirmAction, setConfirmAction] = useState<'remove' | 'block'>('remove')
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const clearConfirm = useCallback(() => setConfirmId(null), [])
@@ -80,19 +82,43 @@ export default function FriendsList({ friends, loading, onRemoveFriend }: Props)
               {confirmId === f.friendship_id ? (
                 <button
                   data-confirm-btn
-                  onClick={() => onRemoveFriend(f.friendship_id)}
+                  onClick={() => {
+                    if (confirmAction === 'block' && onBlockUser) {
+                      onBlockUser(f.user.id)
+                    } else {
+                      onRemoveFriend(f.friendship_id)
+                    }
+                    setConfirmId(null)
+                  }}
                   className="text-red-400 text-sm font-medium shrink-0"
                 >
-                  Sure?
+                  {confirmAction === 'block' ? 'Block?' : 'Sure?'}
                 </button>
               ) : (
-                <button
-                  data-confirm-btn
-                  onClick={() => setConfirmId(f.friendship_id)}
-                  className="text-red-400 text-sm shrink-0"
-                >
-                  Remove
-                </button>
+                <div className="flex gap-2 shrink-0">
+                  <button
+                    data-confirm-btn
+                    onClick={() => {
+                      setConfirmAction('remove')
+                      setConfirmId(f.friendship_id)
+                    }}
+                    className="text-red-400 text-sm"
+                  >
+                    Remove
+                  </button>
+                  {onBlockUser && (
+                    <button
+                      data-confirm-btn
+                      onClick={() => {
+                        setConfirmAction('block')
+                        setConfirmId(f.friendship_id)
+                      }}
+                      className="text-text-muted text-sm hover:text-red-400"
+                    >
+                      Block
+                    </button>
+                  )}
+                </div>
               )}
             </div>
           ))}

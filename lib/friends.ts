@@ -186,6 +186,23 @@ export async function searchUsers(query: string): Promise<UserProfile[]> {
     data: { user },
   } = await supabase.auth.getUser()
 
+  // Get blocked user IDs to filter from results
+  let blockedIds: string[] = []
+  if (user) {
+    const { data: blocks } = await supabase.from('user_blocks').select('blocked_id').eq('blocker_id', user.id)
+
+    if (blocks) {
+      blockedIds = blocks.map((b: { blocked_id: string }) => b.blocked_id)
+    }
+
+    // Also get users who blocked me (they shouldn't appear in my search)
+    const { data: blockedBy } = await supabase.from('user_blocks').select('blocker_id').eq('blocked_id', user.id)
+
+    if (blockedBy) {
+      blockedIds.push(...blockedBy.map((b: { blocker_id: string }) => b.blocker_id))
+    }
+  }
+
   const { data, error } = await supabase
     .from('user_profiles')
     .select('*')
@@ -194,8 +211,9 @@ export async function searchUsers(query: string): Promise<UserProfile[]> {
 
   if (error || !data) return []
 
-  // Filter out current user
-  const profiles = (data as UserProfile[]).filter((p) => p.id !== user?.id)
+  // Filter out current user and blocked users
+  const excludeIds = new Set([user?.id, ...blockedIds].filter(Boolean))
+  const profiles = (data as UserProfile[]).filter((p) => !excludeIds.has(p.id))
   return profiles
 }
 
@@ -277,4 +295,67 @@ export async function removeFriend(friendshipId: string): Promise<{ error: strin
   const result = await res.json()
   if (!res.ok) return { error: result.error || 'Request failed' }
   return { error: null }
+}
+
+// ---------- Block operations ----------
+
+export async function blockUser(userId: string): Promise<{ error: string | null }> {
+  const headers = await getAuthHeaders()
+  if (!headers) return { error: 'Not authenticated' }
+
+  const res = await globalThis.fetch('/api/users/block', {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ userId }),
+  })
+  const result = await res.json()
+  if (!res.ok) return { error: result.error || 'Failed to block user' }
+  return { error: null }
+}
+
+export async function unblockUser(userId: string): Promise<{ error: string | null }> {
+  const headers = await getAuthHeaders()
+  if (!headers) return { error: 'Not authenticated' }
+
+  const res = await globalThis.fetch(`/api/users/block?userId=${userId}`, {
+    method: 'DELETE',
+    headers,
+  })
+  const result = await res.json()
+  if (!res.ok) return { error: result.error || 'Failed to unblock user' }
+  return { error: null }
+}
+
+export async function listBlockedUsers(): Promise<UserProfile[]> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return []
+
+  const { data: blocks, error } = await supabase.from('user_blocks').select('blocked_id').eq('blocker_id', user.id)
+
+  if (error || !blocks || blocks.length === 0) return []
+
+  const blockedIds = blocks.map((b: { blocked_id: string }) => b.blocked_id)
+  const { data: profiles, error: profileError } = await supabase.from('user_profiles').select('*').in('id', blockedIds)
+
+  if (profileError || !profiles) return []
+  return profiles as UserProfile[]
+}
+
+export async function isBlocked(otherUserId: string): Promise<boolean> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return false
+
+  const { data } = await supabase
+    .from('user_blocks')
+    .select('id')
+    .or(
+      `and(blocker_id.eq.${user.id},blocked_id.eq.${otherUserId}),and(blocker_id.eq.${otherUserId},blocked_id.eq.${user.id})`,
+    )
+    .limit(1)
+
+  return (data?.length ?? 0) > 0
 }
