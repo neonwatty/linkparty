@@ -13,7 +13,25 @@ import { supabase } from '@/lib/supabase'
 export function AppHome() {
   const { signOut, user } = useAuth()
   const { unreadCount, notifications, markAsRead, markAllAsRead, isOpen, setIsOpen } = useNotifications()
-  const displayName = user?.user_metadata?.display_name || ''
+  const [profileName, setProfileName] = useState<string | null>(null)
+  const displayName = profileName ?? user?.user_metadata?.display_name ?? ''
+
+  // Fetch profile display_name (source of truth, updated via profile editor)
+  useEffect(() => {
+    if (!user) return
+    let cancelled = false
+    supabase
+      .from('user_profiles')
+      .select('display_name')
+      .eq('id', user.id)
+      .single()
+      .then(({ data }) => {
+        if (!cancelled && data?.display_name) setProfileName(data.display_name)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [user])
 
   const [friendParties, setFriendParties] = useState<
     Array<{ id: string; code: string; name: string | null; hostName: string; memberCount: number; expiresAt: string }>

@@ -1,15 +1,31 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { NextRequest } from 'next/server'
 
-// Mock Supabase
-const mockSingle = vi.fn()
-const mockEq = vi.fn(() => ({ single: mockSingle }))
-const mockSelect = vi.fn(() => ({ eq: mockEq }))
-const mockFrom = vi.fn(() => ({ select: mockSelect }))
+// Mock Supabase with flexible chain that supports both party lookup and dedup query
+const mockPartySingle = vi.fn()
+const mockDedupMaybeSingle = vi.fn()
+const mockFrom = vi.fn()
+
+function createChain(terminal: vi.Mock) {
+  const chain: Record<string, vi.Mock> = {}
+  const handler = () => chain
+  chain.select = vi.fn(handler)
+  chain.eq = vi.fn(handler)
+  chain.limit = vi.fn(handler)
+  chain.single = terminal
+  chain.maybeSingle = terminal
+  return chain
+}
 
 vi.mock('@supabase/supabase-js', () => ({
   createClient: vi.fn(() => ({
-    from: mockFrom,
+    from: (...args: unknown[]) => {
+      mockFrom(...args)
+      const table = args[0] as string
+      if (table === 'invite_tokens') return createChain(mockDedupMaybeSingle)
+      return createChain(mockPartySingle)
+    },
+    auth: { getUser: vi.fn().mockResolvedValue({ data: { user: null } }) },
   })),
 }))
 
@@ -31,10 +47,11 @@ describe('Email Invite API Route', () => {
       SUPABASE_SERVICE_ROLE_KEY: 'test-service-key',
     }
     mockSendPartyInvitation.mockResolvedValue({ success: true, id: 'email-id-123' })
-    mockSingle.mockResolvedValue({
+    mockPartySingle.mockResolvedValue({
       data: { id: 'party-id-123', code: 'ABC123', expires_at: new Date(Date.now() + 86400000).toISOString() },
       error: null,
     })
+    mockDedupMaybeSingle.mockResolvedValue({ data: null, error: null })
   })
 
   afterEach(() => {
@@ -115,7 +132,7 @@ describe('Email Invite API Route', () => {
 
   describe('Party Verification', () => {
     it('returns 404 when party is not found', async () => {
-      mockSingle.mockResolvedValueOnce({ data: null, error: { message: 'not found' } })
+      mockPartySingle.mockResolvedValueOnce({ data: null, error: { message: 'not found' } })
       const { POST } = await import('./route')
       const request = createRequest(validBody)
       const response = await POST(request)
@@ -125,7 +142,7 @@ describe('Email Invite API Route', () => {
     })
 
     it('returns 410 when party has expired', async () => {
-      mockSingle.mockResolvedValueOnce({
+      mockPartySingle.mockResolvedValueOnce({
         data: {
           id: 'party-id-123',
           code: 'ABC123',
