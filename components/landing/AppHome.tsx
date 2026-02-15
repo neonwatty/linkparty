@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { HistoryIcon, UserIcon } from '@/components/icons'
 import { TwinklingStars } from '@/components/ui/TwinklingStars'
@@ -8,6 +8,7 @@ import { NotificationBell } from '@/components/notifications/NotificationBell'
 import { NotificationDropdown } from '@/components/notifications/NotificationDropdown'
 import { useAuth } from '@/contexts/AuthContext'
 import { useNotifications } from '@/hooks/useNotifications'
+import { acceptFriendRequest, declineFriendRequest } from '@/lib/friends'
 import { supabase } from '@/lib/supabase'
 
 export function AppHome() {
@@ -32,6 +33,22 @@ export function AppHome() {
       cancelled = true
     }
   }, [user])
+
+  const handleAcceptFriend = useCallback(
+    async (friendshipId: string) => {
+      const { error } = await acceptFriendRequest(friendshipId)
+      if (!error) markAsRead(notifications.find((n) => n.data?.friendshipId === friendshipId)?.id ?? '')
+    },
+    [notifications, markAsRead],
+  )
+
+  const handleDeclineFriend = useCallback(
+    async (friendshipId: string) => {
+      const { error } = await declineFriendRequest(friendshipId)
+      if (!error) markAsRead(notifications.find((n) => n.data?.friendshipId === friendshipId)?.id ?? '')
+    },
+    [notifications, markAsRead],
+  )
 
   const [friendParties, setFriendParties] = useState<
     Array<{ id: string; code: string; name: string | null; hostName: string; memberCount: number; expiresAt: string }>
@@ -89,6 +106,8 @@ export function AppHome() {
                 notifications={notifications}
                 onMarkRead={markAsRead}
                 onMarkAllRead={markAllAsRead}
+                onAcceptFriend={handleAcceptFriend}
+                onDeclineFriend={handleDeclineFriend}
                 onClose={() => setIsOpen(false)}
               />
             )}

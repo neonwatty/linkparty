@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { hashPassword } from '@/lib/passwordHash'
 import { LIMITS } from '@/lib/errorMessages'
 
-export const dynamic = 'force-static'
+export const dynamic = 'force-dynamic'
 
 const MAX_ACTIVE_PARTIES = 5
 
