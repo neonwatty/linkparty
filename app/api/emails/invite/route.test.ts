@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from 'vitest'
 import { NextRequest } from 'next/server'
 
 // Mock Supabase with flexible chain that supports both party lookup and dedup query
@@ -6,8 +6,8 @@ const mockPartySingle = vi.fn()
 const mockDedupMaybeSingle = vi.fn()
 const mockFrom = vi.fn()
 
-function createChain(terminal: vi.Mock) {
-  const chain: Record<string, vi.Mock> = {}
+function createChain(terminal: Mock) {
+  const chain: Record<string, Mock> = {}
   const handler = () => chain
   chain.select = vi.fn(handler)
   chain.eq = vi.fn(handler)
