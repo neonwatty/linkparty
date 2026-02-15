@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 
-export const dynamic = 'force-static'
+export const dynamic = 'force-dynamic'
 
 export async function GET(request: Request) {
   const authHeader = request.headers.get('Authorization')

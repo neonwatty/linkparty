@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { hashPassword, verifyHash } from '@/lib/passwordHash'
 import { LIMITS } from '@/lib/errorMessages'
 
-export const dynamic = 'force-static'
+export const dynamic = 'force-dynamic'
 
 const MAX_MEMBERS = 20
 
