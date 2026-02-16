@@ -1,49 +1,51 @@
 # Browser Workflows
 
 > Auto-generated workflow documentation for Link Party
-> Last updated: 2026-02-14
+> Last updated: 2026-02-16
 > Base URL: https://linkparty.app (production) or http://localhost:3000 (development)
 > Platform: Desktop web browsers (Chrome, Safari, Firefox, Edge)
+> Auth: All pages require authentication (auth wall via middleware). Users must sign in before any workflow.
 
 ## Quick Reference
 
-| #   | Workflow                 | Purpose                   | Steps | Status |
-| --- | ------------------------ | ------------------------- | ----- | ------ |
-| 1   | App Launch (Fresh)       | First-time app open       | 4     | ✅     |
-| 2   | Create a New Party       | Party creation flow       | 8     | ✅     |
-| 3   | Join an Existing Party   | Join with code            | 7     | ✅     |
-| 4   | Join via Deep Link       | Join using URL param      | 4     | ⬜     |
-| 5   | Leave Party              | Exit to home              | 4     | ⬜     |
-| 6   | Add YouTube Content      | Add video to queue        | 7     | ⬜     |
-| 7   | Add Tweet Content        | Add tweet to queue        | 7     | ⬜     |
-| 8   | Add Reddit Content       | Add post to queue         | 7     | ⬜     |
-| 9   | Add Simple Note          | Add text note             | 6     | ✅     |
-| 10  | Add Note with Due Date   | Add reminder              | 7     | ⬜     |
-| 11  | Mark Note Complete       | Toggle completion         | 4     | ⬜     |
-| 12  | View and Edit Note       | Open and modify note      | 8     | ⬜     |
-| 13  | Add Image Content        | Upload image to queue     | 8     | ⬜     |
-| 14  | View Image in Lightbox   | Full-screen image view    | 4     | ⬜     |
-| 15  | Reorder Queue Items      | Move items up/down        | 6     | ⬜     |
-| 16  | Show Item Next           | Bump to show next         | 5     | ✅     |
-| 17  | Remove Queue Item        | Delete from queue         | 6     | ⬜     |
-| 18  | TV Mode                  | Enter TV display          | 5     | ⬜     |
-| 19  | View History             | View past parties         | 4     | ⬜     |
-| 20  | Google OAuth Login       | OAuth flow                | 5     | ⬜     |
-| 21  | Keyboard Navigation      | Tab/Enter navigation      | 5     | ⬜     |
-| 22  | Responsive Layout        | Test viewport sizes       | 4     | ⬜     |
-| 23  | Profile Setup            | Edit name/username/avatar | 7     | ⬜     |
-| 24  | Send Friend Request      | Add friend from party     | 5     | ⬜     |
-| 25  | Accept Friend Request    | Accept from Requests tab  | 6     | ⬜     |
-| 26  | Decline/Cancel Request   | Decline or cancel request | 5     | ⬜     |
-| 27  | Remove Friend            | Remove with confirmation  | 5     | ⬜     |
-| 28  | Block and Unblock User   | Block/unblock flow        | 7     | ⬜     |
-| 29  | Notification Bell        | View & mark read          | 6     | ⬜     |
-| 30  | Act on Notification      | Accept/join from notif    | 5     | ⬜     |
-| 31  | Invite Friends (Create)  | Invite during creation    | 6     | ⬜     |
-| 32  | Invite from Party Room   | Email & friend invites    | 7     | ⬜     |
-| 33  | Friends' Active Parties  | View & join from home     | 5     | ⬜     |
-| 34  | Password-Protected Party | Create & join w/ password | 7     | ⬜     |
-| 35  | Party Creation Limit     | Max 5 parties enforcement | 5     | ⬜     |
+| #   | Workflow                   | Purpose                        | Steps | Status |
+| --- | -------------------------- | ------------------------------ | ----- | ------ |
+| 1   | App Launch (Authenticated) | Verify home screen after login | 5     | ✅     |
+| 2   | Create a New Party         | Party creation flow            | 7     | ✅     |
+| 3   | Join an Existing Party     | Join with code                 | 5     | ✅     |
+| 4   | Join via Deep Link         | Join using /join/CODE URL      | 4     | ✅     |
+| 5   | Leave Party                | Exit to home                   | 4     | ✅     |
+| 6   | Add YouTube Content        | Add video to queue             | 7     | ⬜     |
+| 7   | Add Tweet Content          | Add tweet to queue             | 7     | ⬜     |
+| 8   | Add Reddit Content         | Add post to queue              | 7     | ⬜     |
+| 9   | Add Simple Note            | Add text note                  | 6     | ✅     |
+| 10  | Add Note with Due Date     | Add reminder                   | 7     | ⬜     |
+| 11  | Mark Note Complete         | Toggle completion              | 4     | ⬜     |
+| 12  | View and Edit Note         | Open and modify note           | 8     | ⬜     |
+| 13  | Add Image Content          | Upload image to queue          | 8     | ⬜     |
+| 14  | View Image in Lightbox     | Full-screen image view         | 4     | ⬜     |
+| 15  | Reorder Queue Items        | Move items up/down             | 6     | ⬜     |
+| 16  | Show Item Next             | Bump to show next              | 5     | ✅     |
+| 17  | Remove Queue Item          | Delete from queue              | 6     | ⬜     |
+| 18  | TV Mode                    | Enter TV display               | 5     | ✅     |
+| 19  | View History               | View past parties              | 4     | ✅     |
+| 20  | Sign Up & Login            | Email signup + Google OAuth    | 8     | ⬜     |
+| 21  | Keyboard Navigation        | Tab/Enter navigation           | 5     | ⬜     |
+| 22  | Responsive Layout          | Test viewport sizes            | 4     | ⬜     |
+| 23  | Profile Setup              | Edit name/username/avatar      | 7     | ✅     |
+| 24  | Send Friend Request        | Add friend from party          | 5     | ⬜     |
+| 25  | Accept Friend Request      | Accept from Requests tab       | 6     | ⬜     |
+| 26  | Decline/Cancel Request     | Decline or cancel request      | 5     | ⬜     |
+| 27  | Remove Friend              | Remove with confirmation       | 5     | ⬜     |
+| 28  | Block and Unblock User     | Block/unblock flow             | 7     | ⬜     |
+| 29  | Notification Bell          | View & mark read               | 6     | ⬜     |
+| 30  | Act on Notification        | Accept/join from notif         | 5     | ⬜     |
+| 31  | Invite Friends (Create)    | Invite during creation         | 6     | ⬜     |
+| 32  | Invite from Party Room     | Email & friend invites         | 7     | ⬜     |
+| 33  | Friends' Active Parties    | View & join from home          | 5     | ⬜     |
+| 34  | Password-Protected Party   | Create & join w/ password      | 7     | ⬜     |
+| 35  | Party Creation Limit       | Max 5 parties enforcement      | 5     | ⬜     |
+| 36  | Email Events Dashboard     | Admin email monitoring         | 5     | ⬜     |
 
 **Legend:** ✅ Passed | ⚠️ Partial | ❌ Failed | ⬜ Not tested
 
@@ -96,32 +98,40 @@ The app uses a **dark "Campfire" theme** with deep navy backgrounds and warm ora
 
 ## Core Workflows
 
-### Workflow 1: App Launch (Fresh)
+### Workflow 1: App Launch (Authenticated)
 
-> Tests first-time app launch and verifies home screen elements on desktop.
+> Tests app launch for an authenticated user and verifies home screen elements on desktop.
 
-**Prerequisites:** Clear localStorage, fresh browser session
+**Prerequisites:** Signed in (all pages require authentication via auth wall middleware)
 
 1. Navigate to the app
    - Open browser and navigate to https://linkparty.app (or localhost:3000)
-   - Wait for page to fully load
-   - Verify no loading spinner stuck
+   - If not signed in, verify redirect to /login page
+   - Sign in with Google OAuth or email/password
+   - Wait for home page to fully load
 
 2. Verify home screen branding
-   - Verify "Link Party" title is visible
+   - Verify greeting "Hey, {displayName}" is visible
    - Verify tagline text is displayed
-   - Verify dark navy background (#1a1d2e) with animated stars renders correctly
+   - Verify dark navy background (#1a1d2e) with animated twinkling stars renders correctly
    - Verify fonts load properly (Instrument Serif for headings, Inter for body)
 
 3. Verify primary CTAs
-   - Verify "Start a Party" button is visible (warm orange #ff8a5c)
-   - Verify "Join with Code" button is visible (secondary style)
+   - Verify "Start a Party" link button is visible (warm orange #ff8a5c) → /create
+   - Verify "Join with Code" link button is visible (secondary style) → /join
    - Verify buttons have hover states (test by hovering - darker orange #e86b3a)
 
-4. Verify navigation elements
-   - Verify history icon button in top-right corner
-   - Verify "Sign in" link visible
+4. Verify navigation elements (top header)
+   - Verify "Sign out" button in top-left corner
+   - Verify profile icon button → /profile
+   - Verify notification bell icon with unread badge (if any)
+   - Verify history icon button → /history
    - Verify no hamburger menu (good web convention)
+
+5. Verify friends' active parties section (if applicable)
+   - If user has friends with visible active parties, verify "Friends are partying" section
+   - Verify party cards show: party name, host name, member count, "Join" link
+   - If no friends' parties active, verify the section is hidden
 
 ---
 
@@ -129,48 +139,46 @@ The app uses a **dark "Campfire" theme** with deep navy backgrounds and warm ora
 
 > Tests the complete flow of creating a new party and entering the party room.
 
-**Prerequisites:** On home screen, no active party
+**Prerequisites:** Signed in, on home screen
 
 1. Navigate to create party screen
-   - Click "Start a Party" button
-   - Verify "Create a Party" screen appears
+   - Click "Start a Party" link
+   - Verify URL changes to /create
+   - Verify "Start a party" heading appears
+   - Verify "Create a room and invite your friends" subtitle
    - Verify back button (chevron) in top-left corner
-   - Verify URL does not change (SPA behavior)
 
 2. Verify form elements
-   - Verify "Your Name" input field has focus (autofocus)
-   - Verify "Party Name" optional input is present
-   - Verify settings display shows queue limit (100) and rate limit (5/min)
-   - Verify inputs use dark theme styling with warm text (#f5f0e8)
+   - Verify "Party name (optional)" input field is present
+   - Verify settings card shows: Password protect toggle, Queue limit (100), Rate limit (5/min)
+   - Verify "Invite friends" collapsible section (if user has friends)
+   - Verify "Create Party" button at bottom
+   - Note: Display name is auto-populated from authenticated user profile (no name input)
 
-3. Enter display name
-   - Click the "Your Name" text field
-   - Type "TestUser1"
-   - Verify text appears in field
-   - Verify input has orange focus ring styling (#ff8a5c)
-
-4. Enter party name (optional)
-   - Click the "Party Name" text field
+3. Enter party name (optional)
+   - Click the "Party name" text field
    - Type "Test Party"
    - Verify text appears in field
+   - Verify character count appears (e.g., "10/100")
 
-5. Create the party
+4. Create the party
    - Click "Create Party" button
    - Verify button shows loading state "Creating..."
    - Wait for creation to complete
 
-6. Verify party room loads
-   - Verify party room screen appears
-   - Verify party name "Test Party" shows in header
-   - Verify 6-character party code is displayed
+5. Verify party room loads
+   - Verify party room screen appears at /party/{id}
+   - Verify 6-character party code is displayed prominently
+   - Verify "Party expires in 23h left" countdown
 
-7. Verify party room elements
-   - Verify "Now Showing" section (empty state or content)
-   - Verify "Members" section shows "TestUser1" with host badge
-   - Verify "Up Next" queue section is present
+6. Verify party room elements
+   - Verify "Now Showing" section (empty state)
+   - Verify member count shows "1 watching"
+   - Verify "Up Next" queue section is present (empty)
    - Verify floating "+" button for adding content (warm orange with glow)
+   - Verify header buttons: Leave (chevron), TV mode, Invite by email, Share party
 
-8. Note the party code
+7. Note the party code
    - Record the 6-character code displayed in header
    - This code will be used for Workflow 3
 
@@ -180,69 +188,64 @@ The app uses a **dark "Campfire" theme** with deep navy backgrounds and warm ora
 
 > Tests joining a party using a 6-character code.
 
-**Prerequisites:** On home screen, have a valid party code from Workflow 2
+**Prerequisites:** Signed in, on home screen, have a valid party code from Workflow 2
 
 1. Navigate to join party screen
-   - Click "Join with Code" button
-   - Verify "Join a Party" screen appears
-   - Verify back button in top-left corner
+   - Click "Join with Code" link
+   - Verify URL changes to /join
+   - Verify "Join a party" heading appears
+   - Verify "Enter the code from your host" subtitle
+   - Verify back button (chevron) in top-left corner
+   - Note: Display name is auto-populated from authenticated user profile (no name input)
 
-2. Verify form elements
-   - Verify "Your Name" input field is present and focused
-   - Verify 6-character code input field is present
-   - Verify code input shows monospace styling
-
-3. Enter display name
-   - Click the "Your Name" text field
-   - Type "TestUser2"
-   - Verify text appears in field
-
-4. Enter party code
-   - Click the party code input field
+2. Enter party code
+   - Click the party code input field (placeholder "ABC123")
    - Type the 6-character code (e.g., "ABC123")
-   - Verify code appears in uppercase
-   - Verify code field shows all 6 characters
+   - Verify code appears in uppercase with letter-spacing
+   - Verify code field is centered, monospace, large text
 
-5. Join the party
-   - Verify "Join Party" button becomes enabled
+3. Join the party
+   - Verify "Join Party" button becomes enabled when code is 6 characters
    - Click "Join Party" button
    - Verify loading state shows "Joining..."
    - Wait for join to complete
 
-6. Verify party room loads
-   - Verify party room screen appears
-   - Verify party name matches expected
+4. Verify party room loads
+   - Verify party room screen appears at /party/{id}
    - Verify party code matches entered code
+   - Verify member count increased
 
-7. Verify membership
-   - Verify "Members" section shows both "TestUser1" (host) and "TestUser2"
-   - Verify correct host badge placement
+5. Verify membership
+   - Verify member count shows correct number (e.g., "2 watching")
+   - Verify current user appears in member list
 
 ---
 
 ### Workflow 4: Join via Deep Link
 
-> Tests joining a party using URL query parameter.
+> Tests joining a party using /join/CODE URL path.
 
-**Prerequisites:** Have a valid party code
+**Prerequisites:** Signed in, have a valid party code
 
 1. Navigate to join URL
    - Open browser and navigate to https://linkparty.app/join/ABC123 (replace with real code)
    - Wait for page to load
 
-2. Verify auto-navigation
-   - Verify app automatically navigates to join screen
-   - Verify party code field is pre-populated with the code
-   - Verify name field is ready for input
+2. Verify pre-filled state
+   - Verify "Join a party" heading appears
+   - Verify "Confirm the code and join" subtitle
+   - Verify party code field is pre-populated with the code from URL
+   - Verify "Join Party" button is enabled (code already has 6 characters)
+   - Note: Display name auto-populated from auth profile (no name input)
 
-3. Enter name and join
-   - Type display name in "Your Name" field
+3. Join the party
    - Click "Join Party" button
+   - Verify loading state shows "Joining..."
    - Wait for join to complete
 
 4. Verify party room
-   - Verify party room loads successfully
-   - Verify joined the correct party
+   - Verify party room loads successfully at /party/{id}
+   - Verify joined the correct party (code matches)
 
 ---
 
@@ -250,20 +253,20 @@ The app uses a **dark "Campfire" theme** with deep navy backgrounds and warm ora
 
 > Tests leaving a party and returning to home screen.
 
-**Prerequisites:** In an active party room
+**Prerequisites:** Signed in, in an active party room
 
 1. Initiate leave
-   - Click the back button (chevron) in top-left of party room
-   - Note: May show confirmation dialog in future versions
+   - Click the "Leave party" button (back chevron, aria-label="Leave party") in top-left of party room
+   - Verify party_members row is deleted (member count decreases for other users)
 
 2. Verify transition
    - Verify party room closes
-   - Verify home screen appears
+   - Verify home screen appears at /
 
 3. Verify home state
-   - Verify "Start a Party" and "Join with Code" buttons visible
-   - Verify no party code displayed
-   - Verify clean home screen state
+   - Verify "Start a Party" and "Join with Code" links visible
+   - Verify greeting "Hey, {displayName}" visible
+   - Verify navigation elements (Sign out, Profile, Notifications, History)
 
 4. Verify session cleared
    - Refresh the page (F5 or Cmd+R)
@@ -766,55 +769,91 @@ The app uses a **dark "Campfire" theme** with deep navy backgrounds and warm ora
 
 ### Workflow 19: View History
 
-> Tests viewing past party sessions (currently mock data).
+> Tests viewing past party sessions from real Supabase data.
 
-**Prerequisites:** On home screen
+**Prerequisites:** Signed in, on home screen
 
 1. Open history
    - Click history icon button in top-right of home screen
-   - Verify history screen opens
+   - Verify URL changes to /history
+   - Verify "Party History" heading and "Your past watch sessions" subtitle
 
-2. Verify history list
-   - Verify list of past parties displayed
-   - Verify each card shows: party name, date, member count, item count
+2. Verify history list (if parties exist)
+   - Verify list of past parties displayed (last 10 joined)
+   - Verify each card shows: party name (or "Party {code}"), date, member count, item count
+   - Verify lock icon for password-protected parties
+   - Verify cards are clickable (link to /party/{id} for rejoin)
 
-3. Verify mock data
-   - Verify "Game Night" (Jan 10, 2025) appears
-   - Verify "New Years Eve" (Dec 31, 2024) appears
-   - Verify cards have staggered fade-in animation
+3. Verify empty state (if no history)
+   - Verify "No party history yet" message
+   - Verify "Join or create a party to get started!" subtitle
 
 4. Return to home
-   - Click back button in top-left
+   - Click back button (chevron) in top-left
    - Verify returns to home screen
 
 ---
 
-### Workflow 20: Google OAuth Login
+### Workflow 20: Sign Up & Login
 
-> Tests Google OAuth sign-in flow.
+> Tests email signup, email login, Google OAuth, and password reset flows.
 
-**Prerequisites:** On home screen, Google account available
+**Prerequisites:** Browser with no active session (sign out first if needed)
 
-1. Navigate to login
-   - Click "Sign in" link at bottom of home screen
-   - Verify login screen appears
+1. Navigate to login page
+   - Open https://linkparty.app (any page)
+   - Verify redirect to /login (auth wall)
+   - Verify "Welcome back" heading
+   - Verify email input, password input, "Sign In" button
+   - Verify "Continue with Google" button
+   - Verify "Don't have an account? Sign up" link
 
-2. Initiate Google OAuth
+2. Test email signup
+   - Click "Sign up" link
+   - Verify URL changes to /signup
+   - Verify "Create your account" heading
+   - Verify fields: Display name, Email, Password
+   - Fill in test credentials
+   - Click "Create Account"
+   - Verify redirect or confirmation email message
+
+3. Test email login
+   - Navigate to /login
+   - Enter email and password
+   - Click "Sign In"
+   - Verify redirect to home page
+   - Verify "Hey, {displayName}" greeting
+
+4. Test Google OAuth
    - Click "Continue with Google" button
-   - Verify browser redirects to Google sign-in
+   - [MANUAL] Complete Google sign-in flow (browser popup)
+   - Verify callback redirect to /auth/callback
+   - Verify redirect to home page
+   - Verify authenticated state
 
-3. Complete Google sign-in
-   - Enter Google credentials or select account
-   - Complete any 2FA if required
-   - Approve app permissions if prompted
+5. Test password reset
+   - Navigate to /login
+   - Click "Forgot password?" link
+   - Verify /reset-password page loads
+   - Enter email address
+   - Click "Send Reset Link"
+   - [MANUAL] Check email for reset link
 
-4. Verify redirect
-   - Verify app receives OAuth callback
-   - Verify returns to app
+6. Verify authenticated home state
+   - Verify greeting "Hey, {displayName}" visible
+   - Verify Sign out, Profile, Notifications, History buttons
+   - Verify "Start a Party" and "Join with Code" links
 
-5. Verify authenticated state
-   - Verify user is signed in
-   - Verify any user-specific UI updates
+7. Test sign out
+   - Click "Sign out" button (top-left)
+   - Verify redirect to /login
+   - Verify cannot access / directly (redirects to /login)
+
+8. Verify session persistence
+   - Sign in again
+   - Close browser tab
+   - Reopen https://linkparty.app
+   - Verify still signed in (cookie-based session)
 
 ---
 
@@ -1372,6 +1411,37 @@ The app uses a **dark "Campfire" theme** with deep navy backgrounds and warm ora
    - Note: Member limit (20) and image limit (20) are enforced server-side
    - These limits show as errors only when the limit is actually hit during join or image upload
 
+### Workflow 36: Email Events Dashboard
+
+> Tests the admin email monitoring dashboard for viewing delivery stats and events.
+
+**Prerequisites:** Signed in, navigate to /admin/emails
+
+1. Navigate to email dashboard
+   - Navigate to https://linkparty.app/admin/emails
+   - Verify "Email Events" heading loads
+   - Verify stats cards at top: Delivery rate, Open rate, Total sent, Bounced
+
+2. Review event list
+   - Verify table/list of email events displayed
+   - Verify each event shows: recipient, event type, timestamp
+   - Verify event types include: sent, delivered, bounced, opened, clicked
+
+3. Filter events
+   - Use search field to filter by recipient email
+   - Verify filtered results update
+   - Use event type filter (if available)
+   - Verify filter correctly narrows results
+
+4. Verify pagination
+   - If more than 20 events, verify pagination controls
+   - Click next page
+   - Verify new events load
+
+5. Return home
+   - Navigate back to home screen
+   - Verify normal home screen loads
+
 ---
 
 ## Web Platform UX Verification
@@ -1447,16 +1517,21 @@ Some workflows require state from previous workflows:
 | 33 (Friends' Active Parties)  | 25 (has friends) + friend has visible party     |
 | 34 (Password-Protected Party) | None (standalone)                               |
 | 35 (Party Creation Limit)     | None (standalone, but creates 5 parties)        |
+| 36 (Email Events Dashboard)   | None (standalone, requires sent emails)         |
 
 **Suggested execution order:**
 
-_Core flows:_ 1 → 20 → 23 → 2 → 6 → 9 → 10 → 11 → 12 → 13 → 14 → 15 → 16 → 17 → 18 → 5 → 3 → 4 → 19 → 21 → 22
+_Auth & setup:_ 20 → 1 → 23
+
+_Core flows:_ 2 → 6 → 9 → 10 → 11 → 12 → 13 → 14 → 15 → 16 → 17 → 18 → 5 → 3 → 4 → 19 → 21 → 22
 
 _Social flows (requires 2 users):_ 24 → 25 → 29 → 30 → 27 → 26 → 28
 
 _Invitation flows:_ 31 → 32 → 33
 
 _Abuse prevention:_ 34 → 35
+
+_Admin:_ 36
 
 ---
 
@@ -1482,3 +1557,29 @@ _Abuse prevention:_ 34 → 35
 1. `.trim()` on env vars in `lib/supabase.ts` — fixed WebSocket 401 from trailing `\n` in anon key
 2. `REPLICA IDENTITY FULL` on parties, party_members, queue_items — enables UPDATE/DELETE realtime events
 3. INSERT RLS policy on notification_logs — fixes 403 on queue item addition
+
+---
+
+### 2026-02-16: Post-Security-Hardening Smoke Test (Production)
+
+**Environment:** Chrome (claude-in-chrome) on https://linkparty.app
+**Context:** After PR #59 (security/perf hardening) and S8 hotfix (ac07c95)
+**Party:** WP6GCU (id: 27124d1c-5f60-4485-9a7d-10ada210f7f8)
+
+| Workflow                | Result | Notes                                                       |
+| ----------------------- | ------ | ----------------------------------------------------------- |
+| WF1: App Launch         | PASS   | Home loads, all nav elements visible                        |
+| WF2: Create Party       | PASS   | Party WP6GCU created, room loaded with all elements         |
+| WF9: Add Simple Note    | PASS   | Note added to queue, visible in Now Showing                 |
+| WF18: TV Mode           | PASS   | Note displayed in TV mode, exit works                       |
+| WF4: Join via Deep Link | PASS   | /join/WP6GCU pre-fills code, join succeeds                  |
+| WF5: Leave Party        | PASS   | Navigates to home, member count decrements                  |
+| WF19: View History      | PASS   | History page loads, shows empty state correctly             |
+| Profile Page            | PASS   | 4 tabs (Profile, Friends, Requests, Blocked), all fields OK |
+
+**Key findings:**
+
+1. S8 Bearer token requirement works correctly — create/join pages pass auth headers
+2. Auth wall enforced — all pages redirect to /login when unauthenticated
+3. No regressions from security hardening in core user flows
+4. Profile social tabs (Friends, Requests, Blocked) fully functional
