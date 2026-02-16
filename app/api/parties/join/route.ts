@@ -8,8 +8,8 @@ export const dynamic = 'force-dynamic'
 
 const MAX_MEMBERS = 20
 
-// In-memory rate limit: 20 requests per minute per IP
-const JOIN_RATE_LIMIT = { maxRequests: 20, windowMs: 60 * 1000 }
+// In-memory rate limit: 60 requests per minute per IP
+const JOIN_RATE_LIMIT = { maxRequests: 60, windowMs: 60 * 1000 }
 const joinRateLimitMap = new Map<string, { timestamps: number[] }>()
 let joinRateLimitCheckCount = 0
 
