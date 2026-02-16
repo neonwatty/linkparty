@@ -35,6 +35,18 @@ export async function POST(request: NextRequest) {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
+    // Verify session belongs to this user
+    const { data: memberRecord } = await supabase
+      .from('party_members')
+      .select('id')
+      .eq('session_id', sessionId)
+      .eq('user_id', user.id)
+      .maybeSingle()
+
+    if (!memberRecord) {
+      return NextResponse.json({ error: 'Session does not belong to this user' }, { status: 403 })
+    }
+
     const { error } = await supabase.from('push_tokens').upsert(
       {
         session_id: sessionId,
@@ -88,6 +100,18 @@ export async function DELETE(request: NextRequest) {
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
+
+    // Verify session belongs to this user
+    const { data: memberRecord } = await supabase
+      .from('party_members')
+      .select('id')
+      .eq('session_id', sessionId)
+      .eq('user_id', user.id)
+      .maybeSingle()
+
+    if (!memberRecord) {
+      return NextResponse.json({ error: 'Session does not belong to this user' }, { status: 403 })
+    }
 
     const { error } = await supabase.from('push_tokens').delete().eq('session_id', sessionId)
 

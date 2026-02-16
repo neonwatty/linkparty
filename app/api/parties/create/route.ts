@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { hashPassword } from '@/lib/passwordHash'
 import { LIMITS } from '@/lib/errorMessages'
+import { validateOrigin } from '@/lib/csrf'
 
 export const dynamic = 'force-dynamic'
 
@@ -10,15 +11,16 @@ const MAX_ACTIVE_PARTIES = 5
 /** Generate 6-character alphanumeric party code (same charset as lib/supabase.ts) */
 function generatePartyCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
-  let code = ''
-  for (let i = 0; i < 6; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length))
-  }
-  return code
+  const randomValues = crypto.getRandomValues(new Uint8Array(6))
+  return Array.from(randomValues, (v) => chars.charAt(v % chars.length)).join('')
 }
 
 export async function POST(request: NextRequest) {
   try {
+    if (!validateOrigin(request)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
     const body = await request.json()
     const { sessionId, displayName, avatar, partyName, password, userId, visibleToFriends } = body
 
@@ -40,11 +42,8 @@ export async function POST(request: NextRequest) {
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
     if (!supabaseUrl || !supabaseServiceKey) {
-      console.warn('Supabase service role key not configured, skipping server-side validation')
-      return NextResponse.json(
-        { success: true, skipped: true, message: 'Server-side validation skipped (no service key)' },
-        { status: 200 },
-      )
+      console.error('FATAL: Supabase service role key not configured')
+      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)

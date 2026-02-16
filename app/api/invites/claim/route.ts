@@ -3,6 +3,39 @@ import { createClient } from '@supabase/supabase-js'
 
 export const dynamic = 'force-dynamic'
 
+// In-memory rate limit: 10 requests per minute per user ID
+const CLAIM_RATE_LIMIT = { maxRequests: 10, windowMs: 60 * 1000 }
+const claimRateLimitMap = new Map<string, { timestamps: number[] }>()
+let claimRateLimitCheckCount = 0
+
+function checkClaimRateLimit(key: string): { isLimited: boolean; retryAfterMs: number } {
+  claimRateLimitCheckCount++
+  if (claimRateLimitCheckCount >= 100) {
+    claimRateLimitCheckCount = 0
+    const now = Date.now()
+    for (const [k, entry] of claimRateLimitMap.entries()) {
+      entry.timestamps = entry.timestamps.filter((ts) => now - ts < CLAIM_RATE_LIMIT.windowMs)
+      if (entry.timestamps.length === 0) claimRateLimitMap.delete(k)
+    }
+  }
+
+  const now = Date.now()
+  let entry = claimRateLimitMap.get(key)
+  if (!entry) {
+    entry = { timestamps: [] }
+    claimRateLimitMap.set(key, entry)
+  }
+  entry.timestamps = entry.timestamps.filter((ts) => now - ts < CLAIM_RATE_LIMIT.windowMs)
+
+  if (entry.timestamps.length >= CLAIM_RATE_LIMIT.maxRequests) {
+    const oldestTimestamp = Math.min(...entry.timestamps)
+    return { isLimited: true, retryAfterMs: Math.max(0, CLAIM_RATE_LIMIT.windowMs - (now - oldestTimestamp)) }
+  }
+
+  entry.timestamps.push(now)
+  return { isLimited: false, retryAfterMs: 0 }
+}
+
 /**
  * POST /api/invites/claim
  * After a user joins a party via an invite link, claim matching invite tokens
@@ -33,6 +66,16 @@ export async function POST(request: NextRequest) {
     } = await supabase.auth.getUser(token)
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Rate limit by user ID
+    const { isLimited, retryAfterMs } = checkClaimRateLimit(user.id)
+    if (isLimited) {
+      const retryAfterSec = Math.ceil(retryAfterMs / 1000)
+      return NextResponse.json(
+        { error: 'Rate limit exceeded. Please try again later.' },
+        { status: 429, headers: { 'Retry-After': retryAfterSec.toString() } },
+      )
     }
 
     const body = await request.json().catch(() => ({}))

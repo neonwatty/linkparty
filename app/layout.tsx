@@ -30,7 +30,7 @@ export const metadata: Metadata = {
     title: 'Link Party',
   },
   icons: {
-    icon: '/vite.svg',
+    icon: '/icons/icon-192.png',
     apple: '/icons/icon-192.png',
   },
   openGraph: {

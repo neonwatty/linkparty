@@ -43,11 +43,8 @@ export async function POST(request: NextRequest) {
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
     if (!supabaseUrl || !supabaseServiceKey) {
-      console.warn('Supabase service role key not configured')
-      return NextResponse.json(
-        { success: true, skipped: true, message: 'Server-side validation skipped (no service key)' },
-        { status: 200 },
-      )
+      console.error('FATAL: Supabase service role key not configured')
+      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
