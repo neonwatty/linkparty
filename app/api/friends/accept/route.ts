@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { FRIENDS } from '@/lib/errorMessages'
 
-// Required for Capacitor static export (output: 'export')
-export const dynamic = 'force-static'
+export const dynamic = 'force-dynamic'
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -56,6 +55,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: FRIENDS.REQUEST_NOT_FOUND }, { status: 404 })
     }
 
+    // Check if either user has blocked the other
+    const { data: blocks } = await supabase
+      .from('user_blocks')
+      .select('id')
+      .or(
+        `and(blocker_id.eq.${user.id},blocked_id.eq.${friendship.user_id}),and(blocker_id.eq.${friendship.user_id},blocked_id.eq.${user.id})`,
+      )
+      .limit(1)
+
+    if (blocks && blocks.length > 0) {
+      return NextResponse.json({ error: FRIENDS.BLOCKED }, { status: 403 })
+    }
+
     // Validate: must be pending and current user must be the recipient
     if (friendship.status !== 'pending') {
       return NextResponse.json({ error: FRIENDS.REQUEST_NOT_FOUND }, { status: 404 })
@@ -90,6 +102,26 @@ export async function POST(request: NextRequest) {
       // Revert the original update to maintain consistency
       await supabase.from('friendships').update({ status: 'pending' }).eq('id', friendshipId)
       return NextResponse.json({ error: 'Failed to accept friend request' }, { status: 500 })
+    }
+
+    // Create notification for the original sender (fire-and-forget)
+    try {
+      const acceptorProfile = await supabase.from('user_profiles').select('display_name').eq('id', user.id).single()
+
+      const acceptorName = acceptorProfile.data?.display_name || 'Someone'
+
+      const { error: notifError } = await supabase.from('notifications').insert({
+        user_id: friendship.user_id,
+        type: 'friend_accepted',
+        title: `${acceptorName} accepted your friend request`,
+        data: { friendshipId: friendship.id, acceptorId: user.id, acceptorName },
+      })
+
+      if (notifError) {
+        console.error('Failed to create friend accepted notification:', notifError)
+      }
+    } catch (notifErr) {
+      console.error('Error creating friend accepted notification:', notifErr)
     }
 
     return NextResponse.json({ success: true })

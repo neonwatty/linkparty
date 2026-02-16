@@ -8,7 +8,10 @@ test.describe('Error Scenarios', () => {
     await page.context().addCookies([FAKE_AUTH_COOKIE])
     // Clear localStorage to reset session and rate limits
     await page.goto('/')
-    await page.evaluate(() => localStorage.clear())
+    await page.evaluate(() => {
+      localStorage.clear()
+      localStorage.setItem('link-party-display-name', 'Test User')
+    })
     await page.reload()
   })
 

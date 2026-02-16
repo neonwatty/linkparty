@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import ProfileEditor from './ProfileEditor'
 import FriendsList from './FriendsList'
 import FriendRequests from './FriendRequests'
+import BlockedUsers from './BlockedUsers'
 import {
   listFriends,
   listIncomingRequests,
@@ -12,10 +13,14 @@ import {
   declineFriendRequest,
   cancelFriendRequest,
   removeFriend,
+  listBlockedUsers,
+  unblockUser,
+  blockUser,
 } from '@/lib/friends'
 import type { FriendWithProfile, FriendRequest, OutgoingRequest } from '@/lib/friends'
+import type { UserProfile } from '@/lib/profile'
 
-type Tab = 'profile' | 'friends' | 'requests'
+type Tab = 'profile' | 'friends' | 'requests' | 'blocked'
 
 export default function ProfileTabs() {
   const [activeTab, setActiveTab] = useState<Tab>('profile')
@@ -28,6 +33,10 @@ export default function ProfileTabs() {
   const [incoming, setIncoming] = useState<FriendRequest[]>([])
   const [outgoing, setOutgoing] = useState<OutgoingRequest[]>([])
   const [requestsLoading, setRequestsLoading] = useState(true)
+
+  // Blocked users data
+  const [blockedUsers, setBlockedUsers] = useState<UserProfile[]>([])
+  const [blockedLoading, setBlockedLoading] = useState(true)
 
   const fetchFriends = useCallback(async () => {
     setFriendsLoading(true)
@@ -44,13 +53,20 @@ export default function ProfileTabs() {
     setRequestsLoading(false)
   }, [])
 
+  const fetchBlocked = useCallback(async () => {
+    setBlockedLoading(true)
+    const data = await listBlockedUsers()
+    setBlockedUsers(data)
+    setBlockedLoading(false)
+  }, [])
+
   // Fetch all data on mount
   useEffect(() => {
     async function loadData() {
-      await Promise.all([fetchFriends(), fetchRequests()])
+      await Promise.all([fetchFriends(), fetchRequests(), fetchBlocked()])
     }
     loadData()
-  }, [fetchFriends, fetchRequests])
+  }, [fetchFriends, fetchRequests, fetchBlocked])
 
   // Mutation handlers
   const handleRemoveFriend = useCallback(
@@ -87,10 +103,29 @@ export default function ProfileTabs() {
     [fetchRequests],
   )
 
+  const handleBlockUser = useCallback(
+    async (userId: string) => {
+      const result = await blockUser(userId)
+      if (!result.error) {
+        await Promise.all([fetchFriends(), fetchBlocked()])
+      }
+    },
+    [fetchFriends, fetchBlocked],
+  )
+
+  const handleUnblock = useCallback(
+    async (userId: string) => {
+      const result = await unblockUser(userId)
+      if (!result.error) await fetchBlocked()
+    },
+    [fetchBlocked],
+  )
+
   const tabs: { key: Tab; label: string }[] = [
     { key: 'profile', label: 'Profile' },
     { key: 'friends', label: 'Friends' },
     { key: 'requests', label: 'Requests' },
+    { key: 'blocked', label: 'Blocked' },
   ]
 
   return (
@@ -122,7 +157,12 @@ export default function ProfileTabs() {
       {/* Tab content */}
       {activeTab === 'profile' && <ProfileEditor />}
       {activeTab === 'friends' && (
-        <FriendsList friends={friends} loading={friendsLoading} onRemoveFriend={handleRemoveFriend} />
+        <FriendsList
+          friends={friends}
+          loading={friendsLoading}
+          onRemoveFriend={handleRemoveFriend}
+          onBlockUser={handleBlockUser}
+        />
       )}
       {activeTab === 'requests' && (
         <FriendRequests
@@ -133,6 +173,9 @@ export default function ProfileTabs() {
           onDecline={handleDecline}
           onCancel={handleCancel}
         />
+      )}
+      {activeTab === 'blocked' && (
+        <BlockedUsers blockedUsers={blockedUsers} loading={blockedLoading} onUnblock={handleUnblock} />
       )}
     </div>
   )

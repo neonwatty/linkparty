@@ -1,8 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 
-// Required for Capacitor static export (output: 'export')
-export const dynamic = 'force-static'
+export const dynamic = 'force-dynamic'
 
 // Resend webhook event types
 type ResendEventType =

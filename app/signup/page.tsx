@@ -1,13 +1,16 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { signInWithGoogle, signUpWithEmail } from '@/lib/auth'
 import { validateEmail, validatePassword, validateDisplayName } from '@/lib/validation'
 import { ChevronLeftIcon, LoaderIcon } from '@/components/icons'
 import { TwinklingStars } from '@/components/ui/TwinklingStars'
 
-export default function SignupPage() {
+function SignupForm() {
+  const searchParams = useSearchParams()
+  const redirectParam = searchParams.get('redirect')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [displayName, setDisplayNameInput] = useState('')
@@ -18,9 +21,19 @@ export default function SignupPage() {
   const [passwordError, setPasswordError] = useState<string | null>(null)
   const [signupSuccess, setSignupSuccess] = useState(false)
 
+  // Parse invite context from redirect param (e.g., /join/ABC123?inviter=USER_ID)
+  const isInvite = redirectParam?.includes('inviter=')
+
   useEffect(() => {
     document.title = 'Sign Up | Link Party'
   }, [])
+
+  // Store redirect in sessionStorage so auth callback can use it after email confirmation
+  useEffect(() => {
+    if (redirectParam) {
+      sessionStorage.setItem('auth-redirect', redirectParam)
+    }
+  }, [redirectParam])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !isLoading) {
@@ -33,6 +46,7 @@ export default function SignupPage() {
     setIsLoading(true)
     setError(null)
     try {
+      // sessionStorage redirect is already set by the useEffect above
       await signInWithGoogle()
     } catch {
       setError('Failed to sign in with Google')
@@ -65,7 +79,7 @@ export default function SignupPage() {
     }
 
     setIsLoading(true)
-    const result = await signUpWithEmail(email, password, displayName.trim())
+    const result = await signUpWithEmail(email, password, displayName.trim(), redirectParam || undefined)
     setIsLoading(false)
 
     if (result.success && result.needsConfirmation) {
@@ -97,10 +111,13 @@ export default function SignupPage() {
               </svg>
             </div>
             <h1 className="text-3xl font-bold mb-4">Check your email</h1>
-            <p className="text-text-secondary mb-8">
-              We've sent a confirmation link to <span className="text-text-primary">{email}</span>. Click the link to
-              activate your account.
+            <p className="text-text-secondary mb-2">
+              We&apos;ve sent a confirmation link to <span className="text-text-primary">{email}</span>.
             </p>
+            <p className="text-text-secondary mb-8">Click the link to activate your account.</p>
+            {isInvite && (
+              <p className="text-accent-400 text-sm mb-4">After confirming, you&apos;ll be redirected to the party.</p>
+            )}
             <Link href="/login" className="btn btn-primary">
               Go to Sign In
             </Link>
@@ -121,7 +138,9 @@ export default function SignupPage() {
       <div className="flex-1 flex flex-col relative z-10">
         <h1 className="text-3xl font-bold mb-2 animate-fade-in-up">Create account</h1>
         <p className="text-text-secondary mb-8 animate-fade-in-up delay-100">
-          Join parties and share content with friends
+          {isInvite
+            ? "You've been invited to a party! Sign up to join."
+            : 'Join parties and share content with friends'}
         </p>
 
         {error && <div className="text-red-400 text-sm text-center mb-4">{error}</div>}
@@ -213,5 +232,19 @@ export default function SignupPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="container-mobile bg-gradient-party flex items-center justify-center">
+          <LoaderIcon />
+        </div>
+      }
+    >
+      <SignupForm />
+    </Suspense>
   )
 }

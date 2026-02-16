@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import JoinWithCodeClient from './JoinWithCodeClient'
 
 // Required for static export with dynamic routes
@@ -7,5 +8,9 @@ export function generateStaticParams() {
 }
 
 export default function JoinWithCodePage() {
-  return <JoinWithCodeClient />
+  return (
+    <Suspense>
+      <JoinWithCodeClient />
+    </Suspense>
+  )
 }

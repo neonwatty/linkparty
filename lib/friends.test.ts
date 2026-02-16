@@ -251,12 +251,23 @@ describe('friends', () => {
     it('sanitizes input and returns results excluding current user', async () => {
       const profiles = [mockProfile('user-2', 'Alice'), mockProfile('user-1', 'Alicia')]
 
-      mockFrom.mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          or: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue({ data: profiles, error: null }),
+      // Mock handles user_blocks queries (return empty) and user_profiles query
+      mockFrom.mockImplementation((table: string) => {
+        if (table === 'user_blocks') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockResolvedValue({ data: [], error: null }),
+            }),
+          }
+        }
+        // user_profiles
+        return {
+          select: vi.fn().mockReturnValue({
+            or: vi.fn().mockReturnValue({
+              limit: vi.fn().mockResolvedValue({ data: profiles, error: null }),
+            }),
           }),
-        }),
+        }
       })
 
       const result = await searchUsers('ali')
@@ -266,12 +277,21 @@ describe('friends', () => {
     })
 
     it('returns empty array on error', async () => {
-      mockFrom.mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          or: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue({ data: null, error: { message: 'db error' } }),
+      mockFrom.mockImplementation((table: string) => {
+        if (table === 'user_blocks') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockResolvedValue({ data: [], error: null }),
+            }),
+          }
+        }
+        return {
+          select: vi.fn().mockReturnValue({
+            or: vi.fn().mockReturnValue({
+              limit: vi.fn().mockResolvedValue({ data: null, error: { message: 'db error' } }),
+            }),
           }),
-        }),
+        }
       })
       expect(await searchUsers('test')).toEqual([])
     })

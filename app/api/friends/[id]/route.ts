@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { FRIENDS } from '@/lib/errorMessages'
 
-// Required for Capacitor static export (output: 'export')
-export const dynamic = 'force-static'
+export const dynamic = 'force-dynamic'
 
 type RouteContext = { params: Promise<{ id: string }> }
 

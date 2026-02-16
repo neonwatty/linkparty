@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { sendPartyInvitation } from '@/lib/email'
 
-// Required for Capacitor static export (output: 'export')
-export const dynamic = 'force-static'
+export const dynamic = 'force-dynamic'
 
 interface InviteRequest {
   email: string
@@ -68,12 +67,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Too many invitations sent. Please try again later.' }, { status: 429 })
     }
 
-    // Verify party exists (optional - requires service role)
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
+    // Try to get inviter's user ID from auth token
+    let inviterId: string | undefined
     if (supabaseUrl && supabaseServiceKey) {
       const supabase = createClient(supabaseUrl, supabaseServiceKey)
+
+      const authHeader = request.headers.get('authorization')
+      const token = authHeader?.replace('Bearer ', '')
+      if (token) {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser(token)
+        if (user) {
+          inviterId = user.id
+        }
+      }
+
+      // Verify party exists
       const { data: party, error } = await supabase
         .from('parties')
         .select('id, code, expires_at')
@@ -84,9 +97,32 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Party not found' }, { status: 404 })
       }
 
-      // Check if party has expired
       if (new Date(party.expires_at) < new Date()) {
         return NextResponse.json({ error: 'This party has expired' }, { status: 410 })
+      }
+
+      // Deduplicate: check if this email was already invited to this party
+      const { data: existingToken } = await supabase
+        .from('invite_tokens')
+        .select('id')
+        .eq('invitee_email', email.toLowerCase())
+        .eq('party_code', partyCode.toUpperCase())
+        .eq('claimed', false)
+        .limit(1)
+        .maybeSingle()
+
+      if (existingToken) {
+        return NextResponse.json({ error: 'This person has already been invited to this party.' }, { status: 409 })
+      }
+
+      // Create invite token for auto-friendship on sign-up (requires authenticated inviter)
+      if (inviterId) {
+        const { error: tokenError } = await supabase.from('invite_tokens').insert({
+          inviter_id: inviterId,
+          invitee_email: email.toLowerCase(),
+          party_code: partyCode.toUpperCase(),
+        })
+        if (tokenError) console.error('Failed to create invite token:', tokenError.message)
       }
     }
 
@@ -96,6 +132,7 @@ export async function POST(request: NextRequest) {
       partyCode: partyCode.toUpperCase(),
       partyName,
       inviterName,
+      inviterId,
       personalMessage,
     })
 

@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { hashPassword } from '@/lib/passwordHash'
 import { LIMITS } from '@/lib/errorMessages'
 
-export const dynamic = 'force-static'
+export const dynamic = 'force-dynamic'
 
 const MAX_ACTIVE_PARTIES = 5
 
@@ -20,7 +20,7 @@ function generatePartyCode(): string {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { sessionId, displayName, avatar, partyName, password, userId } = body
+    const { sessionId, displayName, avatar, partyName, password, userId, visibleToFriends } = body
 
     // Validate required fields
     if (!sessionId || typeof sessionId !== 'string') {
@@ -76,6 +76,7 @@ export async function POST(request: NextRequest) {
       code,
       name: trimmedPartyName || null,
       host_session_id: sessionId,
+      visible_to_friends: visibleToFriends === true,
     }
     if (passwordHash) insertData.password_hash = passwordHash
 

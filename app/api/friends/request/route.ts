@@ -2,10 +2,31 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { FRIENDS } from '@/lib/errorMessages'
 
-// Required for Capacitor static export (output: 'export')
-export const dynamic = 'force-static'
+export const dynamic = 'force-dynamic'
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+// Server-side rate limiting: max 20 friend requests per user per hour
+const FRIEND_REQUEST_LIMIT = 20
+const FRIEND_REQUEST_WINDOW_MS = 60 * 60 * 1000
+const friendRequestMap = new Map<string, { count: number; resetTime: number }>()
+
+function checkFriendRequestRateLimit(userId: string): boolean {
+  const now = Date.now()
+  const entry = friendRequestMap.get(userId)
+
+  if (!entry || now > entry.resetTime) {
+    friendRequestMap.set(userId, { count: 1, resetTime: now + FRIEND_REQUEST_WINDOW_MS })
+    return true
+  }
+
+  if (entry.count >= FRIEND_REQUEST_LIMIT) {
+    return false
+  }
+
+  entry.count++
+  return true
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -45,9 +66,27 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // Rate limit: max 20 friend requests per hour
+    if (!checkFriendRequestRateLimit(user.id)) {
+      return NextResponse.json({ error: FRIENDS.RATE_LIMITED }, { status: 429 })
+    }
+
     // Cannot friend self
     if (friendId === user.id) {
       return NextResponse.json({ error: FRIENDS.CANNOT_FRIEND_SELF }, { status: 400 })
+    }
+
+    // Check if either user has blocked the other
+    const { data: blocks } = await supabase
+      .from('user_blocks')
+      .select('id')
+      .or(
+        `and(blocker_id.eq.${user.id},blocked_id.eq.${friendId}),and(blocker_id.eq.${friendId},blocked_id.eq.${user.id})`,
+      )
+      .limit(1)
+
+    if (blocks && blocks.length > 0) {
+      return NextResponse.json({ error: FRIENDS.BLOCKED }, { status: 403 })
     }
 
     // Verify target user exists in user_profiles
@@ -100,6 +139,26 @@ export async function POST(request: NextRequest) {
       }
       console.error('Failed to insert friend request:', insertError)
       return NextResponse.json({ error: 'Failed to send friend request' }, { status: 500 })
+    }
+
+    // Create notification for the recipient (fire-and-forget)
+    try {
+      const senderProfile = await supabase.from('user_profiles').select('display_name').eq('id', user.id).single()
+
+      const senderName = senderProfile.data?.display_name || 'Someone'
+
+      const { error: notifError } = await supabase.from('notifications').insert({
+        user_id: friendId,
+        type: 'friend_request',
+        title: `${senderName} sent you a friend request`,
+        data: { friendshipId: friendship.id, senderId: user.id, senderName },
+      })
+
+      if (notifError) {
+        console.error('Failed to create friend request notification:', notifError)
+      }
+    } catch (notifErr) {
+      console.error('Error creating friend request notification:', notifErr)
     }
 
     return NextResponse.json({ success: true, friendship })
