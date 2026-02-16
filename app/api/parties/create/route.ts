@@ -49,6 +49,21 @@ export async function POST(request: NextRequest) {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
+    // S8: If userId is provided, verify it matches the authenticated user
+    if (userId) {
+      const authHeader = request.headers.get('authorization')
+      const token = authHeader?.replace('Bearer ', '')
+      if (!token) {
+        return NextResponse.json({ error: 'Authentication required when userId is provided' }, { status: 401 })
+      }
+      const {
+        data: { user },
+      } = await supabase.auth.getUser(token)
+      if (!user || user.id !== userId) {
+        return NextResponse.json({ error: 'userId does not match authenticated user' }, { status: 403 })
+      }
+    }
+
     // Enforce 5-party limit: count active (non-expired) parties for this session
     const { count, error: countError } = await supabase
       .from('parties')

@@ -38,6 +38,21 @@ export async function POST(request: NextRequest) {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
+    // S8: If userId is provided, verify it matches the authenticated user
+    if (userId) {
+      const authHeader = request.headers.get('authorization')
+      const token = authHeader?.replace('Bearer ', '')
+      if (!token) {
+        return NextResponse.json({ error: 'Authentication required when userId is provided' }, { status: 401 })
+      }
+      const {
+        data: { user },
+      } = await supabase.auth.getUser(token)
+      if (!user || user.id !== userId) {
+        return NextResponse.json({ error: 'userId does not match authenticated user' }, { status: 403 })
+      }
+    }
+
     // Look up party by code (select * to be resilient to schema drift)
     const { data: party, error: partyError } = await supabase
       .from('parties')

@@ -99,9 +99,22 @@ async function sendPushNotifications(
   excludeSessionId: string,
 ): Promise<void> {
   try {
+    // Get auth token for Bearer authentication
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
+    const accessToken = session?.access_token
+    if (!accessToken) {
+      log.error('No auth session — cannot send push notifications')
+      return
+    }
+
     const response = await fetch('/api/push/send', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
       body: JSON.stringify({
         partyId,
         title: 'Link Party',
@@ -118,30 +131,6 @@ async function sendPushNotifications(
     log.error('Failed to call push API', err)
   }
 }
-
-// Unused - reserved for future push notification implementation
-// export async function triggerItemShowingNotification(
-//   partyId: string,
-//   item: QueueItem,
-//   currentSessionId: string,
-//   partyMembers: Array<{ sessionId: string; name: string }>
-// ): Promise<void> {
-//   const payload: NotificationPayload = {
-//     type: 'item_showing',
-//     partyId,
-//     itemId: item.id,
-//     itemTitle: getItemTitle(item),
-//   }
-//   const recipientIds = partyMembers
-//     .filter(m => m.sessionId !== currentSessionId)
-//     .map(m => m.sessionId)
-//   for (const sessionId of recipientIds) {
-//     await logNotificationTrigger(sessionId, payload)
-//   }
-//   if (recipientIds.length > 0) {
-//     log.debug(`Queued ${recipientIds.length} notifications for item showing`)
-//   }
-// }
 
 /**
  * Get a display title for a queue item
@@ -175,8 +164,3 @@ export function areNotificationsEnabled(): boolean {
   const storedPref = localStorage.getItem('link-party-notifications-enabled')
   return storedPref !== 'false'
 }
-
-// Unused - reserved for future settings UI
-// export function setNotificationsEnabled(enabled: boolean): void {
-//   localStorage.setItem('link-party-notifications-enabled', enabled ? 'true' : 'false')
-// }

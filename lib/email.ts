@@ -207,12 +207,12 @@ function generatePartyInviteHtml(options: {
               }
 
               <!-- CTA Button -->
-              <a href="${joinUrl}" style="display: block; width: 100%; padding: 16px 24px; background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%); color: #ffffff; text-decoration: none; text-align: center; font-size: 16px; font-weight: 600; border-radius: 8px; box-sizing: border-box;">
+              <a href="${escapeHtml(joinUrl)}" style="display: block; width: 100%; padding: 16px 24px; background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%); color: #ffffff; text-decoration: none; text-align: center; font-size: 16px; font-weight: 600; border-radius: 8px; box-sizing: border-box;">
                 Join the Party
               </a>
 
               <p style="margin: 24px 0 0; font-size: 13px; color: #737373; text-align: center;">
-                Or enter the code manually at <a href="${joinUrl}" style="color: #a78bfa; text-decoration: none;">linkparty.app</a>
+                Or enter the code manually at <a href="${escapeHtml(joinUrl)}" style="color: #a78bfa; text-decoration: none;">linkparty.app</a>
               </p>
             </td>
           </tr>

@@ -18,6 +18,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Server not configured' }, { status: 500 })
     }
 
+    // Authenticate user from Bearer token
+    const authHeader = request.headers.get('Authorization')
+    if (!authHeader?.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    const token = authHeader.replace('Bearer ', '')
+    const supabaseAuth = createClient(supabaseUrl, supabaseServiceKey)
+    const {
+      data: { user },
+      error: authError,
+    } = await supabaseAuth.auth.getUser(token)
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
     const { error } = await supabase.from('push_tokens').upsert(
@@ -55,6 +70,21 @@ export async function DELETE(request: NextRequest) {
 
     if (!supabaseUrl || !supabaseServiceKey) {
       return NextResponse.json({ error: 'Server not configured' }, { status: 500 })
+    }
+
+    // Authenticate user from Bearer token
+    const authHeader = request.headers.get('Authorization')
+    if (!authHeader?.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    const token = authHeader.replace('Bearer ', '')
+    const supabaseAuth = createClient(supabaseUrl, supabaseServiceKey)
+    const {
+      data: { user },
+      error: authError,
+    } = await supabaseAuth.auth.getUser(token)
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)

@@ -58,6 +58,9 @@ interface QueueItemRequest {
  * @returns Object with isLimited flag and retryAfterMs
  */
 function checkRateLimit(sessionId: string): { isLimited: boolean; retryAfterMs: number } {
+  // P3: Lazy cleanup instead of setInterval
+  maybeLazyCleanup()
+
   const now = Date.now()
   const key = `queue:${sessionId}`
 
@@ -92,8 +95,12 @@ function recordAction(sessionId: string): void {
 }
 
 /**
- * Clean up old rate limit entries periodically
+ * Clean up old rate limit entries.
+ * P3: Called lazily every 100th check instead of via setInterval
+ * (setInterval is unreliable in serverless environments).
  */
+let rateLimitCheckCount = 0
+
 function cleanupRateLimitMap(): void {
   const now = Date.now()
   for (const [key, entry] of rateLimitMap.entries()) {
@@ -104,8 +111,13 @@ function cleanupRateLimitMap(): void {
   }
 }
 
-// Run cleanup every 5 minutes
-setInterval(cleanupRateLimitMap, 5 * 60 * 1000)
+function maybeLazyCleanup(): void {
+  rateLimitCheckCount++
+  if (rateLimitCheckCount >= 100) {
+    rateLimitCheckCount = 0
+    cleanupRateLimitMap()
+  }
+}
 
 /**
  * Validate queue item request
@@ -206,6 +218,23 @@ export async function POST(request: NextRequest) {
 
     if (new Date(party.expires_at) < new Date()) {
       return NextResponse.json({ error: 'This party has expired' }, { status: 410 })
+    }
+
+    // S7: Verify the requesting user is a member of this party
+    const { data: member, error: memberError } = await supabase
+      .from('party_members')
+      .select('id')
+      .eq('party_id', body.partyId)
+      .eq('session_id', body.sessionId)
+      .maybeSingle()
+
+    if (memberError) {
+      console.error('Failed to verify party membership:', memberError)
+      return NextResponse.json({ error: 'Failed to verify membership' }, { status: 500 })
+    }
+
+    if (!member) {
+      return NextResponse.json({ error: 'You must be a member of this party to add items' }, { status: 403 })
     }
 
     // Check queue size limit

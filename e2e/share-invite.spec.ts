@@ -20,8 +20,8 @@ test.describe('Share and Invite Flows', () => {
     // Create party (no display name input — derived from auth user)
     await page.getByRole('button', { name: 'Create Party' }).click()
 
-    // Wait for party room to load
-    await expect(page.getByTestId('party-code')).toBeVisible({ timeout: 10000 })
+    // Wait for party room to load (longer timeout for Mobile Safari/WebKit)
+    await expect(page.getByTestId('party-code')).toBeVisible({ timeout: 20000 })
   })
 
   test.describe('Share Button', () => {

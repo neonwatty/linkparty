@@ -71,7 +71,7 @@ export async function searchProfiles(query: string): Promise<UserProfile[]> {
   const trimmed = query.trim().toLowerCase()
   if (trimmed.length < 2) return []
 
-  const escaped = trimmed.replace(/[,.*()%_]/g, '')
+  const escaped = trimmed.replace(/[^a-zA-Z0-9\s\-_]/g, '')
   if (escaped.length < 2) return []
 
   // Search by username or display_name

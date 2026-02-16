@@ -1,6 +1,7 @@
 'use client'
 
 import { logger } from './logger'
+import { supabase } from './supabase'
 
 const log = logger.createLogger('WebPushClient')
 
@@ -58,9 +59,22 @@ export async function subscribeToPush(sessionId: string): Promise<boolean> {
       applicationServerKey: urlBase64ToUint8Array(vapidPublicKey).buffer as ArrayBuffer,
     })
 
+    // Get auth token for Bearer authentication
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
+    const accessToken = session?.access_token
+    if (!accessToken) {
+      log.error('No auth session — cannot subscribe to push')
+      return false
+    }
+
     const response = await fetch('/api/push/subscribe', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
       body: JSON.stringify({ sessionId, subscription: subscription.toJSON() }),
     })
 
@@ -87,9 +101,22 @@ export async function unsubscribeFromPush(sessionId: string): Promise<boolean> {
       await subscription.unsubscribe()
     }
 
+    // Get auth token for Bearer authentication
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
+    const accessToken = session?.access_token
+    if (!accessToken) {
+      log.error('No auth session — cannot unsubscribe from push')
+      return false
+    }
+
     await fetch('/api/push/subscribe', {
       method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
       body: JSON.stringify({ sessionId }),
     })
 
