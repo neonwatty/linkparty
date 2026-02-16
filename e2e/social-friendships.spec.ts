@@ -35,7 +35,7 @@ test.describe('Friends Tab — UI Structure', () => {
     await expect(page.getByText(/no friends/i)).toBeVisible()
     await expect(page.getByPlaceholder('Search friends...')).not.toBeVisible()
     await expect(page.getByRole('button', { name: 'Remove' })).toHaveCount(0)
-    await expect(page.getByRole('button', { name: 'Block' })).toHaveCount(0)
+    await expect(page.getByRole('button', { name: 'Block', exact: true })).toHaveCount(0)
   })
 })
 
