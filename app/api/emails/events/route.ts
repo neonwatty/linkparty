@@ -24,6 +24,10 @@ interface EmailStats {
   openRate: number
 }
 
+function escapeIlike(input: string): string {
+  return input.replace(/%/g, '\\%').replace(/_/g, '\\_')
+}
+
 export async function GET(request: NextRequest) {
   // Verify the caller is authenticated using the anon key client (respects auth)
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -103,7 +107,7 @@ export async function GET(request: NextRequest) {
       query = query.eq('event_type', eventType)
     }
     if (recipient) {
-      query = query.ilike('recipient', `%${recipient}%`)
+      query = query.ilike('recipient', `%${escapeIlike(recipient)}%`)
     }
 
     const { data: events, error, count } = await query

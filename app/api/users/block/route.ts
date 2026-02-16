@@ -5,6 +5,39 @@ export const dynamic = 'force-dynamic'
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
+// In-memory rate limit: 20 requests per minute per user ID
+const BLOCK_RATE_LIMIT = { maxRequests: 20, windowMs: 60 * 1000 }
+const blockRateLimitMap = new Map<string, { timestamps: number[] }>()
+let blockRateLimitCheckCount = 0
+
+function checkBlockRateLimit(key: string): { isLimited: boolean; retryAfterMs: number } {
+  blockRateLimitCheckCount++
+  if (blockRateLimitCheckCount >= 100) {
+    blockRateLimitCheckCount = 0
+    const now = Date.now()
+    for (const [k, entry] of blockRateLimitMap.entries()) {
+      entry.timestamps = entry.timestamps.filter((ts) => now - ts < BLOCK_RATE_LIMIT.windowMs)
+      if (entry.timestamps.length === 0) blockRateLimitMap.delete(k)
+    }
+  }
+
+  const now = Date.now()
+  let entry = blockRateLimitMap.get(key)
+  if (!entry) {
+    entry = { timestamps: [] }
+    blockRateLimitMap.set(key, entry)
+  }
+  entry.timestamps = entry.timestamps.filter((ts) => now - ts < BLOCK_RATE_LIMIT.windowMs)
+
+  if (entry.timestamps.length >= BLOCK_RATE_LIMIT.maxRequests) {
+    const oldestTimestamp = Math.min(...entry.timestamps)
+    return { isLimited: true, retryAfterMs: Math.max(0, BLOCK_RATE_LIMIT.windowMs - (now - oldestTimestamp)) }
+  }
+
+  entry.timestamps.push(now)
+  return { isLimited: false, retryAfterMs: 0 }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
@@ -35,6 +68,16 @@ export async function POST(request: NextRequest) {
     } = await supabase.auth.getUser(token)
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Rate limit by user ID
+    const { isLimited, retryAfterMs } = checkBlockRateLimit(user.id)
+    if (isLimited) {
+      const retryAfterSec = Math.ceil(retryAfterMs / 1000)
+      return NextResponse.json(
+        { error: 'Rate limit exceeded. Please try again later.' },
+        { status: 429, headers: { 'Retry-After': retryAfterSec.toString() } },
+      )
     }
 
     if (userId === user.id) {

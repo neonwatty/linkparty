@@ -104,8 +104,24 @@ export async function GET(request: NextRequest) {
       tokensDeleted = deletedTokens?.length ?? 0
     }
 
+    // Clean up old read notifications (older than 30 days)
+    let notificationsDeleted = 0
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+    const { data: deletedNotifications, error: notifError } = await supabase
+      .from('notifications')
+      .delete()
+      .eq('read', true)
+      .lt('created_at', thirtyDaysAgo)
+      .select('id')
+
+    if (notifError) {
+      console.error('Failed to delete old notifications:', notifError)
+    } else {
+      notificationsDeleted = deletedNotifications?.length ?? 0
+    }
+
     console.log(
-      `Cleanup complete: ${totalDeleted} parties deleted, ${totalImagesDeleted} images removed, ${tokensDeleted} expired tokens deleted`,
+      `Cleanup complete: ${totalDeleted} parties deleted, ${totalImagesDeleted} images removed, ${tokensDeleted} expired tokens deleted, ${notificationsDeleted} old notifications deleted`,
     )
 
     return NextResponse.json({
@@ -113,6 +129,7 @@ export async function GET(request: NextRequest) {
       deletedCount: totalDeleted,
       imagesDeleted: totalImagesDeleted,
       tokensDeleted,
+      notificationsDeleted,
     })
   } catch (err) {
     console.error('Cron cleanup error:', err)

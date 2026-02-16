@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { LIMITS } from '@/lib/errorMessages'
+import { validateOrigin } from '@/lib/csrf'
 
 export const dynamic = 'force-dynamic'
 
@@ -163,6 +164,10 @@ function validateRequest(body: QueueItemRequest): string | null {
 
 export async function POST(request: NextRequest) {
   try {
+    if (!validateOrigin(request)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
     const body: QueueItemRequest = await request.json()
 
     // Validate request
@@ -194,13 +199,8 @@ export async function POST(request: NextRequest) {
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
     if (!supabaseUrl || !supabaseServiceKey) {
-      // In development without keys, allow the request to pass through
-      // Client will fall back to direct Supabase calls
-      console.warn('Supabase service role key not configured, skipping server-side validation')
-      return NextResponse.json(
-        { success: true, skipped: true, message: 'Server-side validation skipped (no service key)' },
-        { status: 200 },
-      )
+      console.error('FATAL: Supabase service role key not configured')
+      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)

@@ -174,8 +174,8 @@ describe('Queue Items API Route', () => {
     })
   })
 
-  describe('Successful Requests', () => {
-    it('returns success when service key is not configured', async () => {
+  describe('Server Configuration', () => {
+    it('returns 500 when service key is not configured', async () => {
       // Reset env to remove service key
       process.env = {
         ...originalEnv,
@@ -194,10 +194,9 @@ describe('Queue Items API Route', () => {
       })
 
       const response = await POST(request)
-      expect(response.status).toBe(200)
+      expect(response.status).toBe(500)
       const body = await response.json()
-      expect(body.success).toBe(true)
-      expect(body.skipped).toBe(true)
+      expect(body.error).toBe('Server configuration error')
     })
   })
 })

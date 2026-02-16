@@ -314,7 +314,7 @@ describe('Resend Webhook API Route', () => {
       const response = await POST(request)
       expect(response.status).toBe(500)
       const body = await response.json()
-      expect(body.error).toContain('Server error')
+      expect(body.error).toContain('Internal server error')
     })
 
     it('still returns 200 when database insert fails with non-existence error', async () => {

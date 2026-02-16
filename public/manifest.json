@@ -1,7 +1,7 @@
 {
   "name": "Link Party",
   "short_name": "LinkParty",
-  "description": "Queue YouTube videos, tweets, and Reddit posts together in real-time",
+  "description": "Stop losing links in chat. One shared queue for your crew.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0a0a0f",
@@ -9,10 +9,16 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/vite.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any"
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ],
   "categories": ["lifestyle", "productivity"],
@@ -23,14 +29,14 @@
       "short_name": "Start",
       "description": "Start a new party",
       "url": "/create",
-      "icons": [{ "src": "/vite.svg", "sizes": "any" }]
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
     },
     {
       "name": "Join Party",
       "short_name": "Join",
       "description": "Join an existing party",
       "url": "/join",
-      "icons": [{ "src": "/vite.svg", "sizes": "any" }]
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
     }
   ]
 }
