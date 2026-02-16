@@ -58,11 +58,8 @@ test.describe('TV Mode', () => {
     await page.getByRole('button', { name: 'Open TV mode' }).click()
     await expect(page).toHaveURL(/\/party\/[^/]+\/tv/, { timeout: 10000 })
 
-    // TV mode should show either "NOW SHOWING" label or empty state text
-    // Use auto-waiting locator.or() instead of instant .isVisible() snapshot
-    const nowShowing = page.getByText('NOW SHOWING')
-    const emptyState = page.getByText(/no content|waiting for content|add some content/i)
-    await expect(nowShowing.or(emptyState)).toBeVisible({ timeout: 10000 })
+    // The "NOW SHOWING" label is always rendered in the bottom bar
+    await expect(page.getByText('NOW SHOWING')).toBeVisible({ timeout: 10000 })
   })
 
   test('exit TV mode returns to party room', async ({ page }) => {
