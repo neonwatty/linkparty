@@ -13,12 +13,6 @@ import { logger } from './logger'
 
 const log = logger.createLogger('RateLimit')
 
-// Rate limit configuration type (used in RATE_LIMITS)
-// interface RateLimitConfig {
-//   maxAttempts: number
-//   windowMs: number
-// }
-
 interface RateLimitEntry {
   timestamps: number[]
 }
@@ -200,10 +194,3 @@ export function tryAction(key: RateLimitKey): string | null {
   recordAttempt(key)
   return null
 }
-
-// Utility function for testing - uncomment if needed
-// export function clearRateLimitData(): void {
-//   Object.keys(RATE_LIMITS).forEach((key) => {
-//     localStorage.removeItem(`${STORAGE_PREFIX}${key}`)
-//   })
-// }

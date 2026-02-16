@@ -4,7 +4,9 @@ import { NextRequest } from 'next/server'
 // Mock Supabase with flexible chain that supports both party lookup and dedup query
 const mockPartySingle = vi.fn()
 const mockDedupMaybeSingle = vi.fn()
+const mockInsert = vi.fn().mockResolvedValue({ error: null })
 const mockFrom = vi.fn()
+const mockGetUser = vi.fn()
 
 function createChain(terminal: Mock) {
   const chain: Record<string, Mock> = {}
@@ -12,6 +14,7 @@ function createChain(terminal: Mock) {
   chain.select = vi.fn(handler)
   chain.eq = vi.fn(handler)
   chain.limit = vi.fn(handler)
+  chain.insert = mockInsert
   chain.single = terminal
   chain.maybeSingle = terminal
   return chain
@@ -25,7 +28,7 @@ vi.mock('@supabase/supabase-js', () => ({
       if (table === 'invite_tokens') return createChain(mockDedupMaybeSingle)
       return createChain(mockPartySingle)
     },
-    auth: { getUser: vi.fn().mockResolvedValue({ data: { user: null } }) },
+    auth: { getUser: mockGetUser },
   })),
 }))
 
@@ -47,11 +50,13 @@ describe('Email Invite API Route', () => {
       SUPABASE_SERVICE_ROLE_KEY: 'test-service-key',
     }
     mockSendPartyInvitation.mockResolvedValue({ success: true, id: 'email-id-123' })
+    mockGetUser.mockResolvedValue({ data: { user: { id: 'user-id-123' } } })
     mockPartySingle.mockResolvedValue({
       data: { id: 'party-id-123', code: 'ABC123', expires_at: new Date(Date.now() + 86400000).toISOString() },
       error: null,
     })
     mockDedupMaybeSingle.mockResolvedValue({ data: null, error: null })
+    mockInsert.mockResolvedValue({ error: null })
   })
 
   afterEach(() => {
@@ -59,11 +64,15 @@ describe('Email Invite API Route', () => {
     vi.clearAllMocks()
   })
 
-  const createRequest = (body: object) => {
+  const createRequest = (body: object, includeAuth = true) => {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+    if (includeAuth) {
+      headers['Authorization'] = 'Bearer test-token-123'
+    }
     return new NextRequest('http://localhost:3000/api/emails/invite', {
       method: 'POST',
       body: JSON.stringify(body),
-      headers: { 'Content-Type': 'application/json' },
+      headers,
     })
   }
 
@@ -187,7 +196,7 @@ describe('Email Invite API Route', () => {
       expect(mockSendPartyInvitation).toHaveBeenCalledWith(expect.objectContaining({ partyCode: 'ABC123' }))
     })
 
-    it('skips party verification when Supabase credentials are missing', async () => {
+    it('returns 500 when Supabase credentials are missing', async () => {
       process.env = {
         ...originalEnv,
         NEXT_PUBLIC_SUPABASE_URL: undefined,
@@ -196,10 +205,9 @@ describe('Email Invite API Route', () => {
       const { POST } = await import('./route')
       const request = createRequest(validBody)
       const response = await POST(request)
-      expect(response.status).toBe(200)
+      expect(response.status).toBe(500)
       const body = await response.json()
-      expect(body.success).toBe(true)
-      expect(mockFrom).not.toHaveBeenCalled()
+      expect(body.error).toContain('Server configuration error')
     })
   })
 

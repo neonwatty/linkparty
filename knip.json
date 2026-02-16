@@ -21,7 +21,6 @@
     "@capacitor/core",
     "@capacitor/ios",
     "@capacitor/push-notifications",
-    "@testing-library/user-event",
     "@vitest/coverage-v8",
     "postcss",
     "@supabase/ssr"

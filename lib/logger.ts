@@ -12,9 +12,6 @@
  * monitoring services (Sentry, LogRocket, etc.) in the future.
  */
 
-// Log levels for future external service integration
-// type LogLevel = 'debug' | 'info' | 'warn' | 'error'
-
 interface LogContext {
   component?: string
   action?: string

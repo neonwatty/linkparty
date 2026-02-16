@@ -22,6 +22,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Server not configured for push' }, { status: 500 })
     }
 
+    // Authenticate user from Bearer token
+    const authHeader = request.headers.get('Authorization')
+    if (!authHeader?.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    const token = authHeader.replace('Bearer ', '')
+    const supabaseAuth = createClient(supabaseUrl, supabaseServiceKey)
+    const {
+      data: { user },
+      error: authError,
+    } = await supabaseAuth.auth.getUser(token)
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     webpush.setVapidDetails(vapidContactEmail, vapidPublicKey, vapidPrivateKey)
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)

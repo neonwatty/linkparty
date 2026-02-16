@@ -70,61 +70,62 @@ export async function POST(request: NextRequest) {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
-    // Try to get inviter's user ID from auth token
-    let inviterId: string | undefined
-    if (supabaseUrl && supabaseServiceKey) {
-      const supabase = createClient(supabaseUrl, supabaseServiceKey)
-
-      const authHeader = request.headers.get('authorization')
-      const token = authHeader?.replace('Bearer ', '')
-      if (token) {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser(token)
-        if (user) {
-          inviterId = user.id
-        }
-      }
-
-      // Verify party exists
-      const { data: party, error } = await supabase
-        .from('parties')
-        .select('id, code, expires_at')
-        .eq('code', partyCode.toUpperCase())
-        .single()
-
-      if (error || !party) {
-        return NextResponse.json({ error: 'Party not found' }, { status: 404 })
-      }
-
-      if (new Date(party.expires_at) < new Date()) {
-        return NextResponse.json({ error: 'This party has expired' }, { status: 410 })
-      }
-
-      // Deduplicate: check if this email was already invited to this party
-      const { data: existingToken } = await supabase
-        .from('invite_tokens')
-        .select('id')
-        .eq('invitee_email', email.toLowerCase())
-        .eq('party_code', partyCode.toUpperCase())
-        .eq('claimed', false)
-        .limit(1)
-        .maybeSingle()
-
-      if (existingToken) {
-        return NextResponse.json({ error: 'This person has already been invited to this party.' }, { status: 409 })
-      }
-
-      // Create invite token for auto-friendship on sign-up (requires authenticated inviter)
-      if (inviterId) {
-        const { error: tokenError } = await supabase.from('invite_tokens').insert({
-          inviter_id: inviterId,
-          invitee_email: email.toLowerCase(),
-          party_code: partyCode.toUpperCase(),
-        })
-        if (tokenError) console.error('Failed to create invite token:', tokenError.message)
-      }
+    if (!supabaseUrl || !supabaseServiceKey) {
+      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
     }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey)
+
+    // S10: Authentication is required for sending invites
+    const authHeader = request.headers.get('authorization')
+    const token = authHeader?.replace('Bearer ', '')
+    if (!token) {
+      return NextResponse.json({ error: 'Authentication required to send invitations' }, { status: 401 })
+    }
+    const {
+      data: { user },
+    } = await supabase.auth.getUser(token)
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    const inviterId: string = user.id
+
+    // Verify party exists
+    const { data: party, error } = await supabase
+      .from('parties')
+      .select('id, code, expires_at')
+      .eq('code', partyCode.toUpperCase())
+      .single()
+
+    if (error || !party) {
+      return NextResponse.json({ error: 'Party not found' }, { status: 404 })
+    }
+
+    if (new Date(party.expires_at) < new Date()) {
+      return NextResponse.json({ error: 'This party has expired' }, { status: 410 })
+    }
+
+    // Deduplicate: check if this email was already invited to this party
+    const { data: existingToken } = await supabase
+      .from('invite_tokens')
+      .select('id')
+      .eq('invitee_email', email.toLowerCase())
+      .eq('party_code', partyCode.toUpperCase())
+      .eq('claimed', false)
+      .limit(1)
+      .maybeSingle()
+
+    if (existingToken) {
+      return NextResponse.json({ error: 'This person has already been invited to this party.' }, { status: 409 })
+    }
+
+    // Create invite token for auto-friendship on sign-up
+    const { error: tokenError } = await supabase.from('invite_tokens').insert({
+      inviter_id: inviterId,
+      invitee_email: email.toLowerCase(),
+      party_code: partyCode.toUpperCase(),
+    })
+    if (tokenError) console.error('Failed to create invite token:', tokenError.message)
 
     // Send the invitation email
     const result = await sendPartyInvitation({

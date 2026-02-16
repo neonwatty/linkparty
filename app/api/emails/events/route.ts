@@ -52,6 +52,36 @@ export async function GET(request: NextRequest) {
 
   const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
+  // S11: Scope results to the authenticated user's own invites
+  // Get the list of emails this user has invited
+  const { data: inviteTokens, error: inviteError } = await supabase
+    .from('invite_tokens')
+    .select('invitee_email')
+    .eq('inviter_id', user.id)
+
+  if (inviteError) {
+    console.error('Failed to fetch invite tokens:', inviteError)
+    return NextResponse.json({ error: 'Failed to fetch invite data' }, { status: 500 })
+  }
+
+  // Extract unique invited emails
+  const invitedEmails = [...new Set(inviteTokens?.map((t) => t.invitee_email) ?? [])]
+
+  // If the user hasn't invited anyone, return empty results
+  if (invitedEmails.length === 0) {
+    const emptyStats: EmailStats = {
+      total: 0,
+      sent: 0,
+      delivered: 0,
+      bounced: 0,
+      opened: 0,
+      clicked: 0,
+      deliveryRate: 0,
+      openRate: 0,
+    }
+    return NextResponse.json({ events: [], total: 0, stats: emptyStats })
+  }
+
   // Parse query parameters
   const searchParams = request.nextUrl.searchParams
   const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 100)
@@ -60,10 +90,11 @@ export async function GET(request: NextRequest) {
   const recipient = searchParams.get('recipient')
 
   try {
-    // Build query
+    // Build query — scoped to the user's invited emails only
     let query = supabase
       .from('email_events')
       .select('*', { count: 'exact' })
+      .in('recipient', invitedEmails)
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1)
 
@@ -82,8 +113,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch email events' }, { status: 500 })
     }
 
-    // Get stats (aggregate counts by event type)
-    const { data: statsData, error: statsError } = await supabase.from('email_events').select('event_type')
+    // Get stats scoped to this user's invites
+    const { data: statsData, error: statsError } = await supabase
+      .from('email_events')
+      .select('event_type')
+      .in('recipient', invitedEmails)
 
     if (statsError) {
       console.error('Failed to fetch email stats:', statsError)

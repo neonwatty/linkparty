@@ -52,41 +52,53 @@ export async function GET(request: Request) {
 
   if (!parties || parties.length === 0) return Response.json({ parties: [] })
 
-  // 4. Get member counts and host info for each party
-  const result = await Promise.all(
-    parties.map(async (party) => {
-      const { count } = await supabase
-        .from('party_members')
-        .select('*', { count: 'exact', head: true })
-        .eq('party_id', party.id)
+  // 4. Batch-fetch all members for these parties in a single query
+  const visiblePartyIds = parties.map((p) => p.id)
+  const { data: allMembers } = await supabase
+    .from('party_members')
+    .select('party_id, user_id, display_name, is_host')
+    .in('party_id', visiblePartyIds)
 
-      const { data: hostMember } = await supabase
-        .from('party_members')
-        .select('user_id, display_name')
-        .eq('party_id', party.id)
-        .eq('is_host', true)
-        .single()
+  // Build per-party member counts and host info in memory
+  const memberCountByParty = new Map<string, number>()
+  const hostByParty = new Map<string, { user_id: string | null; display_name: string }>()
 
-      let hostName = hostMember?.display_name || 'Someone'
-      if (hostMember?.user_id) {
-        const { data: profile } = await supabase
-          .from('user_profiles')
-          .select('display_name')
-          .eq('id', hostMember.user_id)
-          .single()
-        if (profile) hostName = profile.display_name
-      }
+  for (const member of allMembers || []) {
+    memberCountByParty.set(member.party_id, (memberCountByParty.get(member.party_id) || 0) + 1)
+    if (member.is_host) {
+      hostByParty.set(member.party_id, { user_id: member.user_id, display_name: member.display_name })
+    }
+  }
 
-      return {
-        id: party.id,
-        code: party.code,
-        name: party.name,
-        hostName,
-        memberCount: count || 1,
-        expiresAt: party.expires_at,
-      }
-    }),
-  )
+  // Batch-fetch host profiles for hosts that have a user_id
+  const hostUserIds = [...hostByParty.values()].map((h) => h.user_id).filter((id): id is string => id !== null)
+
+  const profileByUserId = new Map<string, string>()
+  if (hostUserIds.length > 0) {
+    const { data: profiles } = await supabase.from('user_profiles').select('id, display_name').in('id', hostUserIds)
+
+    for (const profile of profiles || []) {
+      profileByUserId.set(profile.id, profile.display_name)
+    }
+  }
+
+  // Assemble results from in-memory data
+  const result = parties.map((party) => {
+    const host = hostByParty.get(party.id)
+    let hostName = host?.display_name || 'Someone'
+    if (host?.user_id && profileByUserId.has(host.user_id)) {
+      hostName = profileByUserId.get(host.user_id)!
+    }
+
+    return {
+      id: party.id,
+      code: party.code,
+      name: party.name,
+      hostName,
+      memberCount: memberCountByParty.get(party.id) || 1,
+      expiresAt: party.expires_at,
+    }
+  })
 
   return Response.json({ parties: result })
 }

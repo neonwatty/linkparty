@@ -5,7 +5,7 @@ import { supabase, getSessionId } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { triggerItemAddedNotification, areNotificationsEnabled } from '@/lib/notificationTriggers'
 import { tryAction } from '@/lib/rateLimit'
-import { mergeQueueState, pendingChanges } from '@/lib/conflictResolver'
+import { detectConflict, pendingChanges } from '@/lib/conflictResolver'
 import type { ConflictInfo } from '@/lib/conflictResolver'
 import type { DbParty, DbPartyMember, DbQueueItem } from '@/lib/supabase'
 import type { RealtimeChannel } from '@supabase/supabase-js'
@@ -348,91 +348,199 @@ export function useParty(partyId: string | null) {
 
     loadInitialData()
 
-    // Subscribe to queue changes
+    // Subscribe to queue changes with incremental updates
     // Use partyIdRef.current in callbacks to always get the latest value
     const queueChannel: RealtimeChannel = supabase
       .channel(`queue:${partyId}`)
       .on(
         'postgres_changes',
         {
-          event: '*',
+          event: 'INSERT',
           schema: 'public',
           table: 'queue_items',
           filter: `party_id=eq.${partyId}`,
         },
-        async () => {
-          // Use ref to get current partyId (prevents stale closure)
-          const currentPartyId = partyIdRef.current
-          if (!currentPartyId) return
-
+        (payload) => {
           try {
-            const { data, error } = await supabase
-              .from('queue_items')
-              .select('*')
-              .eq('party_id', currentPartyId)
-              .neq('status', 'shown')
-              .order('position', { ascending: true })
+            const newDbItem = payload.new as DbQueueItem
+            // Filter out 'shown' items to match initial fetch behavior
+            if (newDbItem.status === 'shown') return
+            const newItem = transformQueueItem(newDbItem)
+            setQueue((prev) => {
+              // Skip if item already exists (e.g., optimistic update with temp ID replaced)
+              // Replace any temp item at the same position, or add if truly new
+              const withoutTemp = prev.filter((q) => !(q.id.startsWith('temp-') && q.position === newItem.position))
+              if (withoutTemp.some((q) => q.id === newItem.id)) return prev
+              return [...withoutTemp, newItem].sort((a, b) => a.position - b.position)
+            })
+          } catch (err) {
+            log.error('Queue INSERT handler failed', err)
+          }
+        },
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'queue_items',
+          filter: `party_id=eq.${partyId}`,
+        },
+        (payload) => {
+          try {
+            const updatedDbItem = payload.new as DbQueueItem
+            const updatedItem = transformQueueItem(updatedDbItem)
 
-            if (error) {
-              log.error('Failed to refetch queue', error)
+            // Check for conflicts with pending local changes
+            const localQueue = queueRef.current
+            const localItem = localQueue.find((q) => q.id === updatedItem.id)
+            if (localItem) {
+              const itemPendingChanges = pendingChanges.getChanges(updatedItem.id)
+              for (const change of itemPendingChanges) {
+                const conflict = detectConflict(localItem, updatedItem, change)
+                if (conflict) {
+                  setLastConflict((prev) => (prev ? [...prev, conflict] : [conflict]))
+                  pendingChanges.clearChanges(updatedItem.id)
+                  log.info('Sync conflict detected on UPDATE', { conflict })
+                }
+              }
+            }
+
+            // If status changed to 'shown', remove from local state
+            if (updatedItem.status === 'shown') {
+              setQueue((prev) => prev.filter((q) => q.id !== updatedItem.id))
               return
             }
 
-            if (data) {
-              const serverQueue = (data as DbQueueItem[]).map(transformQueueItem)
-              const localQueue = queueRef.current
-
-              // Check for conflicts between local pending changes and server state
-              const { mergedQueue, conflicts } = mergeQueueState(localQueue, serverQueue)
-
-              setQueue(mergedQueue)
-
-              // Notify about conflicts if any
-              if (conflicts.length > 0) {
-                setLastConflict(conflicts)
-                log.info('Sync conflicts detected', { conflicts })
+            setQueue((prev) => {
+              const idx = prev.findIndex((q) => q.id === updatedItem.id)
+              if (idx === -1) {
+                // Item wasn't in local state (e.g., status changed from 'shown' to something else)
+                return [...prev, updatedItem].sort((a, b) => a.position - b.position)
               }
-            }
+              const newQueue = [...prev]
+              newQueue[idx] = updatedItem
+              return newQueue.sort((a, b) => a.position - b.position)
+            })
           } catch (err) {
-            log.error('Queue subscription callback failed', err)
+            log.error('Queue UPDATE handler failed', err)
+          }
+        },
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'queue_items',
+          filter: `party_id=eq.${partyId}`,
+        },
+        (payload) => {
+          try {
+            const oldDbItem = payload.old as { id: string }
+            if (!oldDbItem?.id) {
+              log.warn('Queue DELETE payload missing id, skipping')
+              return
+            }
+
+            // Detect deletion conflicts for items with pending changes
+            const itemPendingChanges = pendingChanges.getChanges(oldDbItem.id)
+            if (itemPendingChanges.length > 0) {
+              const localItem = queueRef.current.find((q) => q.id === oldDbItem.id)
+              if (localItem) {
+                const conflict: ConflictInfo = {
+                  type: 'deleted',
+                  itemId: oldDbItem.id,
+                  itemTitle: localItem.title || localItem.noteContent?.substring(0, 50) || 'Queue Item',
+                  description: 'Item was deleted by another user',
+                }
+                setLastConflict((prev) => (prev ? [...prev, conflict] : [conflict]))
+              }
+              pendingChanges.clearChanges(oldDbItem.id)
+            }
+
+            setQueue((prev) => prev.filter((q) => q.id !== oldDbItem.id))
+          } catch (err) {
+            log.error('Queue DELETE handler failed', err)
           }
         },
       )
       .subscribe()
 
-    // Subscribe to member changes
+    // Subscribe to member changes with incremental updates
     const membersChannel: RealtimeChannel = supabase
       .channel(`members:${partyId}`)
       .on(
         'postgres_changes',
         {
-          event: '*',
+          event: 'INSERT',
           schema: 'public',
           table: 'party_members',
           filter: `party_id=eq.${partyId}`,
         },
-        async () => {
-          // Use ref to get current partyId (prevents stale closure)
-          const currentPartyId = partyIdRef.current
-          if (!currentPartyId) return
-
+        (payload) => {
           try {
-            const { data, error } = await supabase
-              .from('party_members')
-              .select('*')
-              .eq('party_id', currentPartyId)
-              .order('joined_at', { ascending: true })
-
-            if (error) {
-              log.error('Failed to refetch members', error)
+            const newDbMember = payload.new as DbPartyMember
+            const newMember = transformMember(newDbMember)
+            setMembers((prev) => {
+              // Skip if member already exists
+              if (prev.some((m) => m.id === newMember.id)) return prev
+              // Insert maintaining joined_at order (new members go at the end)
+              return [...prev, newMember]
+            })
+          } catch (err) {
+            log.error('Members INSERT handler failed', err)
+          }
+        },
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'party_members',
+          filter: `party_id=eq.${partyId}`,
+        },
+        (payload) => {
+          try {
+            const updatedDbMember = payload.new as DbPartyMember
+            const updatedMember = transformMember(updatedDbMember)
+            setMembers((prev) => {
+              const idx = prev.findIndex((m) => m.id === updatedMember.id)
+              if (idx === -1) return [...prev, updatedMember]
+              const newMembers = [...prev]
+              newMembers[idx] = updatedMember
+              return newMembers
+            })
+          } catch (err) {
+            log.error('Members UPDATE handler failed', err)
+          }
+        },
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'party_members',
+          filter: `party_id=eq.${partyId}`,
+        },
+        (payload) => {
+          try {
+            const oldDbMember = payload.old as { id?: string; session_id?: string }
+            if (!oldDbMember?.id && !oldDbMember?.session_id) {
+              log.warn('Members DELETE payload missing identifiers, skipping')
               return
             }
-
-            if (data) {
-              setMembers((data as DbPartyMember[]).map(transformMember))
-            }
+            setMembers((prev) =>
+              prev.filter((m) => {
+                if (oldDbMember.id) return m.id !== oldDbMember.id
+                if (oldDbMember.session_id) return m.sessionId !== oldDbMember.session_id
+                return true
+              }),
+            )
           } catch (err) {
-            log.error('Members subscription callback failed', err)
+            log.error('Members DELETE handler failed', err)
           }
         },
       )
