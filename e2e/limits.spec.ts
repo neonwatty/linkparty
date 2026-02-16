@@ -180,6 +180,13 @@ test.describe('Limit: 20 images per party', () => {
     const { body: createResult } = await apiCreateParty(baseURL!, `20img-${runId}`, 'ImageHost')
     expect(createResult.success).toBe(true)
     const partyId = createResult.party.id
+    const partyCode = createResult.party.code
+
+    // Join image sessions as party members (S7 requires membership to add items)
+    await apiJoinParty(baseURL!, partyCode, `img-a-${runId}`, 'ImageBotA')
+    await apiJoinParty(baseURL!, partyCode, `img-b-${runId}`, 'ImageBotB')
+    await apiJoinParty(baseURL!, partyCode, `img-c-${runId}`, 'ImageBotC')
+    await apiJoinParty(baseURL!, partyCode, `img-note-${runId}`, 'NoteBot')
 
     // 2 sessions to stay under 10/min rate limit per session
     for (let i = 1; i <= 10; i++) {
