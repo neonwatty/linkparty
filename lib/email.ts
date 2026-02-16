@@ -99,11 +99,12 @@ export async function sendPartyInvitation(options: {
   partyCode: string
   partyName: string
   inviterName: string
+  inviterId?: string
   personalMessage?: string
 }): Promise<SendEmailResult> {
-  const { to, partyCode, partyName, inviterName, personalMessage } = options
+  const { to, partyCode, partyName, inviterName, inviterId, personalMessage } = options
   const baseUrl = getBaseUrl()
-  const joinUrl = `${baseUrl}/join?code=${partyCode}`
+  const joinUrl = inviterId ? `${baseUrl}/join/${partyCode}?inviter=${inviterId}` : `${baseUrl}/join?code=${partyCode}`
 
   const subject = `${inviterName} invited you to join "${partyName}" on Link Party`
 

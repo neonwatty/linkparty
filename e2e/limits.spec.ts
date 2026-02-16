@@ -74,7 +74,10 @@ async function apiAddImage(baseURL: string, partyId: string, sessionId: string, 
 async function resetSession(page: Page): Promise<void> {
   await page.context().addCookies([FAKE_AUTH_COOKIE])
   await page.goto('/')
-  await page.evaluate(() => localStorage.clear())
+  await page.evaluate(() => {
+    localStorage.clear()
+    localStorage.setItem('link-party-display-name', 'Test User')
+  })
   await page.reload()
 }
 
@@ -252,7 +255,10 @@ test.describe('Limit: Password-protected party join', () => {
 
     await page.context().addCookies([FAKE_AUTH_COOKIE])
     await page.goto('/')
-    await page.evaluate(() => localStorage.clear())
+    await page.evaluate(() => {
+      localStorage.clear()
+      localStorage.setItem('link-party-display-name', 'Test User')
+    })
     await page.goto(`/join/${partyCode}`)
 
     await expect(page.getByRole('textbox', { name: 'ABC123' })).toHaveValue(partyCode)

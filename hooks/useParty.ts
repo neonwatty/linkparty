@@ -60,6 +60,7 @@ export interface PartyMember {
   avatar: string
   isHost: boolean
   sessionId: string
+  userId?: string
 }
 
 export interface PartyInfo {
@@ -114,6 +115,7 @@ function transformMember(member: DbPartyMember): PartyMember {
     avatar: member.avatar,
     isHost: member.is_host,
     sessionId: member.session_id,
+    userId: member.user_id ?? undefined,
   }
 }
 

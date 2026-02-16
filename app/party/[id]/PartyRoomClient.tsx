@@ -3,8 +3,9 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import type { ContentType, AddContentStep } from '@/types'
-import { getSessionId, getDisplayName, clearCurrentParty, getCurrentParty } from '@/lib/supabase'
+import { getSessionId, getDisplayName, clearCurrentParty, getCurrentParty, supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import { getFriendshipStatus, sendFriendRequest, type FriendshipStatus } from '@/lib/friends'
 import { useAuth } from '@/contexts/AuthContext'
 import { useParty } from '@/hooks/useParty'
 import type { QueueItem } from '@/hooks/useParty'
@@ -96,6 +97,45 @@ export default function PartyRoomClient() {
   const sessionId = getSessionId()
   const currentUserDisplayName = user?.user_metadata?.display_name || getDisplayName() || 'You'
   const isHost = partyInfo?.hostSessionId === sessionId
+
+  // Friendship statuses for party members (for "Add as friend" button)
+  const [friendshipStatuses, setFriendshipStatuses] = useState<Record<string, FriendshipStatus>>({})
+
+  // Fetch friendship statuses for all members with user IDs
+  useEffect(() => {
+    if (!user) return
+    const memberUserIds = members.filter((m) => m.userId && m.userId !== user.id).map((m) => m.userId!)
+    if (memberUserIds.length === 0) return
+
+    let cancelled = false
+    Promise.all(memberUserIds.map((uid) => getFriendshipStatus(uid).then((s) => [uid, s] as const))).then((results) => {
+      if (cancelled) return
+      const statuses: Record<string, FriendshipStatus> = {}
+      for (const [uid, status] of results) {
+        statuses[uid] = status
+      }
+      setFriendshipStatuses(statuses)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [user, members])
+
+  const handleAddFriend = useCallback(
+    async (userId: string) => {
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession()
+        if (!session?.access_token) return
+        await sendFriendRequest(userId)
+        setFriendshipStatuses((prev) => ({ ...prev, [userId]: 'pending_sent' }))
+      } catch (err) {
+        log.error('Failed to send friend request', err)
+      }
+    },
+    [setFriendshipStatuses],
+  )
 
   // Use memoized values from useParty hook
   const currentItem = showingItem
@@ -529,7 +569,12 @@ export default function PartyRoomClient() {
         />
       )}
 
-      <MembersList members={members} currentSessionId={sessionId} />
+      <MembersList
+        members={members}
+        currentSessionId={sessionId}
+        friendshipStatuses={friendshipStatuses}
+        onAddFriend={handleAddFriend}
+      />
 
       <QueueList
         items={pendingItems}
@@ -622,6 +667,7 @@ export default function PartyRoomClient() {
       {/* Invite Modal */}
       <InviteModal
         isOpen={showInvite}
+        partyId={partyId}
         partyCode={partyCode}
         partyName={partyInfo?.name || 'Party'}
         inviterName={currentUserDisplayName}

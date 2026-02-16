@@ -8,7 +8,10 @@ test.describe('Party Room', () => {
     await page.context().addCookies([FAKE_AUTH_COOKIE])
     // Clear localStorage and create a party first
     await page.goto('/')
-    await page.evaluate(() => localStorage.clear())
+    await page.evaluate(() => {
+      localStorage.clear()
+      localStorage.setItem('link-party-display-name', 'Test User')
+    })
     await page.reload()
 
     // Navigate to create party

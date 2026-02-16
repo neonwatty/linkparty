@@ -6,7 +6,9 @@ import Link from 'next/link'
 import { getSessionId, getDisplayName, setDisplayName, getAvatar, setCurrentParty } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { useAuth } from '@/contexts/AuthContext'
-import { ChevronLeftIcon, LoaderIcon, LockIcon } from '@/components/icons'
+import { ChevronLeftIcon, LoaderIcon, LockIcon, UsersIcon } from '@/components/icons'
+import { FriendsPicker } from '@/components/party/FriendsPicker'
+import { supabase } from '@/lib/supabase'
 import { TwinklingStars } from '@/components/ui/TwinklingStars'
 
 const log = logger.createLogger('CreateParty')
@@ -20,6 +22,9 @@ export default function CreatePartyPage() {
   const [password, setPassword] = useState('')
   const [isCreating, setIsCreating] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [selectedFriendIds, setSelectedFriendIds] = useState<string[]>([])
+  const [visibleToFriends, setVisibleToFriends] = useState(false)
+  const [showFriendsPicker, setShowFriendsPicker] = useState(false)
 
   useEffect(() => {
     document.title = 'Create Party | Link Party'
@@ -64,6 +69,7 @@ export default function CreatePartyPage() {
           partyName: partyName.trim() || undefined,
           password: passwordEnabled && password ? password : undefined,
           userId: user?.id || undefined,
+          visibleToFriends,
         }),
       })
 
@@ -77,6 +83,28 @@ export default function CreatePartyPage() {
       // Save display name for future use
       setDisplayName(displayName.trim())
       setCurrentParty(data.party.id, data.party.code)
+
+      // Fire-and-forget: invite selected friends
+      if (selectedFriendIds.length > 0 && data.party?.code) {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession()
+        if (session?.access_token) {
+          fetch('/api/parties/invite-friends', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify({
+              partyId: data.party.id,
+              partyCode: data.party.code,
+              partyName: partyName.trim() || 'Party',
+              friendIds: selectedFriendIds,
+            }),
+          }).catch((err) => log.error('Failed to invite friends', err))
+        }
+      }
 
       router.push(`/party/${data.party.id}`)
     } catch (err) {
@@ -175,6 +203,53 @@ export default function CreatePartyPage() {
               </div>
               <div className="bg-surface-700 px-3 py-1.5 rounded-lg font-mono text-sm">5</div>
             </div>
+          </div>
+
+          {/* Invite Friends (optional) */}
+          <div>
+            <button
+              type="button"
+              onClick={() => setShowFriendsPicker(!showFriendsPicker)}
+              className="flex items-center gap-2 text-sm text-text-secondary hover:text-white transition-colors"
+            >
+              <UsersIcon />
+              <span>Invite friends {selectedFriendIds.length > 0 && `(${selectedFriendIds.length})`}</span>
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                className={`transition-transform ${showFriendsPicker ? 'rotate-180' : ''}`}
+              >
+                <path d="M6 9l6 6 6-6" />
+              </svg>
+            </button>
+            {showFriendsPicker && (
+              <div className="mt-3 space-y-3">
+                <FriendsPicker selectedIds={selectedFriendIds} onSelectionChange={setSelectedFriendIds} />
+                <div className="card p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-sm font-medium">Visible to friends</div>
+                      <div className="text-xs text-text-muted">Friends can see this party on their home page</div>
+                    </div>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={visibleToFriends}
+                      onClick={() => setVisibleToFriends(!visibleToFriends)}
+                      className={`relative w-11 h-6 rounded-full transition-colors ${visibleToFriends ? 'bg-primary' : 'bg-surface-600'}`}
+                    >
+                      <span
+                        className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${visibleToFriends ? 'translate-x-5' : ''}`}
+                      />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {error && <div className="text-red-400 text-sm text-center">{error}</div>}

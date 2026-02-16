@@ -9,6 +9,15 @@ export default function AuthCallbackPage() {
 
   useEffect(() => {
     const getRedirectPath = () => {
+      // Check URL params first (set by emailRedirectTo in signUpWithEmail)
+      const urlParams = new URLSearchParams(window.location.search)
+      const urlRedirect = urlParams.get('redirect')
+      if (urlRedirect && urlRedirect.startsWith('/') && !urlRedirect.startsWith('//')) {
+        sessionStorage.removeItem('auth-redirect')
+        return urlRedirect
+      }
+
+      // Fall back to sessionStorage (set by login/signup pages for OAuth flow)
       const savedRedirect = sessionStorage.getItem('auth-redirect')
       if (savedRedirect) {
         sessionStorage.removeItem('auth-redirect')

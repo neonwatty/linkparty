@@ -84,7 +84,22 @@ function mapSupabaseError(error: { message: string; code?: string }): string {
   return 'Something went wrong. Please try again.'
 }
 
-export async function signUpWithEmail(email: string, password: string, displayName?: string): Promise<AuthResult> {
+export async function signUpWithEmail(
+  email: string,
+  password: string,
+  displayName?: string,
+  redirectPath?: string,
+): Promise<AuthResult> {
+  // Build the email redirect URL — include redirect path so auth callback can navigate there
+  let emailRedirectTo: string | undefined
+  if (typeof window !== 'undefined') {
+    const callbackUrl = new URL('/auth/callback', window.location.origin)
+    if (redirectPath) {
+      callbackUrl.searchParams.set('redirect', redirectPath)
+    }
+    emailRedirectTo = callbackUrl.toString()
+  }
+
   const { error } = await supabase.auth.signUp({
     email,
     password,
@@ -92,7 +107,7 @@ export async function signUpWithEmail(email: string, password: string, displayNa
       data: {
         display_name: displayName,
       },
-      emailRedirectTo: typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : undefined,
+      emailRedirectTo,
     },
   })
 

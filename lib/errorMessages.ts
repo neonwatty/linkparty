@@ -8,6 +8,20 @@ export const LIMITS = {
   PARTY_NOT_FOUND: 'Party not found. Check the code and try again.',
 } as const
 
+/** Friend-related error messages */
+export const FRIENDS = {
+  ALREADY_FRIENDS: 'You are already friends with this user.',
+  REQUEST_EXISTS: 'A friend request has already been sent.',
+  REQUEST_INCOMING: 'This user has already sent you a friend request.',
+  REQUEST_NOT_FOUND: 'Friend request not found.',
+  CANNOT_FRIEND_SELF: 'You cannot send a friend request to yourself.',
+  NOT_AUTHORIZED: 'You are not authorized to perform this action.',
+  USER_NOT_FOUND: 'User not found.',
+  INVALID_ACTION: 'Invalid action. Use decline, cancel, or unfriend.',
+  RATE_LIMITED: 'Too many friend requests. Please wait before sending more.',
+  BLOCKED: 'You cannot interact with this user.',
+} as const
+
 /**
  * Convert errors to user-friendly messages
  */

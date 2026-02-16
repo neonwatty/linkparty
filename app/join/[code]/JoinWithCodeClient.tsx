@@ -1,9 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter, useParams } from 'next/navigation'
+import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { getSessionId, getDisplayName, setDisplayName, getAvatar, setCurrentParty, IS_MOCK_MODE } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { useAuth } from '@/contexts/AuthContext'
 import { ChevronLeftIcon, LoaderIcon, LockIcon } from '@/components/icons'
@@ -13,7 +14,9 @@ const log = logger.createLogger('JoinParty')
 export default function JoinWithCodeClient() {
   const router = useRouter()
   const params = useParams()
+  const searchParams = useSearchParams()
   const initialCode = ((params.code as string) || '').toUpperCase()
+  const inviterId = searchParams.get('inviter')
   const { user } = useAuth()
   const displayName = user?.user_metadata?.display_name || getDisplayName() || ''
   const [code, setCode] = useState(initialCode)
@@ -88,6 +91,19 @@ export default function JoinWithCodeClient() {
       // Save display name for future use
       setDisplayName(displayName.trim())
       setCurrentParty(data.party.id, data.party.code)
+
+      // Fire-and-forget: claim invite tokens for auto-friendship
+      if (inviterId) {
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          if (session?.access_token) {
+            fetch('/api/invites/claim', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+              body: JSON.stringify({ partyCode: code.toUpperCase() }),
+            }).catch((err) => log.error('Failed to claim invite', err))
+          }
+        })
+      }
 
       router.push(`/party/${data.party.id}`)
     } catch (err) {

@@ -1,9 +1,17 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { getSessionId, getDisplayName, setDisplayName, getAvatar, setCurrentParty, IS_MOCK_MODE } from '@/lib/supabase'
+import {
+  getSessionId,
+  getDisplayName,
+  setDisplayName,
+  getAvatar,
+  setCurrentParty,
+  IS_MOCK_MODE,
+  supabase,
+} from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { useAuth } from '@/contexts/AuthContext'
 import { ChevronLeftIcon, LoaderIcon, LockIcon } from '@/components/icons'
@@ -11,11 +19,14 @@ import { TwinklingStars } from '@/components/ui/TwinklingStars'
 
 const log = logger.createLogger('JoinParty')
 
-export default function JoinPartyPage() {
+function JoinPartyForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { user } = useAuth()
   const displayName = user?.user_metadata?.display_name || getDisplayName() || ''
-  const [code, setCode] = useState('')
+  const initialCode = (searchParams.get('code') || '').toUpperCase()
+  const inviterId = searchParams.get('inviter')
+  const [code, setCode] = useState(initialCode)
   const [password, setPassword] = useState('')
   const [needsPassword, setNeedsPassword] = useState(false)
   const [isJoining, setIsJoining] = useState(false)
@@ -91,6 +102,19 @@ export default function JoinPartyPage() {
       // Save display name for future use
       setDisplayName(displayName.trim())
       setCurrentParty(data.party.id, data.party.code)
+
+      // Fire-and-forget: claim invite tokens for auto-friendship
+      if (inviterId) {
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          if (session?.access_token) {
+            fetch('/api/invites/claim', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+              body: JSON.stringify({ partyCode: code.toUpperCase() }),
+            }).catch((err) => log.error('Failed to claim invite', err))
+          }
+        })
+      }
 
       router.push(`/party/${data.party.id}`)
     } catch (err) {
@@ -173,5 +197,19 @@ export default function JoinPartyPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function JoinPartyPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="container-mobile bg-gradient-party flex items-center justify-center">
+          <LoaderIcon />
+        </div>
+      }
+    >
+      <JoinPartyForm />
+    </Suspense>
   )
 }

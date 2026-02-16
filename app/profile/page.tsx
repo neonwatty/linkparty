@@ -4,7 +4,7 @@ import { useEffect } from 'react'
 import Link from 'next/link'
 import { ChevronLeftIcon } from '@/components/icons'
 import { TwinklingStars } from '@/components/ui/TwinklingStars'
-import ProfileEditor from '@/components/profile/ProfileEditor'
+import ProfileTabs from '@/components/profile/ProfileTabs'
 
 export default function ProfilePage() {
   useEffect(() => {
@@ -29,7 +29,7 @@ export default function ProfilePage() {
           Profile
         </h1>
 
-        <ProfileEditor />
+        <ProfileTabs />
       </div>
     </div>
   )

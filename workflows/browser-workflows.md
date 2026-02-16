@@ -1,36 +1,49 @@
 # Browser Workflows
 
 > Auto-generated workflow documentation for Link Party
-> Last updated: 2026-02-07
+> Last updated: 2026-02-14
 > Base URL: https://linkparty.app (production) or http://localhost:3000 (development)
 > Platform: Desktop web browsers (Chrome, Safari, Firefox, Edge)
 
 ## Quick Reference
 
-| #   | Workflow               | Purpose                | Steps | Status |
-| --- | ---------------------- | ---------------------- | ----- | ------ |
-| 1   | App Launch (Fresh)     | First-time app open    | 4     | ✅     |
-| 2   | Create a New Party     | Party creation flow    | 8     | ✅     |
-| 3   | Join an Existing Party | Join with code         | 7     | ✅     |
-| 4   | Join via Deep Link     | Join using URL param   | 4     | ⬜     |
-| 5   | Leave Party            | Exit to home           | 4     | ⬜     |
-| 6   | Add YouTube Content    | Add video to queue     | 7     | ⬜     |
-| 7   | Add Tweet Content      | Add tweet to queue     | 7     | ⬜     |
-| 8   | Add Reddit Content     | Add post to queue      | 7     | ⬜     |
-| 9   | Add Simple Note        | Add text note          | 6     | ✅     |
-| 10  | Add Note with Due Date | Add reminder           | 7     | ⬜     |
-| 11  | Mark Note Complete     | Toggle completion      | 4     | ⬜     |
-| 12  | View and Edit Note     | Open and modify note   | 8     | ⬜     |
-| 13  | Add Image Content      | Upload image to queue  | 8     | ⬜     |
-| 14  | View Image in Lightbox | Full-screen image view | 4     | ⬜     |
-| 15  | Reorder Queue Items    | Move items up/down     | 6     | ⬜     |
-| 16  | Show Item Next         | Bump to show next      | 5     | ✅     |
-| 17  | Remove Queue Item      | Delete from queue      | 6     | ⬜     |
-| 18  | TV Mode                | Enter TV display       | 5     | ⬜     |
-| 19  | View History           | View past parties      | 4     | ⬜     |
-| 20  | Google OAuth Login     | OAuth flow             | 5     | ⬜     |
-| 21  | Keyboard Navigation    | Tab/Enter navigation   | 5     | ⬜     |
-| 22  | Responsive Layout      | Test viewport sizes    | 4     | ⬜     |
+| #   | Workflow                 | Purpose                   | Steps | Status |
+| --- | ------------------------ | ------------------------- | ----- | ------ |
+| 1   | App Launch (Fresh)       | First-time app open       | 4     | ✅     |
+| 2   | Create a New Party       | Party creation flow       | 8     | ✅     |
+| 3   | Join an Existing Party   | Join with code            | 7     | ✅     |
+| 4   | Join via Deep Link       | Join using URL param      | 4     | ⬜     |
+| 5   | Leave Party              | Exit to home              | 4     | ⬜     |
+| 6   | Add YouTube Content      | Add video to queue        | 7     | ⬜     |
+| 7   | Add Tweet Content        | Add tweet to queue        | 7     | ⬜     |
+| 8   | Add Reddit Content       | Add post to queue         | 7     | ⬜     |
+| 9   | Add Simple Note          | Add text note             | 6     | ✅     |
+| 10  | Add Note with Due Date   | Add reminder              | 7     | ⬜     |
+| 11  | Mark Note Complete       | Toggle completion         | 4     | ⬜     |
+| 12  | View and Edit Note       | Open and modify note      | 8     | ⬜     |
+| 13  | Add Image Content        | Upload image to queue     | 8     | ⬜     |
+| 14  | View Image in Lightbox   | Full-screen image view    | 4     | ⬜     |
+| 15  | Reorder Queue Items      | Move items up/down        | 6     | ⬜     |
+| 16  | Show Item Next           | Bump to show next         | 5     | ✅     |
+| 17  | Remove Queue Item        | Delete from queue         | 6     | ⬜     |
+| 18  | TV Mode                  | Enter TV display          | 5     | ⬜     |
+| 19  | View History             | View past parties         | 4     | ⬜     |
+| 20  | Google OAuth Login       | OAuth flow                | 5     | ⬜     |
+| 21  | Keyboard Navigation      | Tab/Enter navigation      | 5     | ⬜     |
+| 22  | Responsive Layout        | Test viewport sizes       | 4     | ⬜     |
+| 23  | Profile Setup            | Edit name/username/avatar | 7     | ⬜     |
+| 24  | Send Friend Request      | Add friend from party     | 5     | ⬜     |
+| 25  | Accept Friend Request    | Accept from Requests tab  | 6     | ⬜     |
+| 26  | Decline/Cancel Request   | Decline or cancel request | 5     | ⬜     |
+| 27  | Remove Friend            | Remove with confirmation  | 5     | ⬜     |
+| 28  | Block and Unblock User   | Block/unblock flow        | 7     | ⬜     |
+| 29  | Notification Bell        | View & mark read          | 6     | ⬜     |
+| 30  | Act on Notification      | Accept/join from notif    | 5     | ⬜     |
+| 31  | Invite Friends (Create)  | Invite during creation    | 6     | ⬜     |
+| 32  | Invite from Party Room   | Email & friend invites    | 7     | ⬜     |
+| 33  | Friends' Active Parties  | View & join from home     | 5     | ⬜     |
+| 34  | Password-Protected Party | Create & join w/ password | 7     | ⬜     |
+| 35  | Party Creation Limit     | Max 5 parties enforcement | 5     | ⬜     |
 
 **Legend:** ✅ Passed | ⚠️ Partial | ❌ Failed | ⬜ Not tested
 
@@ -870,6 +883,497 @@ The app uses a **dark "Campfire" theme** with deep navy backgrounds and warm ora
 
 ---
 
+## Social & Profile Workflows
+
+### Workflow 23: Profile Setup
+
+> Tests editing user profile: display name, username, and avatar emoji.
+
+**Prerequisites:** Signed in, on home screen
+
+1. Navigate to profile page
+   - Click the profile icon button (person silhouette) in top-right header
+   - Verify profile page loads with "Profile" tab active
+   - Verify four tabs visible: Profile, Friends, Requests, Blocked
+
+2. Verify profile editor loads
+   - Verify avatar picker shows current emoji (default: 🎉) displayed large
+   - Verify 16 emoji options in a grid (🎉 🎸 🎭 🎪 🎵 🌟 🔥 🎯 🦊 🐻 🦁 🐱 🐶 🦄 🌈 🍕)
+   - Verify "Display name" input with current name
+   - Verify "Username" input with @-prefix
+
+3. Change avatar
+   - Click a different emoji (e.g., 🦊)
+   - Verify selected emoji gets accent ring highlight and scales up
+   - Verify large preview updates to show the new emoji
+
+4. Edit display name
+   - Clear the display name field
+   - Type "New Display Name"
+   - Verify text appears in field
+
+5. Set username
+   - Click the username field
+   - Type "testuser123"
+   - Verify input auto-lowercases and strips invalid characters
+   - Wait for "Checking availability..." text
+   - Verify either "Username available" (teal) or "Username already taken" (red) appears
+
+6. Save profile
+   - Click "Save Profile" button
+   - Verify button shows loading spinner
+   - Verify "Profile saved!" success message appears (teal text)
+   - Verify success message disappears after 3 seconds
+
+7. Return to home
+   - Click back button (chevron) in top-left
+   - Verify home screen shows updated greeting "Hey, New Display Name"
+
+---
+
+### Workflow 24: Send Friend Request from Party Room
+
+> Tests adding a party member as a friend using the "+" button in the members list.
+
+**Prerequisites:** In a party room with at least one other signed-in member
+
+1. Locate add friend button
+   - Find the "Members" section showing member count (e.g., "2 watching")
+   - Identify a member who is NOT the current user and NOT already a friend
+   - Verify a small "+" button appears next to their name
+
+2. Send friend request
+   - Click the "+" button next to the member's name
+   - Verify the "+" button changes to show "Sent" label (muted text)
+
+3. Verify request was sent
+   - Navigate to /profile
+   - Click "Requests" tab
+   - Verify "Sent" section shows the outgoing request with the member's name
+
+4. Verify from recipient side
+   - In a second browser session (the other member), navigate to /profile
+   - Click "Requests" tab
+   - Verify "Incoming" section shows the friend request
+
+5. Return to party
+   - Navigate back to the party room
+   - Verify the member still shows "Sent" label (not "+" button)
+
+---
+
+### Workflow 25: Accept Friend Request
+
+> Tests accepting an incoming friend request from the profile Requests tab.
+
+**Prerequisites:** Signed in, have an incoming friend request pending
+
+1. Navigate to profile
+   - Click profile icon in home screen header
+   - Verify profile page loads
+
+2. Check Requests tab badge
+   - Verify "Requests" tab shows a badge count (e.g., orange circle with "1")
+   - Click "Requests" tab
+
+3. Verify incoming request
+   - Verify "Incoming" section shows the friend request
+   - Verify sender's avatar emoji, display name, and @username visible
+   - Verify "Accept" and "Decline" buttons present
+
+4. Accept the request
+   - Click "Accept" button
+   - Verify the request disappears from the Incoming section
+   - Verify badge count decrements (or disappears if was 1)
+
+5. Verify friendship created
+   - Click "Friends" tab
+   - Verify the accepted user now appears in the friends list
+   - Verify their avatar, display name, and @username shown
+
+6. Verify bidirectional
+   - In the other user's session, navigate to /profile → Friends tab
+   - Verify the accepting user appears in their friends list too
+
+---
+
+### Workflow 26: Decline/Cancel Friend Request
+
+> Tests declining an incoming request and canceling an outgoing request.
+
+**Prerequisites:** Signed in with both incoming and outgoing friend requests
+
+1. Navigate to Requests tab
+   - Click profile icon → click "Requests" tab
+   - Verify both "Incoming" and "Sent" sections visible
+
+2. Decline incoming request
+   - Find an incoming request
+   - Click "Decline" button
+   - Verify the request disappears from the Incoming section
+   - Verify badge count decrements
+
+3. Verify decline effect
+   - The declined user should be able to send a new request later
+   - The declined user should NOT appear in the Friends tab
+
+4. Cancel outgoing request
+   - Find a sent/outgoing request in the "Sent" section
+   - Click "Cancel" button
+   - Verify the request disappears from the Sent section
+
+5. Verify cancel effect
+   - The target user's Requests tab should no longer show the incoming request
+
+---
+
+### Workflow 27: Remove Friend
+
+> Tests removing an existing friend from the Friends tab with confirmation.
+
+**Prerequisites:** Signed in, have at least one friend
+
+1. Navigate to Friends tab
+   - Click profile icon → click "Friends" tab
+   - Verify friends list shows at least one friend
+
+2. Locate friend to remove
+   - Find a friend in the list
+   - Verify avatar emoji, display name, @username, "Remove" and "Block" buttons visible
+
+3. Initiate removal
+   - Click "Remove" button
+   - Verify button text changes to "Sure?" (confirmation state)
+
+4. Confirm removal
+   - Click "Sure?" button
+   - Verify the friend disappears from the list
+
+5. Verify removal
+   - Verify friend count decremented
+   - In the other user's session, verify the friendship is also removed from their Friends tab
+   - Verify both users can send new friend requests to each other again
+
+---
+
+### Workflow 28: Block and Unblock User
+
+> Tests blocking a user from the Friends tab, then unblocking from the Blocked tab.
+
+**Prerequisites:** Signed in, have at least one friend
+
+1. Navigate to Friends tab
+   - Click profile icon → click "Friends" tab
+   - Verify at least one friend visible
+
+2. Locate block button
+   - Find a friend in the list
+   - Verify "Block" button visible next to "Remove"
+
+3. Initiate block
+   - Click "Block" button
+   - Verify button text changes to "Block?" (confirmation state)
+
+4. Confirm block
+   - Click "Block?" button
+   - Verify the user disappears from the Friends list
+   - Verify friendship is removed (blocking auto-removes friendship)
+
+5. Verify blocked user appears in Blocked tab
+   - Click "Blocked" tab
+   - Verify the blocked user appears in the list
+   - Verify their avatar, display name, and @username shown
+   - Verify "Unblock" button visible
+
+6. Unblock user
+   - Click "Unblock" button
+   - Verify the user disappears from the Blocked list
+   - Verify empty state shows "No blocked users" if list is now empty
+
+7. Verify unblock effect
+   - Click "Friends" tab
+   - Verify the user does NOT appear (unblocking does not restore friendship)
+   - Verify both users can now send friend requests to each other again
+
+---
+
+## Notification Workflows
+
+### Workflow 29: Notification Bell and Dropdown
+
+> Tests the notification bell icon, unread badge, and dropdown behavior.
+
+**Prerequisites:** Signed in, on home screen
+
+1. Locate notification bell
+   - Verify bell icon visible in top-right header (between profile icon and history icon)
+   - Note whether an unread badge (red circle with count) is present
+
+2. Open notification dropdown
+   - Click the bell icon
+   - Verify dropdown appears below the bell
+   - Verify "Notifications" header visible
+   - If unread notifications exist: verify "Mark all read" button visible
+
+3. Review notification list
+   - Verify notifications listed in reverse chronological order
+   - Verify each notification shows: icon (emoji), title text, relative timestamp (e.g., "5m ago")
+   - Verify unread notifications have a slightly different background (darker)
+   - If no notifications: verify "No notifications" empty state
+
+4. Mark single notification as read
+   - Click on an unread notification
+   - Verify its background changes to the read state
+   - Verify unread badge count decrements
+
+5. Mark all as read
+   - If unread notifications remain, click "Mark all read" button
+   - Verify all notifications switch to read state
+   - Verify unread badge disappears from the bell icon
+   - Verify "Mark all read" button disappears
+
+6. Close dropdown
+   - Click outside the dropdown (or click the bell icon again)
+   - Verify dropdown closes
+   - Verify back to normal home screen view
+
+---
+
+### Workflow 30: Act on Notification
+
+> Tests taking action on notifications: accepting friend requests and joining party invites.
+
+**Prerequisites:** Signed in, have notifications with actionable items (friend request and/or party invite)
+
+1. Open notifications
+   - Click bell icon to open dropdown
+
+2. Act on friend request notification
+   - Find a notification of type "friend_request" (shows 👋 emoji and "sent you a friend request")
+   - Verify "Accept" and "Decline" buttons visible inline
+   - Click "Accept"
+   - Verify the notification updates (buttons removed, marked as read)
+   - Verify friendship is created (can verify in Friends tab later)
+
+3. Act on party invite notification
+   - Find a notification of type "party_invite" (shows 🎉 emoji and "invited you to [Party]")
+   - Verify "Join" link visible
+   - Click "Join"
+   - Verify navigation to /join/[code] with the party code pre-filled
+
+4. Verify friend accepted notification
+   - After accepting a friend request, the sender should receive a "friend_accepted" notification
+   - Verify it shows 🤝 emoji and "[Name] accepted your friend request"
+   - Verify it has no action buttons (informational only)
+
+5. Close notifications
+   - Click outside dropdown to close
+   - Verify dropdown closes
+
+---
+
+## Invitation Workflows
+
+### Workflow 31: Invite Friends During Party Creation
+
+> Tests using the FriendsPicker on the create party page to invite friends when creating a new party.
+
+**Prerequisites:** Signed in, have at least one friend
+
+1. Navigate to create party
+   - Click "Start a Party" on home screen
+   - Verify "Start a party" heading and form appears
+
+2. Open invite friends section
+   - Click "Invite friends" dropdown toggle (shows users icon + chevron)
+   - Verify FriendsPicker expands below
+   - Verify friend list appears with search input
+   - Verify "Visible to friends" toggle visible below the picker
+
+3. Select friends to invite
+   - Click on a friend to select them
+   - Verify accent border and checkmark indicator appears on selected friend
+   - Verify "Invite friends (1)" count updates in the toggle label
+   - Select additional friends if available
+
+4. Enable visibility toggle
+   - Toggle "Visible to friends" switch ON
+   - Verify switch turns orange (active state)
+
+5. Create the party
+   - Enter a party name (optional)
+   - Click "Create Party"
+   - Verify party creation succeeds and navigates to party room
+
+6. Verify invites sent
+   - Selected friends should receive party_invite notifications
+   - In a friend's session, click bell icon
+   - Verify "invited you to [Party]" notification appears with "Join" link
+
+---
+
+### Workflow 32: Invite Friends from Party Room
+
+> Tests the InviteModal in the party room with both Email and Friends tabs.
+
+**Prerequisites:** In an active party room, signed in, have at least one friend
+
+1. Open invite modal
+   - Click the mail icon button in the party room header
+   - Verify "Invite a Friend" modal slides up from bottom
+   - Verify two tabs: "Email" and "Friends"
+   - Verify Email tab is active by default
+
+2. Send email invite
+   - Verify email input field with placeholder "friend@example.com"
+   - Type a valid email address (e.g., "test@example.com")
+   - Verify optional personal message textarea visible
+   - Type a personal message (optional)
+   - Click "Send Invite" button
+   - Verify button shows "Sending..." loading state
+   - Verify "Invite sent!" success banner with checkmark
+   - Verify modal auto-closes after ~1.5 seconds
+
+3. Reopen modal for friend invite
+   - Click the mail icon button again
+   - Click "Friends" tab
+
+4. Select friends
+   - Verify FriendsPicker shows friend list with search
+   - Click on friends to select them
+   - Verify checkmark indicators on selected friends
+   - Verify "Send Invites (N)" button shows count
+
+5. Send friend invites
+   - Click "Send Invites (N)" button
+   - Verify "Sending..." loading state
+   - Verify "Invites sent!" success banner
+   - Verify modal auto-closes
+
+6. Verify email invite deduplication
+   - Reopen modal, go to Email tab
+   - Enter the same email address used in step 2
+   - Click "Send Invite"
+   - Verify error message: "This person has already been invited to this party."
+
+7. Cancel invite
+   - Reopen modal
+   - Click "Cancel" button
+   - Verify modal closes without sending
+
+---
+
+### Workflow 33: Friends' Active Parties Feed
+
+> Tests viewing and joining friends' visible active parties from the home screen.
+
+**Prerequisites:** Signed in, have a friend who has an active party with "Visible to friends" enabled
+
+1. Verify friends' parties section
+   - On home screen, verify "Friends are partying" section heading visible
+   - Verify party cards displayed below the heading
+
+2. Review party card
+   - Verify each card shows: 🎉 emoji icon, party name (or "Unnamed party"), host name, member count (e.g., "Alice · 3 watching")
+   - Verify "Join" label on the right side of the card
+
+3. Join friend's party
+   - Click on a friend's party card
+   - Verify navigation to /join/[code] with the party code pre-filled
+   - Complete the join flow (enter name if needed, click Join)
+   - Verify party room loads
+
+4. Verify auto-refresh
+   - Return to home screen
+   - Verify the party list updates (joined party may now show updated member count)
+   - Note: feed refreshes every 30 seconds automatically
+
+5. Verify no section when empty
+   - If no friends have visible active parties, verify the "Friends are partying" section is NOT shown
+   - Home screen shows only the hero section with "Start a Party" and "Join with Code"
+
+---
+
+## Abuse Prevention Workflows
+
+### Workflow 34: Password-Protected Party
+
+> Tests creating a party with a password and joining it with the correct/incorrect password.
+
+**Prerequisites:** Signed in, on home screen
+
+1. Create password-protected party
+   - Click "Start a Party"
+   - Enter a party name (e.g., "Secret Party")
+   - Toggle "Password protect" switch ON (turns orange)
+   - Verify password input field appears below the toggle
+   - Type "mypassword" in the password field
+   - Click "Create Party"
+   - Verify party room loads
+
+2. Note the party code
+   - Record the 6-character code from the party header
+
+3. Attempt to join without password (second session)
+   - In a second browser session, navigate to /join
+   - Enter the party code
+   - Click "Join Party"
+   - Verify the server responds with a password prompt (needsPassword: true)
+   - Verify password input field appears
+
+4. Enter wrong password
+   - Type "wrongpassword" in the password field
+   - Click "Join Party"
+   - Verify "Incorrect party password." error message appears
+
+5. Enter correct password
+   - Clear the password field
+   - Type "mypassword"
+   - Click "Join Party"
+   - Verify party room loads successfully
+
+6. Verify membership
+   - Verify the joining user appears in the members list
+   - Verify host sees updated member count
+
+7. Re-join skips password
+   - Leave the party and re-join with the same session
+   - Verify re-join succeeds without requiring password again (existing member upsert)
+
+---
+
+### Workflow 35: Party Creation Limit
+
+> Tests that users cannot create more than 5 active parties.
+
+**Prerequisites:** Signed in, no active parties (or close existing ones)
+
+1. Create parties up to limit
+   - Create 5 parties in succession using "Start a Party" flow
+   - Note each party code for reference
+   - Verify each party creates successfully
+
+2. Attempt 6th party
+   - Click "Start a Party" again
+   - Fill in party name
+   - Click "Create Party"
+   - Verify error message: "You can have at most 5 active parties. Close or let one expire first."
+   - Verify party is NOT created
+
+3. Verify error display
+   - Verify error appears as red text below the form
+   - Verify the form is still editable (can retry after closing a party)
+
+4. Verify limit resets after expiry
+   - Wait for a party to expire (24h default) or manually note this behavior
+   - After expiry, creating a new party should succeed
+
+5. Verify member limit display
+   - Note: Member limit (20) and image limit (20) are enforced server-side
+   - These limits show as errors only when the limit is actually hit during join or image upload
+
+---
+
 ## Web Platform UX Verification
 
 When testing workflows, verify these web conventions are followed:
@@ -921,17 +1425,38 @@ When testing workflows, verify these web conventions are followed:
 
 Some workflows require state from previous workflows:
 
-| Workflow               | Depends On                          |
-| ---------------------- | ----------------------------------- |
-| 3 (Join Party)         | 2 (Create Party) - needs party code |
-| 4 (Join via Deep Link) | 2 (Create Party) - needs party code |
-| 5 (Leave Party)        | 2 or 3 (active party)               |
-| 6-13 (Content)         | 2 or 3 (active party)               |
-| 14 (Image Lightbox)    | 13 (image in queue)                 |
-| 15-17 (Queue Mgmt)     | 6-13 (items in queue)               |
-| 18 (TV Mode)           | 2 or 3 (active party)               |
+| Workflow                      | Depends On                                      |
+| ----------------------------- | ----------------------------------------------- |
+| 3 (Join Party)                | 2 (Create Party) - needs party code             |
+| 4 (Join via Deep Link)        | 2 (Create Party) - needs party code             |
+| 5 (Leave Party)               | 2 or 3 (active party)                           |
+| 6-13 (Content)                | 2 or 3 (active party)                           |
+| 14 (Image Lightbox)           | 13 (image in queue)                             |
+| 15-17 (Queue Mgmt)            | 6-13 (items in queue)                           |
+| 18 (TV Mode)                  | 2 or 3 (active party)                           |
+| 23 (Profile Setup)            | 20 (Google OAuth) or signed in                  |
+| 24 (Send Friend Request)      | 2 or 3 (active party with 2+ signed-in members) |
+| 25 (Accept Friend Request)    | 24 (pending incoming request)                   |
+| 26 (Decline/Cancel Request)   | 24 (pending requests)                           |
+| 27 (Remove Friend)            | 25 (accepted friendship)                        |
+| 28 (Block/Unblock)            | 25 (accepted friendship)                        |
+| 29 (Notification Bell)        | 24 or 25 (notifications from friend actions)    |
+| 30 (Act on Notification)      | 24 + 31 or 32 (actionable notifications)        |
+| 31 (Invite Friends - Create)  | 25 (has friends)                                |
+| 32 (Invite from Party Room)   | 2 or 3 (active party) + 25 (has friends)        |
+| 33 (Friends' Active Parties)  | 25 (has friends) + friend has visible party     |
+| 34 (Password-Protected Party) | None (standalone)                               |
+| 35 (Party Creation Limit)     | None (standalone, but creates 5 parties)        |
 
-**Suggested execution order:** 1 → 2 → 6 → 9 → 10 → 11 → 12 → 13 → 14 → 15 → 16 → 17 → 18 → 5 → 3 → 4 → 19 → 20 → 21 → 22
+**Suggested execution order:**
+
+_Core flows:_ 1 → 20 → 23 → 2 → 6 → 9 → 10 → 11 → 12 → 13 → 14 → 15 → 16 → 17 → 18 → 5 → 3 → 4 → 19 → 21 → 22
+
+_Social flows (requires 2 users):_ 24 → 25 → 29 → 30 → 27 → 26 → 28
+
+_Invitation flows:_ 31 → 32 → 33
+
+_Abuse prevention:_ 34 → 35
 
 ---
 

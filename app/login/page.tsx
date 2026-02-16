@@ -1,12 +1,37 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { signInWithGoogle, signInWithEmail, resetPassword } from '@/lib/auth'
 import { validateEmail, validatePassword } from '@/lib/validation'
 import { ChevronLeftIcon, LoaderIcon } from '@/components/icons'
 import { TwinklingStars } from '@/components/ui/TwinklingStars'
+
+function SignupLinkInner() {
+  const searchParams = useSearchParams()
+  const redirect = searchParams.get('redirect')
+  const href = redirect ? `/signup?redirect=${encodeURIComponent(redirect)}` : '/signup'
+  return (
+    <Link href={href} className="text-text-muted text-sm hover:text-text-secondary transition-colors">
+      Don&apos;t have an account? <span className="text-accent-400">Sign up</span>
+    </Link>
+  )
+}
+
+function SignupLink() {
+  return (
+    <Suspense
+      fallback={
+        <Link href="/signup" className="text-text-muted text-sm hover:text-text-secondary transition-colors">
+          Don&apos;t have an account? <span className="text-accent-400">Sign up</span>
+        </Link>
+      }
+    >
+      <SignupLinkInner />
+    </Suspense>
+  )
+}
 
 export default function LoginPage() {
   const router = useRouter()
@@ -252,9 +277,7 @@ export default function LoginPage() {
         </div>
 
         <div className="mt-4 text-center animate-fade-in-up delay-500">
-          <Link href="/signup" className="text-text-muted text-sm hover:text-text-secondary transition-colors">
-            Don't have an account? <span className="text-accent-400">Sign up</span>
-          </Link>
+          <SignupLink />
         </div>
       </div>
     </div>

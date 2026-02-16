@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { hashPassword, verifyHash } from '@/lib/passwordHash'
 import { LIMITS } from '@/lib/errorMessages'
 
-export const dynamic = 'force-static'
+export const dynamic = 'force-dynamic'
 
 const MAX_MEMBERS = 20
 
@@ -54,8 +54,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: LIMITS.PARTY_EXPIRED }, { status: 410 })
     }
 
-    // Password verification (server-side)
-    if (party.password_hash) {
+    // Check if this session already has a row (re-join) — skip password and member limit
+    const { data: existingMember } = await supabase
+      .from('party_members')
+      .select('id')
+      .eq('party_id', party.id)
+      .eq('session_id', sessionId)
+      .maybeSingle()
+
+    // Password verification (server-side) — skip for existing members
+    if (party.password_hash && !existingMember) {
       if (!password) {
         // Client needs to show password field
         return NextResponse.json({ success: false, needsPassword: true })
@@ -65,14 +73,6 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: LIMITS.INCORRECT_PASSWORD }, { status: 401 })
       }
     }
-
-    // Check if this session already has a row (re-join) — skip member limit
-    const { data: existingMember } = await supabase
-      .from('party_members')
-      .select('id')
-      .eq('party_id', party.id)
-      .eq('session_id', sessionId)
-      .maybeSingle()
 
     if (!existingMember) {
       // Enforce 20-member limit only for new joins
