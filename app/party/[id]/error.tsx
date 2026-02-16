@@ -2,13 +2,8 @@
 
 import Link from 'next/link'
 
-export default function PartyError({
-  error: _error,
-  reset,
-}: {
-  error: Error & { digest?: string }
-  reset: () => void
-}) {
+export default function PartyError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
+  console.error('PartyError boundary caught:', error)
   return (
     <div className="min-h-screen bg-surface-900 flex items-center justify-center p-6">
       <div className="max-w-md text-center">
