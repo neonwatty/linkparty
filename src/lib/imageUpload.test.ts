@@ -1,5 +1,41 @@
-import { describe, it, expect } from 'vitest'
-import { validateImage } from './imageUpload'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import {
+  validateImage,
+  optimizeImage,
+  uploadImage,
+  deleteImage,
+  createPreviewUrl,
+  revokePreviewUrl,
+} from './imageUpload'
+
+// Mock supabase
+const mockUpload = vi.fn()
+const mockRemove = vi.fn()
+const mockGetPublicUrl = vi.fn()
+
+vi.mock('./supabase', () => ({
+  supabase: {
+    storage: {
+      from: vi.fn(() => ({
+        upload: mockUpload,
+        remove: mockRemove,
+        getPublicUrl: mockGetPublicUrl,
+      })),
+    },
+  },
+}))
+
+// Mock logger
+vi.mock('./logger', () => ({
+  logger: {
+    createLogger: () => ({
+      debug: vi.fn(),
+      error: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+    }),
+  },
+}))
 
 // Helper to create a mock File
 function createMockFile(
@@ -111,5 +147,110 @@ describe('validateImage', () => {
       expect(result.valid).toBe(false)
       expect(result.error).toContain('JPG, PNG, GIF, or WebP')
     })
+  })
+})
+
+// Reset mocks before each test
+beforeEach(() => {
+  vi.clearAllMocks()
+  mockUpload.mockResolvedValue({ error: null })
+  mockRemove.mockResolvedValue({ error: null })
+  mockGetPublicUrl.mockReturnValue({
+    data: { publicUrl: 'https://example.com/storage/image.jpg' },
+  })
+})
+
+describe('optimizeImage', () => {
+  it('skips GIF files to preserve animation', async () => {
+    const file = createMockFile('anim.gif', 'image/gif', 200 * 1024)
+    const result = await optimizeImage(file)
+    expect(result.wasOptimized).toBe(false)
+    expect(result.file).toBe(file)
+    expect(result.originalSize).toBe(file.size)
+    expect(result.optimizedSize).toBe(file.size)
+  })
+
+  it('skips small files under 100KB', async () => {
+    const file = createMockFile('tiny.jpg', 'image/jpeg', 50 * 1024)
+    const result = await optimizeImage(file)
+    expect(result.wasOptimized).toBe(false)
+    expect(result.file).toBe(file)
+    expect(result.originalSize).toBe(file.size)
+    expect(result.optimizedSize).toBe(file.size)
+  })
+})
+
+describe('uploadImage', () => {
+  it('uploads file and returns URL and path', async () => {
+    const file = createMockFile('photo.jpg', 'image/jpeg', 1000)
+    const result = await uploadImage(file, 'party-123')
+
+    expect(mockUpload).toHaveBeenCalledOnce()
+    expect(mockUpload).toHaveBeenCalledWith(expect.stringContaining('party-123/'), file, {
+      contentType: 'image/jpeg',
+      upsert: false,
+    })
+    expect(mockGetPublicUrl).toHaveBeenCalledOnce()
+    expect(result.url).toBe('https://example.com/storage/image.jpg')
+    expect(result.storagePath).toContain('party-123/')
+    expect(result.storagePath).toMatch(/\.jpg$/)
+    expect(result.fileName).toBe('photo.jpg')
+  })
+
+  it('throws when upload fails', async () => {
+    mockUpload.mockResolvedValueOnce({ error: { message: 'Bucket not found' } })
+    const file = createMockFile('photo.jpg', 'image/jpeg', 1000)
+
+    await expect(uploadImage(file, 'party-123')).rejects.toThrow('Upload failed: Bucket not found')
+  })
+})
+
+describe('deleteImage', () => {
+  it('returns true when delete succeeds', async () => {
+    const result = await deleteImage('party-123/image.jpg')
+    expect(result).toBe(true)
+    expect(mockRemove).toHaveBeenCalledWith(['party-123/image.jpg'])
+  })
+
+  it('returns false when delete fails', async () => {
+    mockRemove.mockResolvedValueOnce({ error: { message: 'Not found' } })
+    const result = await deleteImage('party-123/image.jpg')
+    expect(result).toBe(false)
+  })
+
+  it('returns true for empty storagePath', async () => {
+    const result = await deleteImage('')
+    expect(result).toBe(true)
+    expect(mockRemove).not.toHaveBeenCalled()
+  })
+})
+
+describe('createPreviewUrl', () => {
+  it('creates object URL from file', () => {
+    const mockObjectUrl = 'blob:http://localhost/fake-uuid'
+    const originalCreateObjectURL = globalThis.URL.createObjectURL
+    globalThis.URL.createObjectURL = vi.fn(() => mockObjectUrl)
+
+    const file = createMockFile('preview.jpg', 'image/jpeg', 1000)
+    const url = createPreviewUrl(file)
+
+    expect(url).toBe(mockObjectUrl)
+    expect(globalThis.URL.createObjectURL).toHaveBeenCalledWith(file)
+
+    globalThis.URL.createObjectURL = originalCreateObjectURL
+  })
+})
+
+describe('revokePreviewUrl', () => {
+  it('revokes object URL', () => {
+    const originalRevokeObjectURL = globalThis.URL.revokeObjectURL
+    globalThis.URL.revokeObjectURL = vi.fn()
+
+    const url = 'blob:http://localhost/fake-uuid'
+    revokePreviewUrl(url)
+
+    expect(globalThis.URL.revokeObjectURL).toHaveBeenCalledWith(url)
+
+    globalThis.URL.revokeObjectURL = originalRevokeObjectURL
   })
 })
