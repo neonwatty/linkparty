@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import { useParty } from '@/hooks/useParty'
+import { usePartyContext } from '@/contexts/PartyContext'
 import { getQueueItemTitle } from '@/utils/queueHelpers'
 import { getContentTypeBadge } from '@/utils/contentHelpers'
 import { getCurrentParty, getSessionId } from '@/lib/supabase'
@@ -15,7 +15,7 @@ export default function TVModeClient() {
   const partyId = params.id as string
   const partyCode = getCurrentParty()?.partyCode || ''
 
-  const { queue, members, partyInfo, advanceQueue } = useParty(partyId)
+  const { queue, members, partyInfo, advanceQueue } = usePartyContext()
   const [lightboxImage, setLightboxImage] = useState<{ url: string; caption?: string } | null>(null)
 
   const sessionId = getSessionId()

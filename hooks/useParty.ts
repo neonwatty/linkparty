@@ -583,7 +583,8 @@ export function useParty(partyId: string | null) {
       }
 
       const currentSessionId = getSessionId()
-      const maxPos = queue.length > 0 ? Math.max(...queue.map((q) => q.position)) : -1
+      const currentQueue = queueRef.current
+      const maxPos = currentQueue.length > 0 ? Math.max(...currentQueue.map((q) => q.position)) : -1
       const newPosition = maxPos + 1
       const tempId = `temp-${Date.now()}`
 
@@ -683,18 +684,19 @@ export function useParty(partyId: string | null) {
         throw err
       }
     },
-    [partyId, queue, apiRequest],
+    [partyId, apiRequest],
   )
 
   const moveItem = useCallback(
     async (itemId: string, direction: 'up' | 'down', steps: number = 1) => {
       if (!partyId) return
 
-      const itemIndex = queue.findIndex((q) => q.id === itemId)
+      const currentQueue = queueRef.current
+      const itemIndex = currentQueue.findIndex((q) => q.id === itemId)
       if (itemIndex === -1) return
 
       // Get only pending items for reordering
-      const pendingItems = queue.filter((q) => q.status === 'pending')
+      const pendingItems = currentQueue.filter((q) => q.status === 'pending')
       const pendingItemIndex = pendingItems.findIndex((q) => q.id === itemId)
       if (pendingItemIndex === -1) return
 
@@ -888,7 +890,7 @@ export function useParty(partyId: string | null) {
         }
       }
     },
-    [partyId, queue, apiRequest],
+    [partyId, apiRequest],
   )
 
   const deleteItem = useCallback(
@@ -896,7 +898,7 @@ export function useParty(partyId: string | null) {
       if (!partyId) return
 
       // Store item for potential rollback
-      const deletedItem = queue.find((item) => item.id === itemId)
+      const deletedItem = queueRef.current.find((item) => item.id === itemId)
       if (!deletedItem) return
 
       // Optimistic update: remove item immediately
@@ -933,14 +935,15 @@ export function useParty(partyId: string | null) {
         })
       }
     },
-    [partyId, queue, apiRequest],
+    [partyId, apiRequest],
   )
 
   const advanceQueue = useCallback(async () => {
     if (!partyId) return
 
-    const showingItem = queue.find((q) => q.status === 'showing')
-    const firstPending = queue.find((q) => q.status === 'pending')
+    const currentQueue = queueRef.current
+    const showingItem = currentQueue.find((q) => q.status === 'showing')
+    const firstPending = currentQueue.find((q) => q.status === 'pending')
 
     // Optimistic update: apply status changes immediately
     setQueue((prev) =>
@@ -995,17 +998,18 @@ export function useParty(partyId: string | null) {
         return next
       })
     }
-  }, [partyId, queue, apiRequest])
+  }, [partyId, apiRequest])
 
   const showNext = useCallback(
     async (itemId: string) => {
       if (!partyId) return
 
       // Find the showing item's position
-      const showingItem = queue.find((q) => q.status === 'showing')
+      const currentQueue = queueRef.current
+      const showingItem = currentQueue.find((q) => q.status === 'showing')
       if (!showingItem) return
 
-      const item = queue.find((q) => q.id === itemId)
+      const item = currentQueue.find((q) => q.id === itemId)
       if (!item) return
 
       // Set this item's position to be right after the showing item
@@ -1055,7 +1059,7 @@ export function useParty(partyId: string | null) {
         })
       }
     },
-    [partyId, queue, apiRequest],
+    [partyId, apiRequest],
   )
 
   const updateNoteContent = useCallback(
@@ -1064,7 +1068,7 @@ export function useParty(partyId: string | null) {
 
       // Validate ownership - only the note creator can edit
       const currentSessionId = getSessionId()
-      const item = queue.find((q) => q.id === itemId)
+      const item = queueRef.current.find((q) => q.id === itemId)
       if (!item) {
         throw new Error('Note not found')
       }
@@ -1104,14 +1108,14 @@ export function useParty(partyId: string | null) {
         throw new Error(errorData.error || 'Failed to update note')
       }
     },
-    [partyId, queue, apiRequest],
+    [partyId, apiRequest],
   )
 
   const toggleComplete = useCallback(
     async (itemId: string, userId?: string) => {
       if (!partyId) return
 
-      const item = queue.find((q) => q.id === itemId)
+      const item = queueRef.current.find((q) => q.id === itemId)
       if (!item) return
 
       const isCompleted = !item.isCompleted
@@ -1177,7 +1181,7 @@ export function useParty(partyId: string | null) {
         throw new Error(errorData.error || 'Failed to toggle completion')
       }
     },
-    [partyId, queue, apiRequest],
+    [partyId, apiRequest],
   )
 
   const updateDueDate = useCallback(

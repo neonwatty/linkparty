@@ -1,13 +1,13 @@
 'use client'
 
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import type { ContentType, AddContentStep } from '@/types'
 import { getSessionId, getDisplayName, clearCurrentParty, getCurrentParty, supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { getFriendshipStatus, sendFriendRequest, type FriendshipStatus } from '@/lib/friends'
 import { useAuth } from '@/contexts/AuthContext'
-import { useParty } from '@/hooks/useParty'
+import { usePartyContext } from '@/contexts/PartyContext'
 import type { QueueItem } from '@/hooks/useParty'
 import { fetchContentMetadata, type ContentMetadataResponse } from '@/lib/contentMetadata'
 import { detectContentType } from '@/utils/contentHelpers'
@@ -58,7 +58,7 @@ export default function PartyRoomClient() {
     clearConflict,
     pendingItems: memoizedPendingItems,
     showingItem,
-  } = useParty(partyId)
+  } = usePartyContext()
 
   // Modal/sheet visibility states
   const [showAddContent, setShowAddContent] = useState(false)
@@ -101,14 +101,24 @@ export default function PartyRoomClient() {
   // Friendship statuses for party members (for "Add as friend" button)
   const [friendshipStatuses, setFriendshipStatuses] = useState<Record<string, FriendshipStatus>>({})
 
+  // Memoize member user IDs to avoid re-fetching on every members array reference change
+  const memberUserIdsKey = useMemo(
+    () =>
+      members
+        .filter((m) => m.userId && m.userId !== user?.id)
+        .map((m) => m.userId!)
+        .sort()
+        .join(','),
+    [members, user?.id],
+  )
+
   // Fetch friendship statuses for all members with user IDs
   useEffect(() => {
-    if (!user) return
-    const memberUserIds = members.filter((m) => m.userId && m.userId !== user.id).map((m) => m.userId!)
-    if (memberUserIds.length === 0) return
+    if (!user || !memberUserIdsKey) return
+    const ids = memberUserIdsKey.split(',')
 
     let cancelled = false
-    Promise.all(memberUserIds.map((uid) => getFriendshipStatus(uid).then((s) => [uid, s] as const))).then((results) => {
+    Promise.all(ids.map((uid) => getFriendshipStatus(uid).then((s) => [uid, s] as const))).then((results) => {
       if (cancelled) return
       const statuses: Record<string, FriendshipStatus> = {}
       for (const [uid, status] of results) {
@@ -119,7 +129,7 @@ export default function PartyRoomClient() {
     return () => {
       cancelled = true
     }
-  }, [user, members])
+  }, [user, memberUserIdsKey])
 
   const handleAddFriend = useCallback(
     async (userId: string) => {

@@ -1,5 +1,6 @@
 'use client'
 
+import { memo } from 'react'
 import { ChevronLeftIcon, TvIcon, ShareIcon, MailIcon } from '@/components/icons'
 import { ExpirationBadge } from './ExpirationBadge'
 
@@ -13,7 +14,7 @@ interface PartyHeaderProps {
   onInvite: () => void
 }
 
-export function PartyHeader({
+export const PartyHeader = memo(function PartyHeader({
   partyName,
   partyCode,
   expiresAt,
@@ -47,4 +48,4 @@ export function PartyHeader({
       </div>
     </div>
   )
-}
+})
