@@ -10,6 +10,8 @@ import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-
 import { CSS } from '@dnd-kit/utilities'
 import { DragIcon, EditIcon, CheckCircleIcon, ClockIcon, AlertIcon, PlusIcon } from '@/components/icons'
 
+const noop = () => {}
+
 interface QueueListItemProps {
   item: QueueItem
   index: number
@@ -225,8 +227,8 @@ export function QueueList({
               item={activeItem}
               index={0}
               isOwnItem={activeItem.addedBySessionId === currentSessionId}
-              onItemClick={() => {}}
-              onToggleComplete={() => {}}
+              onItemClick={noop}
+              onToggleComplete={noop}
               isOverlay
             />
           ) : null}

@@ -1,37 +1,41 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useMemo } from 'react'
 
 interface TwinklingStarsProps {
   count?: number
 }
 
 export function TwinklingStars({ count = 35 }: TwinklingStarsProps) {
-  const containerRef = useRef<HTMLDivElement>(null)
+  const stars = useMemo(
+    () =>
+      Array.from({ length: count }, (_, i) => ({
+        id: i,
+        left: `${Math.random() * 100}%`,
+        top: `${Math.random() * 100}%`,
+        bright: Math.random() > 0.7,
+        duration: `${2 + Math.random() * 4}s`,
+        delay: `${Math.random() * 5}s`,
+      })),
+    [count],
+  )
 
-  useEffect(() => {
-    const container = containerRef.current
-    if (!container) return
-
-    // Clear any existing stars
-    container.innerHTML = ''
-
-    // Generate stars
-    for (let i = 0; i < count; i++) {
-      const star = document.createElement('div')
-      star.className = `star ${Math.random() > 0.7 ? 'bright' : ''}`
-
-      // Random position
-      star.style.left = `${Math.random() * 100}%`
-      star.style.top = `${Math.random() * 100}%`
-
-      // Random animation timing for natural feel
-      star.style.setProperty('--duration', `${2 + Math.random() * 4}s`)
-      star.style.setProperty('--delay', `${Math.random() * 5}s`)
-
-      container.appendChild(star)
-    }
-  }, [count])
-
-  return <div ref={containerRef} className="stars-container" />
+  return (
+    <div className="stars-container">
+      {stars.map((star) => (
+        <div
+          key={star.id}
+          className={`star ${star.bright ? 'bright' : ''}`}
+          style={
+            {
+              left: star.left,
+              top: star.top,
+              '--duration': star.duration,
+              '--delay': star.delay,
+            } as React.CSSProperties
+          }
+        />
+      ))}
+    </div>
+  )
 }
