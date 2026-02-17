@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
 import { LIMITS } from '@/lib/errorMessages'
-import { validateOrigin } from '@/lib/csrf'
+import {
+  createServiceClient,
+  getCallerIdentity,
+  validateParty,
+  validateMembership,
+  parseAndValidateRequest,
+} from '@/lib/apiHelpers'
 
 export const dynamic = 'force-dynamic'
 
@@ -164,17 +169,10 @@ function validateRequest(body: QueueItemRequest): string | null {
 
 export async function POST(request: NextRequest) {
   try {
-    if (!validateOrigin(request)) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    }
-
-    const body: QueueItemRequest = await request.json()
-
-    // Validate request
-    const validationError = validateRequest(body)
-    if (validationError) {
-      return NextResponse.json({ error: validationError }, { status: 400 })
-    }
+    // CSRF + body parsing + validation
+    const parsed = await parseAndValidateRequest<QueueItemRequest>(request, validateRequest)
+    if (parsed.error) return parsed.error
+    const body = parsed.body
 
     // Check rate limit
     const { isLimited, retryAfterMs } = checkRateLimit(body.sessionId)
@@ -194,48 +192,18 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Get Supabase client with service role key for server-side operations
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-
-    if (!supabaseUrl || !supabaseServiceKey) {
-      console.error('FATAL: Supabase service role key not configured')
-      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseServiceKey)
+    // Service client
+    const { supabase, error: clientError } = createServiceClient()
+    if (clientError) return clientError
 
     // Verify party exists and is not expired
-    const { data: party, error: partyError } = await supabase
-      .from('parties')
-      .select('id, expires_at')
-      .eq('id', body.partyId)
-      .single()
+    const { error: partyError } = await validateParty(supabase, body.partyId)
+    if (partyError) return partyError
 
-    if (partyError || !party) {
-      return NextResponse.json({ error: 'Party not found' }, { status: 404 })
-    }
-
-    if (new Date(party.expires_at) < new Date()) {
-      return NextResponse.json({ error: 'This party has expired' }, { status: 410 })
-    }
-
-    // S7: Verify the requesting user is a member of this party
-    const { data: member, error: memberError } = await supabase
-      .from('party_members')
-      .select('id')
-      .eq('party_id', body.partyId)
-      .eq('session_id', body.sessionId)
-      .maybeSingle()
-
-    if (memberError) {
-      console.error('Failed to verify party membership:', memberError)
-      return NextResponse.json({ error: 'Failed to verify membership' }, { status: 500 })
-    }
-
-    if (!member) {
-      return NextResponse.json({ error: 'You must be a member of this party to add items' }, { status: 403 })
-    }
+    // Verify membership
+    const identity = await getCallerIdentity(request, supabase, body.sessionId)
+    const { error: memberError } = await validateMembership(supabase, body.partyId, identity)
+    if (memberError) return memberError
 
     // Check queue size limit
     const { count, error: countError } = await supabase

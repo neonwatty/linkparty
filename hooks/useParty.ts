@@ -211,6 +211,24 @@ export function useParty(partyId: string | null) {
     setLastConflict(null)
   }, [])
 
+  // Helper to make authenticated API requests
+  const apiRequest = useCallback(async (url: string, options: RequestInit) => {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    }
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`
+      }
+    } catch {
+      /* anonymous user */
+    }
+    return fetch(url, { ...options, headers: { ...headers, ...options.headers } })
+  }, [])
+
   // Fetch initial data (skip in mock mode)
   const fetchData = useCallback(async () => {
     if (IS_MOCK_MODE) {
@@ -620,87 +638,21 @@ export function useParty(partyId: string | null) {
           dueDate: item.dueDate,
         }
 
-        // Try the server-side API first for rate limiting enforcement
-        let useDirectSupabase = false
-        try {
-          const apiResponse = await fetch('/api/queue/items', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(apiRequestBody),
-          })
+        const apiResponse = await apiRequest('/api/queue/items', {
+          method: 'POST',
+          body: JSON.stringify(apiRequestBody),
+        })
 
-          if (apiResponse.status === 429) {
-            // Server-side rate limit exceeded
-            const errorData = await apiResponse.json()
-            setQueue((prev) => prev.filter((q) => q.id !== tempId))
-            throw new Error(errorData.error || 'Rate limit exceeded. Please wait before adding more items.')
-          }
-
-          if (!apiResponse.ok) {
-            const errorData = await apiResponse.json()
-            // For 4xx errors (except 429), throw the error
-            if (apiResponse.status >= 400 && apiResponse.status < 500) {
-              setQueue((prev) => prev.filter((q) => q.id !== tempId))
-              throw new Error(errorData.error || 'Failed to add item to queue')
-            }
-            // For 5xx errors, fall back to direct Supabase
-            log.warn('API error, falling back to direct Supabase', errorData)
-            useDirectSupabase = true
-          } else {
-            const responseData = await apiResponse.json()
-            // If API skipped server-side validation, use direct Supabase
-            if (responseData.skipped) {
-              useDirectSupabase = true
-            }
-          }
-        } catch (fetchError) {
-          // Network error or API unavailable, fall back to direct Supabase
-          if (fetchError instanceof Error && fetchError.message.includes('Rate limit')) {
-            throw fetchError
-          }
-          log.warn('API unavailable, falling back to direct Supabase', { error: String(fetchError) })
-          useDirectSupabase = true
+        if (apiResponse.status === 429) {
+          const errorData = await apiResponse.json()
+          setQueue((prev) => prev.filter((q) => q.id !== tempId))
+          throw new Error(errorData.error || 'Rate limit exceeded. Please wait before adding more items.')
         }
 
-        // Fall back to direct Supabase if needed
-        if (useDirectSupabase) {
-          const dbItem: Partial<DbQueueItem> = {
-            party_id: partyId,
-            type: item.type,
-            status: item.status,
-            position: newPosition,
-            added_by_name: item.addedBy,
-            added_by_session_id: currentSessionId,
-            title: item.title ?? null,
-            channel: item.channel ?? null,
-            duration: item.duration ?? null,
-            thumbnail: item.thumbnail ?? null,
-            tweet_author: item.tweetAuthor ?? null,
-            tweet_handle: item.tweetHandle ?? null,
-            tweet_content: item.tweetContent ?? null,
-            tweet_timestamp: item.tweetTimestamp ?? null,
-            subreddit: item.subreddit ?? null,
-            reddit_title: item.redditTitle ?? null,
-            reddit_body: item.redditBody ?? null,
-            upvotes: item.upvotes ?? null,
-            comment_count: item.commentCount ?? null,
-            note_content: item.noteContent ?? null,
-            image_name: item.imageName ?? null,
-            image_url: item.imageUrl ?? null,
-            image_storage_path: item.imageStoragePath ?? null,
-            image_caption: item.imageCaption ?? null,
-            due_date: item.dueDate ?? null,
-            is_completed: false,
-          }
-
-          const { error } = await supabase.from('queue_items').insert(dbItem)
-
-          if (error) {
-            // Rollback: remove optimistic item
-            setQueue((prev) => prev.filter((q) => q.id !== tempId))
-            log.error('Failed to add to queue', error)
-            throw error
-          }
+        if (!apiResponse.ok) {
+          const errorData = await apiResponse.json()
+          setQueue((prev) => prev.filter((q) => q.id !== tempId))
+          throw new Error(errorData.error || 'Failed to add item to queue')
         }
 
         // Clear syncing state (real-time subscription will update with real ID)
@@ -731,7 +683,7 @@ export function useParty(partyId: string | null) {
         throw err
       }
     },
-    [partyId, queue],
+    [partyId, queue, apiRequest],
   )
 
   const moveItem = useCallback(
@@ -812,13 +764,20 @@ export function useParty(partyId: string | null) {
         }
 
         try {
-          // Swap positions on server
-          const { error: error1 } = await supabase
-            .from('queue_items')
-            .update({ position: originalTargetPos })
-            .eq('id', item.id)
+          // Swap positions on server via API
+          const response = await apiRequest('/api/queue/items/reorder', {
+            method: 'POST',
+            body: JSON.stringify({
+              partyId,
+              sessionId: getSessionId(),
+              updates: [
+                { id: item.id, position: originalTargetPos },
+                { id: targetItem.id, position: originalItemPos },
+              ],
+            }),
+          })
 
-          if (error1) {
+          if (!response.ok) {
             // Rollback on error
             setQueue((prev) => {
               const newQueue = [...prev]
@@ -830,17 +789,8 @@ export function useParty(partyId: string | null) {
               }
               return newQueue.sort((a, b) => a.position - b.position)
             })
-            log.error('Failed to move item', error1)
+            log.error('Failed to move item', await response.json())
             return
-          }
-
-          const { error: error2 } = await supabase
-            .from('queue_items')
-            .update({ position: originalItemPos })
-            .eq('id', targetItem.id)
-
-          if (error2) {
-            log.error('Failed to move target item', error2)
           }
         } finally {
           // Clear pending changes and syncing state
@@ -915,16 +865,18 @@ export function useParty(partyId: string | null) {
         }
 
         try {
-          // Update all positions on server
-          for (const update of positionUpdates) {
-            const { error } = await supabase
-              .from('queue_items')
-              .update({ position: update.newPosition })
-              .eq('id', update.id)
+          // Update all positions on server via API
+          const response = await apiRequest('/api/queue/items/reorder', {
+            method: 'POST',
+            body: JSON.stringify({
+              partyId,
+              sessionId: getSessionId(),
+              updates: positionUpdates.map((u) => ({ id: u.id, position: u.newPosition })),
+            }),
+          })
 
-            if (error) {
-              log.error('Failed to update position for item', { itemId: update.id, error: error.message })
-            }
+          if (!response.ok) {
+            log.error('Failed to reorder items', await response.json())
           }
         } finally {
           syncingIds.forEach((id) => pendingChanges.clearChanges(id))
@@ -936,7 +888,7 @@ export function useParty(partyId: string | null) {
         }
       }
     },
-    [partyId, queue],
+    [partyId, queue, apiRequest],
   )
 
   const deleteItem = useCallback(
@@ -961,13 +913,17 @@ export function useParty(partyId: string | null) {
       }
 
       try {
-        const { error } = await supabase.from('queue_items').delete().eq('id', itemId)
+        const response = await apiRequest(`/api/queue/items/${itemId}`, {
+          method: 'DELETE',
+          body: JSON.stringify({ partyId, sessionId: getSessionId() }),
+        })
 
-        if (error) {
+        if (!response.ok) {
           // Rollback: restore deleted item
           setQueue((prev) => [...prev, deletedItem].sort((a, b) => a.position - b.position))
-          log.error('Failed to delete item', error)
-          throw error
+          const errorData = await response.json()
+          log.error('Failed to delete item', errorData)
+          throw new Error(errorData.error || 'Failed to delete item')
         }
       } finally {
         setSyncingItemIds((prev) => {
@@ -977,7 +933,7 @@ export function useParty(partyId: string | null) {
         })
       }
     },
-    [partyId, queue],
+    [partyId, queue, apiRequest],
   )
 
   const advanceQueue = useCallback(async () => {
@@ -1018,12 +974,19 @@ export function useParty(partyId: string | null) {
     }
 
     try {
-      // Update server state
-      if (showingItem) {
-        await supabase.from('queue_items').update({ status: 'shown' }).eq('id', showingItem.id)
-      }
-      if (firstPending) {
-        await supabase.from('queue_items').update({ status: 'showing' }).eq('id', firstPending.id)
+      // Update server state via API
+      const response = await apiRequest('/api/queue/items/advance', {
+        method: 'POST',
+        body: JSON.stringify({
+          partyId,
+          sessionId: getSessionId(),
+          showingItemId: showingItem?.id,
+          firstPendingItemId: firstPending?.id,
+        }),
+      })
+
+      if (!response.ok) {
+        log.error('Failed to advance queue', await response.json())
       }
     } finally {
       setSyncingItemIds((prev) => {
@@ -1032,7 +995,7 @@ export function useParty(partyId: string | null) {
         return next
       })
     }
-  }, [partyId, queue])
+  }, [partyId, queue, apiRequest])
 
   const showNext = useCallback(
     async (itemId: string) => {
@@ -1066,15 +1029,23 @@ export function useParty(partyId: string | null) {
       }
 
       try {
-        const { error } = await supabase.from('queue_items').update({ position: newPosition }).eq('id', itemId)
+        const response = await apiRequest(`/api/queue/items/${itemId}`, {
+          method: 'PATCH',
+          body: JSON.stringify({
+            partyId,
+            sessionId: getSessionId(),
+            action: 'updatePosition',
+            position: newPosition,
+          }),
+        })
 
-        if (error) {
+        if (!response.ok) {
           // Rollback on error
           setQueue((prev) => {
             const newQueue = prev.map((q) => (q.id === itemId ? { ...q, position: originalPosition } : q))
             return newQueue.sort((a, b) => a.position - b.position)
           })
-          log.error('Failed to move item to next', error)
+          log.error('Failed to move item to next', await response.json())
         }
       } finally {
         setSyncingItemIds((prev) => {
@@ -1084,7 +1055,7 @@ export function useParty(partyId: string | null) {
         })
       }
     },
-    [partyId, queue],
+    [partyId, queue, apiRequest],
   )
 
   const updateNoteContent = useCallback(
@@ -1116,15 +1087,24 @@ export function useParty(partyId: string | null) {
         return
       }
 
-      const { error } = await supabase.from('queue_items').update({ note_content: content }).eq('id', itemId)
+      const response = await apiRequest(`/api/queue/items/${itemId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          partyId,
+          sessionId: getSessionId(),
+          action: 'updateNote',
+          noteContent: content,
+        }),
+      })
 
-      if (error) {
-        log.error('Failed to update note', error)
+      if (!response.ok) {
+        const errorData = await response.json()
+        log.error('Failed to update note', errorData)
         pendingChanges.clearChanges(itemId)
-        throw error
+        throw new Error(errorData.error || 'Failed to update note')
       }
     },
-    [partyId, queue],
+    [partyId, queue, apiRequest],
   )
 
   const toggleComplete = useCallback(
@@ -1165,16 +1145,21 @@ export function useParty(partyId: string | null) {
         return
       }
 
-      const updates: Record<string, unknown> = {
-        is_completed: isCompleted,
-        completed_at: isCompleted ? completedAt : null,
-        completed_by_user_id: isCompleted ? (userId ?? null) : null,
-      }
+      const response = await apiRequest(`/api/queue/items/${itemId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          partyId,
+          sessionId: getSessionId(),
+          action: 'toggleComplete',
+          isCompleted,
+          completedAt: isCompleted ? completedAt : null,
+          completedByUserId: isCompleted ? (userId ?? null) : null,
+        }),
+      })
 
-      const { error } = await supabase.from('queue_items').update(updates).eq('id', itemId)
-
-      if (error) {
-        log.error('Failed to toggle completion', error)
+      if (!response.ok) {
+        const errorData = await response.json()
+        log.error('Failed to toggle completion', errorData)
         pendingChanges.clearChanges(itemId)
         // Revert optimistic update on error
         setQueue((prev) =>
@@ -1189,42 +1174,51 @@ export function useParty(partyId: string | null) {
               : q,
           ),
         )
-        throw error
+        throw new Error(errorData.error || 'Failed to toggle completion')
       }
     },
-    [partyId, queue],
+    [partyId, queue, apiRequest],
   )
 
   const updateDueDate = useCallback(
     async (itemId: string, dueDate: string | null) => {
       if (!partyId) return
 
-      const { error } = await supabase.from('queue_items').update({ due_date: dueDate }).eq('id', itemId)
+      const response = await apiRequest(`/api/queue/items/${itemId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          partyId,
+          sessionId: getSessionId(),
+          action: 'updateDueDate',
+          dueDate,
+        }),
+      })
 
-      if (error) {
-        log.error('Failed to update due date', error)
-        throw error
+      if (!response.ok) {
+        const errorData = await response.json()
+        log.error('Failed to update due date', errorData)
+        throw new Error(errorData.error || 'Failed to update due date')
       }
     },
-    [partyId],
+    [partyId, apiRequest],
   )
 
   const leaveParty = useCallback(async () => {
     if (!partyId || IS_MOCK_MODE) return
     const currentSessionId = getSessionId()
     try {
-      const { error } = await supabase
-        .from('party_members')
-        .delete()
-        .eq('party_id', partyId)
-        .eq('session_id', currentSessionId)
-      if (error) {
-        log.error('Failed to delete member on leave', { error: error.message, code: error.code })
+      const response = await apiRequest('/api/party-members/leave', {
+        method: 'POST',
+        body: JSON.stringify({ partyId, sessionId: currentSessionId }),
+      })
+      if (!response.ok) {
+        const errorData = await response.json()
+        log.error('Failed to delete member on leave', errorData)
       }
     } catch (err) {
       log.error('Failed to delete member on leave', err)
     }
-  }, [partyId])
+  }, [partyId, apiRequest])
 
   // Helper to check if a specific item is syncing
   const isSyncing = useCallback((itemId: string) => syncingItemIds.has(itemId), [syncingItemIds])
