@@ -204,7 +204,7 @@ test.describe('Limit: 20 images per party', () => {
 
     const noteRes = await fetch(`${baseURL}/api/queue/items/`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', origin: 'http://localhost:3000' },
       body: JSON.stringify({
         partyId,
         sessionId: `img-note-${runId}`,
