@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useEffect } from 'react'
+import { memo, useRef, useEffect } from 'react'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
 import type { ContentType, AddContentStep } from '@/types'
 import type { ContentMetadataResponse } from '@/lib/contentMetadata'
@@ -47,7 +47,7 @@ interface AddContentModalProps {
   onResetToInput: () => void
 }
 
-export function AddContentModal({
+export const AddContentModal = memo(function AddContentModal({
   isOpen,
   step,
   contentUrl,
@@ -457,4 +457,4 @@ export function AddContentModal({
       </div>
     </div>
   )
-}
+})

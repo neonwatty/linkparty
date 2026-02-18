@@ -130,11 +130,13 @@ export const NowShowingSection = memo(function NowShowingSection({
         <div className="mb-4">
           <div className="relative rounded-xl overflow-hidden cursor-pointer" onClick={handleImageClick}>
             {currentItem.imageUrl ? (
-              <img
-                src={currentItem.imageUrl}
-                alt={currentItem.imageCaption || currentItem.imageName || 'Shared image'}
-                className="w-full max-h-[50vh] object-contain bg-surface-800 rounded-xl"
-              />
+              <div className="w-full aspect-video bg-surface-800 rounded-xl flex items-center justify-center">
+                <img
+                  src={currentItem.imageUrl}
+                  alt={currentItem.imageCaption || currentItem.imageName || 'Shared image'}
+                  className="w-full max-h-[50vh] object-contain"
+                />
+              </div>
             ) : (
               <div className="w-full aspect-video bg-surface-800 rounded-xl flex items-center justify-center">
                 <div className="text-purple-400">

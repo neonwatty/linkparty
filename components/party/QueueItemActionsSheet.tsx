@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { memo, useEffect, useRef } from 'react'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
 import type { QueueItem } from '@/hooks/useParty'
 import { getContentTypeBadge } from '@/utils/contentHelpers'
@@ -28,7 +28,7 @@ interface QueueItemActionsSheetProps {
   onEditNote: (item: QueueItem) => void
 }
 
-export function QueueItemActionsSheet({
+export const QueueItemActionsSheet = memo(function QueueItemActionsSheet({
   item,
   isOwnItem,
   onClose,
@@ -215,4 +215,4 @@ export function QueueItemActionsSheet({
       </div>
     </div>
   )
-}
+})
