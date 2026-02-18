@@ -32,7 +32,7 @@ async function apiCreateParty(
 ) {
   const res = await fetch(`${baseURL}/api/parties/create/`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', origin: 'http://localhost:3000' },
     body: JSON.stringify({ sessionId, displayName, avatar: '🎉', ...options }),
   })
   return { status: res.status, body: await res.json() }
@@ -47,7 +47,7 @@ async function apiJoinParty(
 ) {
   const res = await fetch(`${baseURL}/api/parties/join/`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', origin: 'http://localhost:3000' },
     body: JSON.stringify({ code, sessionId, displayName, avatar: '🎉', ...options }),
   })
   return { status: res.status, body: await res.json() }
@@ -56,7 +56,7 @@ async function apiJoinParty(
 async function apiAddImage(baseURL: string, partyId: string, sessionId: string, index: number) {
   const res = await fetch(`${baseURL}/api/queue/items/`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', origin: 'http://localhost:3000' },
     body: JSON.stringify({
       partyId,
       sessionId,
