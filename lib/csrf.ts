@@ -5,7 +5,8 @@ const ALLOWED_ORIGINS = ['https://linkparty.app', 'http://localhost:3000', 'http
 export function validateOrigin(request: NextRequest): boolean {
   const origin = request.headers.get('origin')
   const referer = request.headers.get('referer')
-  if (!origin && !referer) return true
+  // Reject requests with no origin AND no referer — prevents CSRF via non-browser tools
+  if (!origin && !referer) return false
   if (origin && ALLOWED_ORIGINS.some((allowed) => origin.startsWith(allowed))) return true
   if (referer && ALLOWED_ORIGINS.some((allowed) => referer.startsWith(allowed))) return true
   return false

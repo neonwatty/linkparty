@@ -60,7 +60,7 @@ describe('Push Subscribe API', () => {
   })
 
   const createRequest = (body: object, method = 'POST', includeAuth = true) => {
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+    const headers: Record<string, string> = { 'Content-Type': 'application/json', origin: 'http://localhost:3000' }
     if (includeAuth) {
       headers['Authorization'] = 'Bearer test-token-123'
     }
@@ -137,7 +137,11 @@ describe('Push Subscribe API', () => {
         const request = new NextRequest('http://localhost:3000/api/push/subscribe', {
           method: 'POST',
           body: JSON.stringify(validPostBody),
-          headers: { 'Content-Type': 'application/json', Authorization: 'Basic bad-format' },
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: 'Basic bad-format',
+            origin: 'http://localhost:3000',
+          },
         })
         const response = await POST(request)
         expect(response.status).toBe(401)

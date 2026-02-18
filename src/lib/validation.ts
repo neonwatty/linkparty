@@ -26,6 +26,10 @@ export function validatePassword(password: string): ValidationResult {
     return { isValid: false, error: 'Password must be at least 8 characters' }
   }
 
+  if (password.length > 128) {
+    return { isValid: false, error: 'Password must be 128 characters or less' }
+  }
+
   return { isValid: true }
 }
 

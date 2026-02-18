@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import webpush from 'web-push'
+import { validateOrigin } from '@/lib/csrf'
 
 export const dynamic = 'force-dynamic'
 
@@ -39,6 +40,10 @@ function checkPushSendRateLimit(key: string): { isLimited: boolean; retryAfterMs
 
 export async function POST(request: NextRequest) {
   try {
+    if (!validateOrigin(request)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
     const { partyId, title, body, url, excludeSessionId } = await request.json()
 
     if (!partyId) {

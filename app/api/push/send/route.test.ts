@@ -86,7 +86,7 @@ import webpush from 'web-push'
 const originalEnv = process.env
 
 const createRequest = (body: object, includeAuth = true) => {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  const headers: Record<string, string> = { 'Content-Type': 'application/json', origin: 'http://localhost:3000' }
   if (includeAuth) headers['Authorization'] = 'Bearer test-token'
   return new NextRequest('http://localhost:3000/api/push/send', {
     method: 'POST',
@@ -338,7 +338,11 @@ describe('Push Send API', () => {
       const badRequest = new NextRequest('http://localhost:3000/api/push/send', {
         method: 'POST',
         body: 'not-json',
-        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer test-token' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer test-token',
+          origin: 'http://localhost:3000',
+        },
       })
       const response = await POST(badRequest)
       expect(response.status).toBe(500)

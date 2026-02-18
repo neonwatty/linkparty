@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { sendPartyInvitation } from '@/lib/email'
+import { validateOrigin } from '@/lib/csrf'
 
 export const dynamic = 'force-dynamic'
 
@@ -41,6 +42,10 @@ function isValidEmail(email: string): boolean {
 
 export async function POST(request: NextRequest) {
   try {
+    if (!validateOrigin(request)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
     const body: InviteRequest = await request.json()
     const { email, partyCode, partyName, inviterName, personalMessage } = body
 

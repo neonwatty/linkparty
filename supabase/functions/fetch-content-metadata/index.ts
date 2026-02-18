@@ -225,23 +225,64 @@ async function fetchRedditMetadata(url: string): Promise<MetadataResult> {
   }
 }
 
+// Allowed CORS origins
+const CORS_ORIGINS = ['https://linkparty.app', 'http://localhost:3000', 'http://localhost:5173']
+
+function getCorsOrigin(req: Request): string {
+  const origin = req.headers.get('origin') || ''
+  return CORS_ORIGINS.includes(origin) ? origin : CORS_ORIGINS[0]
+}
+
+function corsHeaders(req: Request): Record<string, string> {
+  return {
+    'Access-Control-Allow-Origin': getCorsOrigin(req),
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  }
+}
+
+// Verify Authorization header contains a valid project key.
+// The client passes the anon key; server routes pass the service role key.
+// Both are automatically available as env vars in Supabase edge functions.
+function verifyAuth(req: Request): boolean {
+  const authHeader = req.headers.get('authorization')
+  if (!authHeader?.startsWith('Bearer ')) return false
+
+  const token = authHeader.replace('Bearer ', '')
+  if (!token) return false
+
+  // Accept the project's anon key (used by the browser client)
+  const anonKey = Deno.env.get('SUPABASE_ANON_KEY')
+  if (anonKey && token === anonKey) return true
+
+  // Accept the service role key (used by server-side API routes)
+  const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+  if (serviceKey && token === serviceKey) return true
+
+  // Reject unknown tokens
+  return false
+}
+
 // Main handler
 serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-      },
-    })
+    return new Response(null, { headers: corsHeaders(req) })
   }
 
   if (req.method !== 'POST') {
     return new Response(JSON.stringify({ success: false, error: 'Method not allowed' }), {
       status: 405,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...corsHeaders(req) },
+    })
+  }
+
+  // Verify JWT authentication
+  const isAuthenticated = await verifyAuth(req)
+  if (!isAuthenticated) {
+    return new Response(JSON.stringify({ success: false, error: 'Unauthorized' }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json', ...corsHeaders(req) },
     })
   }
 
@@ -253,7 +294,7 @@ serve(async (req) => {
         status: 400,
         headers: {
           'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Origin': getCorsOrigin(req),
         },
       })
     }
@@ -267,7 +308,7 @@ serve(async (req) => {
         status: 400,
         headers: {
           'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Origin': getCorsOrigin(req),
         },
       })
     }
@@ -277,7 +318,7 @@ serve(async (req) => {
         status: 400,
         headers: {
           'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Origin': getCorsOrigin(req),
         },
       })
     }
@@ -291,7 +332,7 @@ serve(async (req) => {
         status: 400,
         headers: {
           'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Origin': getCorsOrigin(req),
         },
       })
     }
@@ -303,7 +344,7 @@ serve(async (req) => {
         status: 400,
         headers: {
           'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Origin': getCorsOrigin(req),
         },
       })
     }

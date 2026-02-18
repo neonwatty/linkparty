@@ -66,7 +66,7 @@ export default function LoginPage() {
       // Preserve redirect target through OAuth flow
       const params = new URLSearchParams(window.location.search)
       const redirect = params.get('redirect')
-      if (redirect) {
+      if (redirect && redirect.startsWith('/') && !redirect.startsWith('//')) {
         sessionStorage.setItem('auth-redirect', redirect)
       }
       await signInWithGoogle()

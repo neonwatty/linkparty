@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { FRIENDS } from '@/lib/errorMessages'
+import { validateOrigin } from '@/lib/csrf'
 
 export const dynamic = 'force-dynamic'
 
@@ -10,6 +11,10 @@ const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12
 
 export async function DELETE(request: NextRequest, context: RouteContext) {
   try {
+    if (!validateOrigin(request)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
     const { id } = await context.params
 
     // Validate friendship id format
