@@ -187,11 +187,11 @@ export default function PartyRoomClient() {
   })
 
   // File selection handler
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
 
-    const validation = validateImage(file)
+    const validation = await validateImage(file)
     if (!validation.valid) {
       setImageValidationError(validation.error || 'Invalid file')
       return

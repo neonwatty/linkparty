@@ -16,9 +16,22 @@ if (IS_MOCK_MODE) {
   )
 }
 
+// Build session headers for RLS policies that check x-session-id
+const sessionHeaders: Record<string, string> = {}
+if (typeof window !== 'undefined') {
+  const storageKey = 'link-party-session-id'
+  let sid = localStorage.getItem(storageKey)
+  if (!sid) {
+    sid = crypto.randomUUID()
+    localStorage.setItem(storageKey, sid)
+  }
+  sessionHeaders['x-session-id'] = sid
+}
+
 export const supabase = createClient(
   supabaseUrl || 'https://placeholder.supabase.co',
   supabaseAnonKey || 'placeholder-key',
+  { global: { headers: sessionHeaders } },
 )
 
 // Migrate localStorage keys from old brand to new brand

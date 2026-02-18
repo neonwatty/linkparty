@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { hashPassword, verifyHash } from '@/lib/passwordHash'
+import { verifyPassword } from '@/lib/passwordHash'
 import { LIMITS } from '@/lib/errorMessages'
 import { validateOrigin } from '@/lib/csrf'
 
@@ -129,8 +129,8 @@ export async function POST(request: NextRequest) {
         // Client needs to show password field
         return NextResponse.json({ success: false, needsPassword: true })
       }
-      const inputHash = await hashPassword(password)
-      if (!verifyHash(inputHash, party.password_hash)) {
+      const passwordValid = await verifyPassword(password, party.password_hash)
+      if (!passwordValid) {
         return NextResponse.json({ error: LIMITS.INCORRECT_PASSWORD }, { status: 401 })
       }
     }

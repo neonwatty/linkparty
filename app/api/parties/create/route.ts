@@ -79,7 +79,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: LIMITS.MAX_PARTIES }, { status: 409 })
     }
 
-    // Hash password if provided
+    // Validate and hash password if provided
+    if (password && (typeof password !== 'string' || password.length > 128)) {
+      return NextResponse.json({ error: 'Password must be 128 characters or less' }, { status: 400 })
+    }
     const passwordHash = password ? await hashPassword(password) : null
 
     // Generate party code server-side

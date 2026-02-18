@@ -12,7 +12,7 @@ function mockRequest(headers: Record<string, string>): NextRequest {
 
 describe('validateOrigin', () => {
   it('allows requests with no origin or referer', () => {
-    expect(validateOrigin(mockRequest({}))).toBe(true)
+    expect(validateOrigin(mockRequest({}))).toBe(false)
   })
 
   it('allows requests from https://linkparty.app', () => {

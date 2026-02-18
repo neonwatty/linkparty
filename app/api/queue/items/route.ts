@@ -155,6 +155,33 @@ function validateRequest(body: QueueItemRequest): string | null {
     return 'Missing or invalid addedByName'
   }
 
+  // Server-side text length limits (prevents oversized payloads)
+  const TEXT_LIMITS: Record<string, number> = {
+    addedByName: 100,
+    title: 500,
+    channel: 200,
+    duration: 20,
+    tweetAuthor: 200,
+    tweetHandle: 100,
+    tweetContent: 2000,
+    tweetTimestamp: 100,
+    subreddit: 100,
+    redditTitle: 500,
+    redditBody: 5000,
+    noteContent: 5000,
+    imageCaption: 500,
+    imageName: 255,
+    imageUrl: 2048,
+    imageStoragePath: 500,
+  }
+
+  for (const [field, maxLen] of Object.entries(TEXT_LIMITS)) {
+    const value = body[field as keyof QueueItemRequest]
+    if (typeof value === 'string' && value.length > maxLen) {
+      return `${field} exceeds maximum length of ${maxLen} characters`
+    }
+  }
+
   // Type-specific validation
   if (body.type === 'note' && !body.noteContent?.trim()) {
     return 'Note content is required for note type'

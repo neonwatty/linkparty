@@ -55,7 +55,7 @@ describe('Queue Items API Route', () => {
     return new NextRequest('http://localhost:3000/api/queue/items', {
       method: 'POST',
       body: JSON.stringify(body),
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', origin: 'http://localhost:3000' },
     })
   }
 

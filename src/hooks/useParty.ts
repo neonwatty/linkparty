@@ -220,7 +220,7 @@ export function useParty(partyId: string | null) {
       // Fetch party info
       const { data: partyData, error: partyError } = await supabase
         .from('parties')
-        .select('*')
+        .select('id, code, name, host_session_id, created_at, expires_at, visible_to_friends, has_password')
         .eq('id', partyId)
         .single()
 
@@ -292,7 +292,7 @@ export function useParty(partyId: string | null) {
       try {
         const { data: partyData, error: partyError } = await supabase
           .from('parties')
-          .select('*')
+          .select('id, code, name, host_session_id, created_at, expires_at, visible_to_friends, has_password')
           .eq('id', partyId)
           .single()
 

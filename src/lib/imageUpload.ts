@@ -5,7 +5,19 @@ const log = logger.createLogger('ImageUpload')
 
 // Allowed image types and max file size
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp']
 const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
+
+// Magic byte signatures for image formats
+const MAGIC_BYTES: Record<string, number[][]> = {
+  'image/jpeg': [[0xff, 0xd8, 0xff]],
+  'image/png': [[0x89, 0x50, 0x4e, 0x47]],
+  'image/gif': [
+    [0x47, 0x49, 0x46, 0x38, 0x37, 0x61], // GIF87a
+    [0x47, 0x49, 0x46, 0x38, 0x39, 0x61], // GIF89a
+  ],
+  'image/webp': [[0x52, 0x49, 0x46, 0x46]], // RIFF (WebP starts with RIFF....WEBP)
+}
 
 // Image optimization settings
 const MAX_WIDTH = 1920
@@ -191,12 +203,34 @@ function formatBytes(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
-// Validate image file type and size
-export function validateImage(file: File): ImageValidationResult {
+/**
+ * Verify file content matches expected MIME type via magic bytes.
+ */
+async function verifyMagicBytes(file: File): Promise<boolean> {
+  const signatures = MAGIC_BYTES[file.type]
+  if (!signatures) return false
+
+  const maxLen = Math.max(...signatures.map((s) => s.length))
+  const buffer = await file.slice(0, maxLen).arrayBuffer()
+  const bytes = new Uint8Array(buffer)
+
+  return signatures.some((sig) => sig.every((b, i) => bytes[i] === b))
+}
+
+// Validate image file type, extension, magic bytes, and size
+export async function validateImage(file: File): Promise<ImageValidationResult> {
   if (!ALLOWED_TYPES.includes(file.type)) {
     return {
       valid: false,
       error: 'Please select a JPG, PNG, GIF, or WebP image',
+    }
+  }
+
+  const ext = file.name.split('.').pop()?.toLowerCase()
+  if (!ext || !ALLOWED_EXTENSIONS.includes(ext)) {
+    return {
+      valid: false,
+      error: 'File extension must be .jpg, .jpeg, .png, .gif, or .webp',
     }
   }
 
@@ -205,6 +239,14 @@ export function validateImage(file: File): ImageValidationResult {
     return {
       valid: false,
       error: `File is too large (${sizeMB}MB). Maximum size is 5MB`,
+    }
+  }
+
+  const validMagic = await verifyMagicBytes(file)
+  if (!validMagic) {
+    return {
+      valid: false,
+      error: 'File content does not match its type. Please select a valid image.',
     }
   }
 

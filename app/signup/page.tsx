@@ -30,7 +30,7 @@ function SignupForm() {
 
   // Store redirect in sessionStorage so auth callback can use it after email confirmation
   useEffect(() => {
-    if (redirectParam) {
+    if (redirectParam && redirectParam.startsWith('/') && !redirectParam.startsWith('//')) {
       sessionStorage.setItem('auth-redirect', redirectParam)
     }
   }, [redirectParam])

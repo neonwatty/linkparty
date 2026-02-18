@@ -41,7 +41,7 @@ export default function HistoryPage() {
             `
             party_id,
             joined_at,
-            parties (id, code, name, created_at, password_hash)
+            parties (id, code, name, created_at, has_password)
           `,
           )
           .eq('session_id', sessionId)
@@ -93,7 +93,7 @@ export default function HistoryPage() {
               code: string
               name: string | null
               created_at: string
-              password_hash: string | null
+              has_password: boolean | null
             }
             const createdAt = new Date(party.created_at)
             const dateStr = createdAt.toLocaleDateString('en-US', {
@@ -107,7 +107,7 @@ export default function HistoryPage() {
               date: dateStr,
               members: memberCountMap[party.id] || 1,
               items: itemCountMap[party.id] || 0,
-              hasPassword: !!party.password_hash,
+              hasPassword: !!party.has_password,
             }
           })
 

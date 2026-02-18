@@ -7,6 +7,7 @@ const useStaticExport = process.env.STATIC_EXPORT === 'true'
 // Allow localhost in CSP when using local Supabase (dev or CI with local Supabase)
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const isLocalSupabase = supabaseUrl.includes('localhost') || supabaseUrl.includes('127.0.0.1')
+const isDev = process.env.NODE_ENV === 'development'
 
 const nextConfig: NextConfig = {
   // Static export for Capacitor iOS builds only
@@ -39,7 +40,7 @@ const nextConfig: NextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com",
+              `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''} https://va.vercel-scripts.com`,
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' https://fonts.gstatic.com",
               `img-src 'self' data: blob: https://*.supabase.co https://i.ytimg.com https://pbs.twimg.com${isLocalSupabase ? ' http://localhost:* http://127.0.0.1:*' : ''}`,

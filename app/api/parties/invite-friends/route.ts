@@ -1,24 +1,30 @@
+import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { sendPartyInvitation } from '@/lib/email'
+import { validateOrigin } from '@/lib/csrf'
 
 export const dynamic = 'force-dynamic'
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const MAX_FRIENDS = 20
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
+    if (!validateOrigin(request)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
     // Authenticate user from Bearer token
     const authHeader = request.headers.get('Authorization')
     if (!authHeader?.startsWith('Bearer ')) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
     const token = authHeader.replace('Bearer ', '')
 
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
     if (!supabaseUrl || !supabaseServiceKey) {
-      return Response.json({ error: 'Server configuration error' }, { status: 500 })
+      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
@@ -27,7 +33,7 @@ export async function POST(request: Request) {
       error: authError,
     } = await supabase.auth.getUser(token)
     if (authError || !user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     // Parse and validate request body
@@ -35,16 +41,16 @@ export async function POST(request: Request) {
     const { partyId, partyCode, partyName, friendIds } = body
 
     if (!partyId || !partyCode || !partyName) {
-      return Response.json({ error: 'Missing required fields: partyId, partyCode, partyName' }, { status: 400 })
+      return NextResponse.json({ error: 'Missing required fields: partyId, partyCode, partyName' }, { status: 400 })
     }
     if (!Array.isArray(friendIds) || friendIds.length === 0) {
-      return Response.json({ error: 'friendIds must be a non-empty array' }, { status: 400 })
+      return NextResponse.json({ error: 'friendIds must be a non-empty array' }, { status: 400 })
     }
     if (friendIds.length > MAX_FRIENDS) {
-      return Response.json({ error: `Cannot invite more than ${MAX_FRIENDS} friends at once` }, { status: 400 })
+      return NextResponse.json({ error: `Cannot invite more than ${MAX_FRIENDS} friends at once` }, { status: 400 })
     }
     if (!friendIds.every((id: unknown) => typeof id === 'string' && UUID_REGEX.test(id))) {
-      return Response.json({ error: 'Invalid friendIds format' }, { status: 400 })
+      return NextResponse.json({ error: 'Invalid friendIds format' }, { status: 400 })
     }
 
     // Verify party exists and is not expired
@@ -55,10 +61,10 @@ export async function POST(request: Request) {
       .single()
 
     if (partyError || !party) {
-      return Response.json({ error: 'Party not found' }, { status: 404 })
+      return NextResponse.json({ error: 'Party not found' }, { status: 404 })
     }
     if (new Date(party.expires_at) <= new Date()) {
-      return Response.json({ error: 'Party has expired' }, { status: 410 })
+      return NextResponse.json({ error: 'Party has expired' }, { status: 410 })
     }
 
     // Get inviter display name
@@ -79,12 +85,12 @@ export async function POST(request: Request) {
 
     if (friendError) {
       console.error('Failed to verify friendships:', friendError)
-      return Response.json({ error: 'Internal server error' }, { status: 500 })
+      return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
     }
 
     const validFriendIds = (friendships || []).map((f) => f.friend_id)
     if (validFriendIds.length === 0) {
-      return Response.json({ error: 'No valid friends found to invite' }, { status: 400 })
+      return NextResponse.json({ error: 'No valid friends found to invite' }, { status: 400 })
     }
 
     // Send notifications and emails for each valid friend
@@ -116,9 +122,9 @@ export async function POST(request: Request) {
       }
     }
 
-    return Response.json({ success: true, invited: validFriendIds.length })
+    return NextResponse.json({ success: true, invited: validFriendIds.length })
   } catch (err) {
     console.error('Invite friends API error:', err)
-    return Response.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

@@ -65,7 +65,7 @@ describe('Email Invite API Route', () => {
   })
 
   const createRequest = (body: object, includeAuth = true) => {
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+    const headers: Record<string, string> = { 'Content-Type': 'application/json', origin: 'http://localhost:3000' }
     if (includeAuth) {
       headers['Authorization'] = 'Bearer test-token-123'
     }

@@ -51,7 +51,7 @@ export function useImageUpload(options: UseImageUploadOptions = {}): UseImageUpl
       }
 
       // Validate the file first
-      const validation = validateImage(file)
+      const validation = await validateImage(file)
       if (!validation.valid) {
         setError(validation.error || 'Invalid file')
         onError?.(validation.error || 'Invalid file')
