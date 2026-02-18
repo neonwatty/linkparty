@@ -60,25 +60,17 @@ export default function HistoryPage() {
         // Get unique party IDs
         const partyIds = memberData.map((m) => m.party_id)
 
-        // Get member counts for each party
-        const { data: memberCounts, error: countError } = await supabase
-          .from('party_members')
-          .select('party_id')
-          .in('party_id', partyIds)
+        // Get member and item counts in parallel
+        const [memberCountResult, itemCountResult] = await Promise.all([
+          supabase.from('party_members').select('party_id').in('party_id', partyIds),
+          supabase.from('queue_items').select('party_id').in('party_id', partyIds),
+        ])
 
-        if (countError) {
-          throw countError
-        }
+        if (memberCountResult.error) throw memberCountResult.error
+        if (itemCountResult.error) throw itemCountResult.error
 
-        // Get item counts for each party
-        const { data: itemCounts, error: itemError } = await supabase
-          .from('queue_items')
-          .select('party_id')
-          .in('party_id', partyIds)
-
-        if (itemError) {
-          throw itemError
-        }
+        const memberCounts = memberCountResult.data
+        const itemCounts = itemCountResult.data
 
         // Count members per party
         const memberCountMap: Record<string, number> = {}

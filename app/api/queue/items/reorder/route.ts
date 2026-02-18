@@ -68,18 +68,23 @@ export async function POST(request: NextRequest) {
     const memberResult = await validateMembership(supabase, body.partyId, identity)
     if (memberResult.error) return memberResult.error
 
-    // 6. Execute all position updates, collecting any errors
+    // 6. Execute all position updates in parallel, collecting any errors
     const errors: Array<{ id: string; error: string }> = []
 
-    for (const update of body.updates) {
-      const { error: updateError } = await supabase
-        .from('queue_items')
-        .update({ position: update.position })
-        .eq('id', update.id)
+    const results = await Promise.all(
+      body.updates.map(async (update) => {
+        const { error: updateError } = await supabase
+          .from('queue_items')
+          .update({ position: update.position })
+          .eq('id', update.id)
+        return { id: update.id, error: updateError }
+      }),
+    )
 
-      if (updateError) {
-        console.error(`Failed to update position for item ${update.id}:`, updateError)
-        errors.push({ id: update.id, error: updateError.message })
+    for (const result of results) {
+      if (result.error) {
+        console.error(`Failed to update position for item ${result.id}:`, result.error)
+        errors.push({ id: result.id, error: result.error.message })
       }
     }
 

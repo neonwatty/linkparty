@@ -58,6 +58,7 @@ export function AppHome() {
     if (!user) return
     let cancelled = false
     const fetchFriendParties = async () => {
+      if (document.hidden || cancelled) return
       try {
         const {
           data: { session },
@@ -76,9 +77,14 @@ export function AppHome() {
     }
     fetchFriendParties()
     const interval = setInterval(fetchFriendParties, 30000)
+    const handleVisibility = () => {
+      if (!document.hidden) fetchFriendParties()
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
     return () => {
       cancelled = true
       clearInterval(interval)
+      document.removeEventListener('visibilitychange', handleVisibility)
     }
   }, [user])
 
