@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef } from 'react'
+import { useState } from 'react'
 
 function generateStars(count: number) {
   return Array.from({ length: count }, (_, i) => ({
@@ -18,11 +18,7 @@ interface TwinklingStarsProps {
 }
 
 export function TwinklingStars({ count = 35 }: TwinklingStarsProps) {
-  const starsRef = useRef<ReturnType<typeof generateStars> | null>(null)
-  if (!starsRef.current) {
-    starsRef.current = generateStars(count)
-  }
-  const stars = starsRef.current
+  const [stars] = useState(() => generateStars(count))
 
   return (
     <div className="stars-container">
