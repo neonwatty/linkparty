@@ -258,7 +258,7 @@ describe('Queue Items [id] API Route', () => {
       const mock = createMockSupabase()
       setupHappyPath(mock)
       // Make eq return an error
-      mock.mockEq.mockReturnValue(Promise.resolve({ error: { message: 'DB write failed' } }))
+      mock.mockEq.mockReturnValue(Promise.resolve({ error: { message: 'DB write failed' } } as never))
 
       const response = await PATCH(mockRequest, mockParams)
       expect(response.status).toBe(500)
@@ -305,7 +305,7 @@ describe('Queue Items [id] API Route', () => {
         body: { partyId: 'party-1', sessionId: 'session-1' },
         error: undefined,
       })
-      mock.mockEq.mockReturnValue(Promise.resolve({ error: { message: 'DB delete failed' } }))
+      mock.mockEq.mockReturnValue(Promise.resolve({ error: { message: 'DB delete failed' } } as never))
 
       const response = await DELETE(mockRequest, mockParams)
       expect(response.status).toBe(500)

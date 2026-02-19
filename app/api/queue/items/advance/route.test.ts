@@ -201,7 +201,7 @@ describe('Queue Items Advance API Route', () => {
       body: { partyId: 'party-1', sessionId: 'session-1', showingItemId: 'show-item-1' },
       error: undefined,
     })
-    mock.mockEq.mockReturnValue(Promise.resolve({ error: { message: 'DB write failed' } }))
+    mock.mockEq.mockReturnValue(Promise.resolve({ error: { message: 'DB write failed' } } as never))
 
     const response = await POST(mockRequest)
     expect(response.status).toBe(500)
@@ -216,7 +216,7 @@ describe('Queue Items Advance API Route', () => {
       body: { partyId: 'party-1', sessionId: 'session-1', firstPendingItemId: 'pending-item-1' },
       error: undefined,
     })
-    mock.mockEq.mockReturnValue(Promise.resolve({ error: { message: 'DB write failed' } }))
+    mock.mockEq.mockReturnValue(Promise.resolve({ error: { message: 'DB write failed' } } as never))
 
     const response = await POST(mockRequest)
     expect(response.status).toBe(500)
