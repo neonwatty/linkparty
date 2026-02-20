@@ -179,4 +179,80 @@ describe('fetchContentMetadata', () => {
       expect(result.error).toBe('Network error')
     })
   })
+
+  describe('in-memory cache', () => {
+    beforeEach(() => {
+      process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://test.supabase.co'
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'test-key'
+    })
+
+    it('returns cached data on second call without hitting fetch', async () => {
+      const mockResponse = {
+        ok: true,
+        json: () => Promise.resolve({ success: true, type: 'youtube', data: { title: 'Cached Video' } }),
+      }
+      global.fetch = vi.fn().mockResolvedValue(mockResponse)
+
+      // Use a single module import so the Map persists between calls
+      const { fetchContentMetadata } = await loadModule()
+
+      const first = await fetchContentMetadata('https://youtube.com/watch?v=cache-test')
+      expect(first.success).toBe(true)
+      expect(first.data?.title).toBe('Cached Video')
+      expect(global.fetch).toHaveBeenCalledTimes(1)
+
+      // Second call — should return from cache, not fetch
+      const second = await fetchContentMetadata('https://youtube.com/watch?v=cache-test')
+      expect(second.success).toBe(true)
+      expect(second.data?.title).toBe('Cached Video')
+      expect(global.fetch).toHaveBeenCalledTimes(1) // still 1
+    })
+
+    it('does not cache failed responses', async () => {
+      const failResponse = {
+        ok: false,
+        status: 500,
+        statusText: 'Internal Server Error',
+        json: () => Promise.resolve({ error: 'Server error' }),
+      }
+      const successResponse = {
+        ok: true,
+        json: () => Promise.resolve({ success: true, type: 'youtube', data: { title: 'Retry Success' } }),
+      }
+      global.fetch = vi.fn().mockResolvedValueOnce(failResponse).mockResolvedValueOnce(successResponse)
+
+      const { fetchContentMetadata } = await loadModule()
+
+      const first = await fetchContentMetadata('https://youtube.com/watch?v=fail-then-succeed')
+      expect(first.success).toBe(false)
+
+      // Second call should hit fetch again since failure wasn't cached
+      const second = await fetchContentMetadata('https://youtube.com/watch?v=fail-then-succeed')
+      expect(second.success).toBe(true)
+      expect(second.data?.title).toBe('Retry Success')
+      expect(global.fetch).toHaveBeenCalledTimes(2)
+    })
+
+    it('fetches again after cache TTL expires', async () => {
+      const mockResponse = {
+        ok: true,
+        json: () => Promise.resolve({ success: true, type: 'youtube', data: { title: 'Fresh Data' } }),
+      }
+      global.fetch = vi.fn().mockResolvedValue(mockResponse)
+
+      const { fetchContentMetadata } = await loadModule()
+
+      await fetchContentMetadata('https://youtube.com/watch?v=ttl-test')
+      expect(global.fetch).toHaveBeenCalledTimes(1)
+
+      // Advance time past the 10-minute TTL
+      vi.useFakeTimers()
+      vi.advanceTimersByTime(11 * 60 * 1000)
+
+      await fetchContentMetadata('https://youtube.com/watch?v=ttl-test')
+      expect(global.fetch).toHaveBeenCalledTimes(2)
+
+      vi.useRealTimers()
+    })
+  })
 })

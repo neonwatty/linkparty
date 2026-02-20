@@ -3,6 +3,10 @@
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 
+// In-memory cache — persists across requests within the same Deno worker instance
+const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
+const metadataCache = new Map<string, { result: MetadataResult; ts: number }>()
+
 interface MetadataResult {
   success: boolean
   type?: 'youtube' | 'tweet' | 'reddit'
@@ -349,6 +353,14 @@ serve(async (req) => {
       })
     }
 
+    // Check in-memory cache
+    const cached = metadataCache.get(url)
+    if (cached && Date.now() - cached.ts < CACHE_TTL) {
+      return new Response(JSON.stringify(cached.result), {
+        headers: { 'Content-Type': 'application/json', ...corsHeaders(req) },
+      })
+    }
+
     let result: MetadataResult
 
     switch (contentType) {
@@ -361,6 +373,11 @@ serve(async (req) => {
       case 'reddit':
         result = await fetchRedditMetadata(url)
         break
+    }
+
+    // Cache successful results
+    if (result.success) {
+      metadataCache.set(url, { result, ts: Date.now() })
     }
 
     return new Response(JSON.stringify(result), {

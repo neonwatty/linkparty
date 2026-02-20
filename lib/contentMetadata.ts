@@ -78,7 +78,17 @@ function getMockMetadata(url: string): ContentMetadataResponse {
   }
 }
 
+// In-memory cache for metadata responses (survives within browser session)
+const METADATA_CACHE_TTL = 10 * 60 * 1000 // 10 minutes
+const metadataCache = new Map<string, { data: ContentMetadataResponse; ts: number }>()
+
 export async function fetchContentMetadata(url: string): Promise<ContentMetadataResponse> {
+  // Check in-memory cache first
+  const cached = metadataCache.get(url)
+  if (cached && Date.now() - cached.ts < METADATA_CACHE_TTL) {
+    return cached.data
+  }
+
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
@@ -107,7 +117,14 @@ export async function fetchContentMetadata(url: string): Promise<ContentMetadata
       }
     }
 
-    return await response.json()
+    const result: ContentMetadataResponse = await response.json()
+
+    // Cache successful responses
+    if (result.success) {
+      metadataCache.set(url, { data: result, ts: Date.now() })
+    }
+
+    return result
   } catch (err) {
     log.error('Content metadata fetch failed', err)
     return {

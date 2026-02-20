@@ -259,6 +259,7 @@ describe('uploadImage', () => {
     expect(mockUpload).toHaveBeenCalledWith(expect.stringContaining('party-123/'), file, {
       contentType: 'image/jpeg',
       upsert: false,
+      cacheControl: '31536000',
     })
     expect(mockGetPublicUrl).toHaveBeenCalledOnce()
     expect(result.url).toBe('https://example.com/storage/image.jpg')
