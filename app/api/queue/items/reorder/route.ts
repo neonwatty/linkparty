@@ -68,32 +68,15 @@ export async function POST(request: NextRequest) {
     const memberResult = await validateMembership(supabase, body.partyId, identity)
     if (memberResult.error) return memberResult.error
 
-    // 6. Execute all position updates in parallel, collecting any errors
-    const errors: Array<{ id: string; error: string }> = []
+    // 6. Execute batch reorder via RPC (single atomic database call)
+    const { error: rpcError } = await supabase.rpc('batch_reorder_queue_items', {
+      p_party_id: body.partyId,
+      p_updates: body.updates,
+    })
 
-    const results = await Promise.all(
-      body.updates.map(async (update) => {
-        const { error: updateError } = await supabase
-          .from('queue_items')
-          .update({ position: update.position })
-          .eq('id', update.id)
-        return { id: update.id, error: updateError }
-      }),
-    )
-
-    for (const result of results) {
-      if (result.error) {
-        console.error(`Failed to update position for item ${result.id}:`, result.error)
-        errors.push({ id: result.id, error: result.error.message })
-      }
-    }
-
-    // 7. Return success with any partial errors noted
-    if (errors.length > 0) {
-      return NextResponse.json({
-        success: true,
-        partialErrors: errors,
-      })
+    if (rpcError) {
+      console.error('Batch reorder RPC failed:', rpcError)
+      return NextResponse.json({ error: 'Reorder failed' }, { status: 500 })
     }
 
     return NextResponse.json({ success: true })
