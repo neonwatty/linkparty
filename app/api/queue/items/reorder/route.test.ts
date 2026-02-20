@@ -19,24 +19,13 @@ import {
 import { POST } from './route'
 import type { NextRequest } from 'next/server'
 
-// --- Supabase chain mock with per-call result control ---
-function createMockSupabase(eqResults?: Array<{ error: { message: string } | null }>) {
-  let callIndex = 0
-  const mockEq = vi.fn(() => {
-    if (eqResults && callIndex < eqResults.length) {
-      return Promise.resolve(eqResults[callIndex++])
-    }
-    return Promise.resolve({ error: null })
-  })
-  const mockUpdate = vi.fn(() => ({ eq: mockEq }))
+// --- Supabase mock with .rpc() support ---
+function createMockSupabase(rpcResult?: { error: { message: string } | null }) {
+  const mockRpc = vi.fn().mockResolvedValue(rpcResult ?? { error: null })
 
-  const supabase = {
-    from: vi.fn(() => ({
-      update: mockUpdate,
-    })),
-  }
+  const supabase = { rpc: mockRpc }
 
-  return { supabase, mockUpdate, mockEq }
+  return { supabase, mockRpc }
 }
 
 const mockRequest = {} as NextRequest
@@ -149,7 +138,7 @@ describe('Queue Items Reorder API Route', () => {
     expect(response).toBe(errorResponse)
   })
 
-  it('successful reorder with multiple items', async () => {
+  it('successful reorder calls RPC with correct params', async () => {
     const mock = createMockSupabase()
     setupHappyPath(mock)
     vi.mocked(parseAndValidateRequest).mockResolvedValue({
@@ -169,24 +158,21 @@ describe('Queue Items Reorder API Route', () => {
     expect(response.status).toBe(200)
     const json = await response.json()
     expect(json.success).toBe(true)
-    expect(json.partialErrors).toBeUndefined()
 
-    // Should update position for each item
-    expect(mock.supabase.from).toHaveBeenCalledTimes(3)
-    expect(mock.mockUpdate).toHaveBeenCalledWith({ position: 0 })
-    expect(mock.mockUpdate).toHaveBeenCalledWith({ position: 1 })
-    expect(mock.mockUpdate).toHaveBeenCalledWith({ position: 2 })
-    expect(mock.mockEq).toHaveBeenCalledWith('id', 'item-a')
-    expect(mock.mockEq).toHaveBeenCalledWith('id', 'item-b')
-    expect(mock.mockEq).toHaveBeenCalledWith('id', 'item-c')
+    // Should call RPC once with all updates
+    expect(mock.mockRpc).toHaveBeenCalledTimes(1)
+    expect(mock.mockRpc).toHaveBeenCalledWith('batch_reorder_queue_items', {
+      p_party_id: 'party-1',
+      p_updates: [
+        { id: 'item-a', position: 0 },
+        { id: 'item-b', position: 1 },
+        { id: 'item-c', position: 2 },
+      ],
+    })
   })
 
-  it('partial errors: some updates succeed, some fail', async () => {
-    const mock = createMockSupabase([
-      { error: null }, // item-a succeeds
-      { error: { message: 'Row not found' } }, // item-b fails
-      { error: null }, // item-c succeeds
-    ])
+  it('returns 500 when RPC fails', async () => {
+    const mock = createMockSupabase({ error: { message: 'RPC error' } })
     setupHappyPath(mock)
     vi.mocked(parseAndValidateRequest).mockResolvedValue({
       body: {
@@ -202,14 +188,12 @@ describe('Queue Items Reorder API Route', () => {
     })
 
     const response = await POST(mockRequest)
-    expect(response.status).toBe(200)
+    expect(response.status).toBe(500)
     const json = await response.json()
-    expect(json.success).toBe(true)
-    expect(json.partialErrors).toHaveLength(1)
-    expect(json.partialErrors[0]).toEqual({ id: 'item-b', error: 'Row not found' })
+    expect(json.error).toBe('Reorder failed')
   })
 
-  it('all succeed returns clean success without partialErrors', async () => {
+  it('single item reorder succeeds', async () => {
     const mock = createMockSupabase()
     setupHappyPath(mock)
     vi.mocked(parseAndValidateRequest).mockResolvedValue({
@@ -225,6 +209,5 @@ describe('Queue Items Reorder API Route', () => {
     expect(response.status).toBe(200)
     const json = await response.json()
     expect(json.success).toBe(true)
-    expect(json.partialErrors).toBeUndefined()
   })
 })
