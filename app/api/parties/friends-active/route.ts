@@ -2,6 +2,8 @@ import { createClient } from '@supabase/supabase-js'
 
 export const dynamic = 'force-dynamic'
 
+const CACHE_HEADERS = { 'Cache-Control': 'private, max-age=30' }
+
 export async function GET(request: Request) {
   const authHeader = request.headers.get('Authorization')
   if (!authHeader?.startsWith('Bearer ')) {
@@ -12,7 +14,7 @@ export async function GET(request: Request) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
   if (!supabaseUrl || !supabaseServiceKey) {
-    return Response.json({ parties: [] })
+    return Response.json({ parties: [] }, { headers: CACHE_HEADERS })
   }
 
   const supabase = createClient(supabaseUrl, supabaseServiceKey)
@@ -32,13 +34,13 @@ export async function GET(request: Request) {
     .eq('status', 'accepted')
 
   const friendIds = (friendships || []).map((f) => f.friend_id)
-  if (friendIds.length === 0) return Response.json({ parties: [] })
+  if (friendIds.length === 0) return Response.json({ parties: [] }, { headers: CACHE_HEADERS })
 
   // 2. Find party_members rows for friends
   const { data: memberRows } = await supabase.from('party_members').select('party_id, user_id').in('user_id', friendIds)
 
   const partyIds = [...new Set((memberRows || []).map((m) => m.party_id))]
-  if (partyIds.length === 0) return Response.json({ parties: [] })
+  if (partyIds.length === 0) return Response.json({ parties: [] }, { headers: CACHE_HEADERS })
 
   // 3. Get visible, non-expired parties
   const { data: parties } = await supabase
@@ -50,7 +52,7 @@ export async function GET(request: Request) {
     .order('created_at', { ascending: false })
     .limit(10)
 
-  if (!parties || parties.length === 0) return Response.json({ parties: [] })
+  if (!parties || parties.length === 0) return Response.json({ parties: [] }, { headers: CACHE_HEADERS })
 
   // 4. Batch-fetch all members for these parties in a single query
   const visiblePartyIds = parties.map((p) => p.id)
@@ -100,5 +102,5 @@ export async function GET(request: Request) {
     }
   })
 
-  return Response.json({ parties: result })
+  return Response.json({ parties: result }, { headers: CACHE_HEADERS })
 }

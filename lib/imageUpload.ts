@@ -264,6 +264,7 @@ export async function uploadImage(file: File, partyId: string): Promise<ImageUpl
   const { error: uploadError } = await supabase.storage.from('queue-images').upload(storagePath, file, {
     contentType: file.type,
     upsert: false,
+    cacheControl: '31536000',
   })
 
   if (uploadError) {

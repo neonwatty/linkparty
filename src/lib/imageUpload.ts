@@ -271,6 +271,7 @@ export async function uploadImage(
     .upload(storagePath, file, {
       contentType: file.type,
       upsert: false,
+      cacheControl: '31536000',
     })
 
   if (uploadError) {
