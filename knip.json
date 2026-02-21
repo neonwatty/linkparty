@@ -23,7 +23,10 @@
     "@capacitor/push-notifications",
     "@vitest/coverage-v8",
     "postcss",
-    "@supabase/ssr"
+    "@supabase/ssr",
+    "@semantic-release/commit-analyzer",
+    "@semantic-release/release-notes-generator",
+    "@semantic-release/github"
   ],
   "ignoreBinaries": ["doppler"],
   "ignoreExportsUsedInFile": true,
