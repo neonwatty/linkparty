@@ -11,6 +11,8 @@
     "lint": "eslint .",
     "build:ios": "STATIC_EXPORT=true doppler run -- npm run build && npx cap sync ios",
     "ios": "npm run build:ios && npx cap open ios",
+    "build:android": "STATIC_EXPORT=true doppler run -- npm run build && npx cap sync android",
+    "android": "npm run build:android && npx cap open android",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
@@ -27,6 +29,7 @@
     "prepare": "husky"
   },
   "dependencies": {
+    "@capacitor/android": "^8.1.0",
     "@capacitor/cli": "^8.0.1",
     "@capacitor/core": "^8.0.1",
     "@capacitor/ios": "^8.0.1",
