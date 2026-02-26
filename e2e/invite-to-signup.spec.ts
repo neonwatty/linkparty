@@ -49,26 +49,15 @@ test.describe('Invite-to-Signup Flow (Phase 5)', () => {
 
       await expect(page.getByText(/join parties and share content/i)).toBeVisible()
     })
-
-    test('stores redirect in sessionStorage', async ({ page }) => {
-      await page.goto('/signup?redirect=/join/ABC123?inviter=user-123')
-
-      // Wait for the React hydration + useEffect to run
-      await page.waitForTimeout(500)
-
-      const stored = await page.evaluate(() => sessionStorage.getItem('auth-redirect'))
-      expect(stored).toContain('/join/ABC123')
-    })
   })
 
   test.describe('Auth callback — redirect handling', () => {
-    test('reads redirect from URL params', async ({ page }) => {
-      // The auth callback page should check URL params for redirect
+    test('redirects to target path from URL params', async ({ page }) => {
+      // The auth callback is now a server-side route handler that redirects immediately
       await page.goto('/auth/callback?redirect=/join/ABC123')
 
-      // In mock mode without a real session, it will timeout to login
-      // But we can verify the page renders
-      await expect(page.getByText(/signing in/i)).toBeVisible()
+      // Without a valid code, it redirects to the target path
+      expect(page.url()).toContain('/join/ABC123')
     })
   })
 

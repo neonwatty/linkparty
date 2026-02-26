@@ -1,6 +1,6 @@
 'use client'
 
-import { createClient } from '@supabase/supabase-js'
+import { createBrowserClient } from '@supabase/ssr'
 import { logger } from './logger'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim()
@@ -28,7 +28,7 @@ if (typeof window !== 'undefined') {
   sessionHeaders['x-session-id'] = sid
 }
 
-export const supabase = createClient(
+export const supabase = createBrowserClient(
   supabaseUrl || 'https://placeholder.supabase.co',
   supabaseAnonKey || 'placeholder-key',
   { global: { headers: sessionHeaders } },

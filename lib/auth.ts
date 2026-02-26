@@ -9,11 +9,18 @@ const log = logger.createLogger('Auth')
 export type AuthUser = User
 export type AuthSession = Session
 
-export async function signInWithGoogle() {
+export async function signInWithGoogle(redirectPath?: string) {
+  let redirectTo: string | undefined
+  if (typeof window !== 'undefined') {
+    const callbackUrl = new URL('/auth/callback', window.location.origin)
+    if (redirectPath) callbackUrl.searchParams.set('redirect', redirectPath)
+    redirectTo = callbackUrl.toString()
+  }
+
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : undefined,
+      redirectTo,
     },
   })
 
