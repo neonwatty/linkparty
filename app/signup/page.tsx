@@ -28,13 +28,6 @@ function SignupForm() {
     document.title = 'Sign Up | Link Party'
   }, [])
 
-  // Store redirect in sessionStorage so auth callback can use it after email confirmation
-  useEffect(() => {
-    if (redirectParam && redirectParam.startsWith('/') && !redirectParam.startsWith('//')) {
-      sessionStorage.setItem('auth-redirect', redirectParam)
-    }
-  }, [redirectParam])
-
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !isLoading) {
       e.preventDefault()
@@ -46,8 +39,7 @@ function SignupForm() {
     setIsLoading(true)
     setError(null)
     try {
-      // sessionStorage redirect is already set by the useEffect above
-      await signInWithGoogle()
+      await signInWithGoogle(redirectParam || undefined)
     } catch {
       setError('Failed to sign in with Google')
       setIsLoading(false)
