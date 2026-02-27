@@ -23,12 +23,14 @@ vi.mock('../lib/supabase', () => ({
         eq: vi.fn(() => Promise.resolve({ data: null, error: null })),
       })),
     })),
-    channel: vi.fn(() => ({
-      on: vi.fn(() => ({
-        subscribe: vi.fn(),
-      })),
-      unsubscribe: vi.fn(),
-    })),
+    channel: vi.fn(() => {
+      const ch: Record<string, unknown> = {
+        on: vi.fn(() => ch),
+        subscribe: vi.fn(() => ch),
+        unsubscribe: vi.fn(),
+      }
+      return ch
+    }),
   },
   getSessionId: vi.fn(() => 'test-session-123'),
 }))

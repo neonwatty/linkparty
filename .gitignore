@@ -47,6 +47,6 @@ supabase/.temp/
 ios/App/App.xcodeproj/project.xcworkspace/
 
 # Test screenshots
-workflows/screenshots/*.png
-ios-*.png
+*.png
+workflows/screenshots/
 .env*.local
