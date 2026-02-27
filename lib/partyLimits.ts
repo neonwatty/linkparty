@@ -39,8 +39,8 @@ export const JOIN_RATE_LIMIT = 60
 /** Rate limit window for join attempts in milliseconds */
 export const JOIN_RATE_WINDOW_MS = 60_000
 
-/** Rate limit: max join attempts per party code per minute */
-export const CODE_THROTTLE_LIMIT = 10
+/** Rate limit: max join attempts per party code per minute (must exceed MAX_MEMBERS for initial party fill) */
+export const CODE_THROTTLE_LIMIT = 25
 
 /** Rate limit window for code throttle in milliseconds */
 export const CODE_THROTTLE_WINDOW_MS = 60_000
