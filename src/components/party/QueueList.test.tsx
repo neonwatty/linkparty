@@ -1,7 +1,49 @@
 import { describe, it, expect, vi } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, act } from '@testing-library/react'
 import { QueueList } from './QueueList'
 import type { QueueItem } from '../../hooks/useParty'
+
+// Capture DndContext callbacks for drag-and-drop tests
+let capturedOnDragEnd: ((event: { active: { id: string }; over: { id: string } | null }) => void) | null = null
+let capturedOnDragStart: ((event: { active: { id: string } }) => void) | null = null
+
+vi.mock('@dnd-kit/core', async () => {
+  const actual = await vi.importActual('@dnd-kit/core')
+  return {
+    ...actual,
+    DndContext: ({
+      children,
+      onDragEnd,
+      onDragStart,
+    }: {
+      children: React.ReactNode
+      onDragEnd?: typeof capturedOnDragEnd
+      onDragStart?: typeof capturedOnDragStart
+      [key: string]: unknown
+    }) => {
+      capturedOnDragEnd = onDragEnd ?? null
+      capturedOnDragStart = onDragStart ?? null
+      return <div data-testid="dnd-context">{children}</div>
+    },
+    DragOverlay: ({ children }: { children: React.ReactNode }) => (
+      <div data-testid="drag-overlay">{children}</div>
+    ),
+  }
+})
+
+vi.mock('@dnd-kit/sortable', async () => {
+  const actual = await vi.importActual('@dnd-kit/sortable')
+  return {
+    ...actual,
+    useSortable: ({ id }: { id: string }) => ({
+      attributes: { role: 'button', 'aria-roledescription': 'sortable', 'data-sortable-id': id },
+      listeners: { onPointerDown: vi.fn() },
+      setNodeRef: vi.fn(),
+      transform: null,
+      transition: null,
+    }),
+  }
+})
 
 // Mock the icon components
 vi.mock('../icons', () => ({
@@ -183,5 +225,107 @@ describe('QueueList', () => {
 
     const titleElement = screen.getByText('Completed Item')
     expect(titleElement).toHaveClass('line-through')
+  })
+
+  describe('Drag and drop', () => {
+    beforeEach(() => {
+      capturedOnDragEnd = null
+      capturedOnDragStart = null
+    })
+
+    it('fires onReorder callback when drag ends with valid source and target', () => {
+      const onReorder = vi.fn()
+      const items = [
+        createMockItem({ id: 'item-1', title: 'First', type: 'youtube' }),
+        createMockItem({ id: 'item-2', title: 'Second', type: 'youtube' }),
+      ]
+
+      render(<QueueList {...defaultProps} items={items} onReorder={onReorder} />)
+
+      expect(capturedOnDragEnd).not.toBeNull()
+
+      act(() => {
+        capturedOnDragEnd!({ active: { id: 'item-1' }, over: { id: 'item-2' } })
+      })
+
+      expect(onReorder).toHaveBeenCalledTimes(1)
+      expect(onReorder).toHaveBeenCalledWith('item-1', 'item-2')
+    })
+
+    it('does not fire onReorder when drag ends on same item', () => {
+      const onReorder = vi.fn()
+      const items = [
+        createMockItem({ id: 'item-1', title: 'First', type: 'youtube' }),
+        createMockItem({ id: 'item-2', title: 'Second', type: 'youtube' }),
+      ]
+
+      render(<QueueList {...defaultProps} items={items} onReorder={onReorder} />)
+
+      act(() => {
+        capturedOnDragEnd!({ active: { id: 'item-1' }, over: { id: 'item-1' } })
+      })
+
+      expect(onReorder).not.toHaveBeenCalled()
+    })
+
+    it('sets aria-roledescription="sortable" on sortable items', () => {
+      const items = [
+        createMockItem({ id: 'item-1', title: 'Sortable Video', type: 'youtube' }),
+      ]
+
+      const { container } = render(<QueueList {...defaultProps} items={items} />)
+
+      const sortableElements = container.querySelectorAll('[aria-roledescription="sortable"]')
+      expect(sortableElements.length).toBeGreaterThanOrEqual(1)
+    })
+
+    it('shows drag handle icon for non-note items when onReorder is provided', () => {
+      const items = [
+        createMockItem({ id: 'yt-1', type: 'youtube', title: 'Video' }),
+        createMockItem({ id: 'link-1', type: 'link', title: 'Link' }),
+      ]
+
+      render(<QueueList {...defaultProps} items={items} onReorder={vi.fn()} />)
+
+      const dragIcons = screen.getAllByTestId('drag-icon')
+      expect(dragIcons).toHaveLength(2)
+    })
+
+    it('shows no drag handle icons for note items', () => {
+      const items = [
+        createMockItem({ id: 'note-1', type: 'note', noteContent: 'Note 1' }),
+        createMockItem({ id: 'note-2', type: 'note', noteContent: 'Note 2' }),
+      ]
+
+      render(<QueueList {...defaultProps} items={items} />)
+
+      expect(screen.queryAllByTestId('drag-icon')).toHaveLength(0)
+      expect(screen.getAllByTestId('check-icon')).toHaveLength(2)
+    })
+
+    it('renders DragOverlay with active item when dragging', () => {
+      const items = [
+        createMockItem({ id: 'item-1', title: 'Drag Me', type: 'youtube' }),
+        createMockItem({ id: 'item-2', title: 'Target', type: 'youtube' }),
+      ]
+
+      const { rerender } = render(<QueueList {...defaultProps} items={items} onReorder={vi.fn()} />)
+
+      // Before drag, overlay should be empty
+      const overlay = screen.getByTestId('drag-overlay')
+      expect(overlay.children).toHaveLength(0)
+
+      // Simulate drag start to set activeId
+      act(() => {
+        capturedOnDragStart!({ active: { id: 'item-1' } })
+      })
+
+      // Re-render to reflect state change
+      rerender(<QueueList {...defaultProps} items={items} onReorder={vi.fn()} />)
+
+      // After drag start, overlay should contain the active item
+      const overlayAfter = screen.getByTestId('drag-overlay')
+      expect(overlayAfter.children.length).toBeGreaterThanOrEqual(1)
+    })
   })
 })
