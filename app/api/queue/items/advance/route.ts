@@ -69,6 +69,7 @@ export async function POST(request: NextRequest) {
         .from('queue_items')
         .update({ status: 'shown' })
         .eq('id', body.showingItemId)
+        .eq('party_id', body.partyId)
 
       if (showingError) {
         console.error('Failed to mark item as shown:', showingError)
@@ -81,6 +82,7 @@ export async function POST(request: NextRequest) {
         .from('queue_items')
         .update({ status: 'showing' })
         .eq('id', body.firstPendingItemId)
+        .eq('party_id', body.partyId)
 
       if (pendingError) {
         console.error('Failed to mark item as showing:', pendingError)

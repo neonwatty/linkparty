@@ -115,7 +115,11 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         break
     }
 
-    const { error: updateError } = await supabase.from('queue_items').update(updateData).eq('id', id)
+    const { error: updateError } = await supabase
+      .from('queue_items')
+      .update(updateData)
+      .eq('id', id)
+      .eq('party_id', body.partyId)
 
     if (updateError) {
       console.error('Failed to update queue item:', updateError)
@@ -149,7 +153,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     const memberResult = await validateMembership(supabase, body.partyId, identity)
     if (memberResult.error) return memberResult.error
 
-    const { error: deleteError } = await supabase.from('queue_items').delete().eq('id', id)
+    const { error: deleteError } = await supabase.from('queue_items').delete().eq('id', id).eq('party_id', body.partyId)
 
     if (deleteError) {
       console.error('Failed to delete queue item:', deleteError)
