@@ -3,43 +3,22 @@ import { createClient } from '@supabase/supabase-js'
 import { verifyPassword } from '@/lib/passwordHash'
 import { LIMITS } from '@/lib/errorMessages'
 import { validateOrigin } from '@/lib/csrf'
+import { createRateLimiter } from '@/lib/serverRateLimit'
+import {
+  MAX_MEMBERS,
+  JOIN_RATE_LIMIT,
+  JOIN_RATE_WINDOW_MS,
+  CODE_THROTTLE_LIMIT,
+  CODE_THROTTLE_WINDOW_MS,
+} from '@/lib/partyLimits'
 
 export const dynamic = 'force-dynamic'
 
-const MAX_MEMBERS = 20
+// 60 requests per minute per IP
+const rateLimiter = createRateLimiter({ maxRequests: JOIN_RATE_LIMIT, windowMs: JOIN_RATE_WINDOW_MS })
 
-// In-memory rate limit: 60 requests per minute per IP
-const JOIN_RATE_LIMIT = { maxRequests: 60, windowMs: 60 * 1000 }
-const joinRateLimitMap = new Map<string, { timestamps: number[] }>()
-let joinRateLimitCheckCount = 0
-
-function checkJoinRateLimit(key: string): { isLimited: boolean; retryAfterMs: number } {
-  joinRateLimitCheckCount++
-  if (joinRateLimitCheckCount >= 100) {
-    joinRateLimitCheckCount = 0
-    const now = Date.now()
-    for (const [k, entry] of joinRateLimitMap.entries()) {
-      entry.timestamps = entry.timestamps.filter((ts) => now - ts < JOIN_RATE_LIMIT.windowMs)
-      if (entry.timestamps.length === 0) joinRateLimitMap.delete(k)
-    }
-  }
-
-  const now = Date.now()
-  let entry = joinRateLimitMap.get(key)
-  if (!entry) {
-    entry = { timestamps: [] }
-    joinRateLimitMap.set(key, entry)
-  }
-  entry.timestamps = entry.timestamps.filter((ts) => now - ts < JOIN_RATE_LIMIT.windowMs)
-
-  if (entry.timestamps.length >= JOIN_RATE_LIMIT.maxRequests) {
-    const oldestTimestamp = Math.min(...entry.timestamps)
-    return { isLimited: true, retryAfterMs: Math.max(0, JOIN_RATE_LIMIT.windowMs - (now - oldestTimestamp)) }
-  }
-
-  entry.timestamps.push(now)
-  return { isLimited: false, retryAfterMs: 0 }
-}
+// 10 attempts per party code per minute — prevents brute-force code guessing
+const codeThrottle = createRateLimiter({ maxRequests: CODE_THROTTLE_LIMIT, windowMs: CODE_THROTTLE_WINDOW_MS })
 
 export async function POST(request: NextRequest) {
   try {
@@ -49,8 +28,8 @@ export async function POST(request: NextRequest) {
 
     // Rate limit by IP
     const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
-    const { isLimited, retryAfterMs } = checkJoinRateLimit(ip)
-    if (isLimited) {
+    const { limited, retryAfterMs } = rateLimiter.check(ip)
+    if (limited) {
       const retryAfterSec = Math.ceil(retryAfterMs / 1000)
       return NextResponse.json(
         { error: 'Rate limit exceeded. Please try again later.' },
@@ -60,6 +39,18 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
     const { code, sessionId, displayName, avatar, password, userId } = body
+
+    // Per-code throttle: prevent brute-force code guessing
+    const upperCode = typeof code === 'string' ? code.toUpperCase() : ''
+    if (upperCode) {
+      const { limited: codeLimited, retryAfterMs: codeRetryMs } = codeThrottle.check(upperCode)
+      if (codeLimited) {
+        return NextResponse.json(
+          { error: 'Too many attempts for this code. Try again shortly.' },
+          { status: 429, headers: { 'Retry-After': String(Math.ceil(codeRetryMs / 1000)) } },
+        )
+      }
+    }
 
     // Validate required fields
     if (!code || typeof code !== 'string' || code.length !== 6) {

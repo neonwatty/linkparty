@@ -2,41 +2,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import webpush from 'web-push'
 import { validateOrigin } from '@/lib/csrf'
+import { createRateLimiter } from '@/lib/serverRateLimit'
+import { PUSH_RATE_LIMIT, PUSH_RATE_WINDOW_MS } from '@/lib/partyLimits'
 
 export const dynamic = 'force-dynamic'
 
-// In-memory rate limit: 30 requests per minute per user ID
-const PUSH_SEND_RATE_LIMIT = { maxRequests: 30, windowMs: 60 * 1000 }
-const pushSendRateLimitMap = new Map<string, { timestamps: number[] }>()
-let pushSendRateLimitCheckCount = 0
-
-function checkPushSendRateLimit(key: string): { isLimited: boolean; retryAfterMs: number } {
-  pushSendRateLimitCheckCount++
-  if (pushSendRateLimitCheckCount >= 100) {
-    pushSendRateLimitCheckCount = 0
-    const now = Date.now()
-    for (const [k, entry] of pushSendRateLimitMap.entries()) {
-      entry.timestamps = entry.timestamps.filter((ts) => now - ts < PUSH_SEND_RATE_LIMIT.windowMs)
-      if (entry.timestamps.length === 0) pushSendRateLimitMap.delete(k)
-    }
-  }
-
-  const now = Date.now()
-  let entry = pushSendRateLimitMap.get(key)
-  if (!entry) {
-    entry = { timestamps: [] }
-    pushSendRateLimitMap.set(key, entry)
-  }
-  entry.timestamps = entry.timestamps.filter((ts) => now - ts < PUSH_SEND_RATE_LIMIT.windowMs)
-
-  if (entry.timestamps.length >= PUSH_SEND_RATE_LIMIT.maxRequests) {
-    const oldestTimestamp = Math.min(...entry.timestamps)
-    return { isLimited: true, retryAfterMs: Math.max(0, PUSH_SEND_RATE_LIMIT.windowMs - (now - oldestTimestamp)) }
-  }
-
-  entry.timestamps.push(now)
-  return { isLimited: false, retryAfterMs: 0 }
-}
+// 30 requests per minute per user ID
+const rateLimiter = createRateLimiter({ maxRequests: PUSH_RATE_LIMIT, windowMs: PUSH_RATE_WINDOW_MS })
 
 export async function POST(request: NextRequest) {
   try {
@@ -76,8 +48,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Rate limit by user ID
-    const { isLimited, retryAfterMs } = checkPushSendRateLimit(user.id)
-    if (isLimited) {
+    const { limited, retryAfterMs } = rateLimiter.check(user.id)
+    if (limited) {
       const retryAfterSec = Math.ceil(retryAfterMs / 1000)
       return NextResponse.json(
         { error: 'Rate limit exceeded. Please try again later.' },

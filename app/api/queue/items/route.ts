@@ -7,6 +7,8 @@ import {
   validateMembership,
   parseAndValidateRequest,
 } from '@/lib/apiHelpers'
+import { createRateLimiter } from '@/lib/serverRateLimit'
+import { QUEUE_LIMIT, IMAGE_LIMIT, QUEUE_RATE_LIMIT, QUEUE_RATE_WINDOW_MS } from '@/lib/partyLimits'
 
 export const dynamic = 'force-dynamic'
 
@@ -18,17 +20,7 @@ export const dynamic = 'force-dynamic'
  * - 100 items maximum per party queue
  */
 
-// Rate limit configuration
-const RATE_LIMIT = {
-  maxItems: 10,
-  windowMs: 60 * 1000, // 1 minute
-}
-
-const QUEUE_LIMIT = 100 // Max items per party
-const IMAGE_LIMIT = 20 // Max images per party
-
-// In-memory rate limit storage (use Redis in production for multi-instance)
-const rateLimitMap = new Map<string, { timestamps: number[] }>()
+const rateLimiter = createRateLimiter({ maxRequests: QUEUE_RATE_LIMIT, windowMs: QUEUE_RATE_WINDOW_MS })
 
 interface QueueItemRequest {
   partyId: string
@@ -57,72 +49,6 @@ interface QueueItemRequest {
   imageStoragePath?: string
   imageCaption?: string
   dueDate?: string
-}
-
-/**
- * Check and update rate limit for a session
- * @returns Object with isLimited flag and retryAfterMs
- */
-function checkRateLimit(sessionId: string): { isLimited: boolean; retryAfterMs: number } {
-  // P3: Lazy cleanup instead of setInterval
-  maybeLazyCleanup()
-
-  const now = Date.now()
-  const key = `queue:${sessionId}`
-
-  // Get or create entry
-  let entry = rateLimitMap.get(key)
-  if (!entry) {
-    entry = { timestamps: [] }
-    rateLimitMap.set(key, entry)
-  }
-
-  // Clean up expired timestamps
-  entry.timestamps = entry.timestamps.filter((ts) => now - ts < RATE_LIMIT.windowMs)
-
-  // Check if rate limited
-  if (entry.timestamps.length >= RATE_LIMIT.maxItems) {
-    const oldestTimestamp = Math.min(...entry.timestamps)
-    const retryAfterMs = Math.max(0, RATE_LIMIT.windowMs - (now - oldestTimestamp))
-    return { isLimited: true, retryAfterMs }
-  }
-
-  return { isLimited: false, retryAfterMs: 0 }
-}
-
-/**
- * Record a successful action for rate limiting
- */
-function recordAction(sessionId: string): void {
-  const key = `queue:${sessionId}`
-  const entry = rateLimitMap.get(key) || { timestamps: [] }
-  entry.timestamps.push(Date.now())
-  rateLimitMap.set(key, entry)
-}
-
-/**
- * Clean up old rate limit entries.
- * P3: Called lazily every 100th check instead of via setInterval
- * (setInterval is unreliable in serverless environments).
- */
-let rateLimitCheckCount = 0
-
-function cleanupRateLimitMap(): void {
-  const now = Date.now()
-  for (const [key, entry] of rateLimitMap.entries()) {
-    entry.timestamps = entry.timestamps.filter((ts) => now - ts < RATE_LIMIT.windowMs)
-    if (entry.timestamps.length === 0) {
-      rateLimitMap.delete(key)
-    }
-  }
-}
-
-function maybeLazyCleanup(): void {
-  rateLimitCheckCount++
-  if (rateLimitCheckCount >= 100) {
-    rateLimitCheckCount = 0
-    cleanupRateLimitMap()
-  }
 }
 
 /**
@@ -202,8 +128,8 @@ export async function POST(request: NextRequest) {
     const body = parsed.body
 
     // Check rate limit
-    const { isLimited, retryAfterMs } = checkRateLimit(body.sessionId)
-    if (isLimited) {
+    const { limited, retryAfterMs } = rateLimiter.check(body.sessionId)
+    if (limited) {
       const retryAfterSec = Math.ceil(retryAfterMs / 1000)
       return NextResponse.json(
         {
@@ -306,9 +232,6 @@ export async function POST(request: NextRequest) {
       console.error('Failed to insert queue item:', insertError)
       return NextResponse.json({ error: 'Failed to add item to queue' }, { status: 500 })
     }
-
-    // Record the action for rate limiting
-    recordAction(body.sessionId)
 
     return NextResponse.json({
       success: true,

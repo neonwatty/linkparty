@@ -384,7 +384,7 @@ serve(async (req) => {
       status: result.success ? 200 : 400,
       headers: {
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
+        ...corsHeaders(req),
       },
     })
   } catch (err) {
@@ -392,7 +392,7 @@ serve(async (req) => {
       status: 500,
       headers: {
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
+        ...corsHeaders(req),
       },
     })
   }

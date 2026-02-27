@@ -5,8 +5,23 @@ import type { QueueItem } from '@/hooks/useParty'
 import { getContentTypeBadge } from '@/utils/contentHelpers'
 import { getQueueItemTitle, getQueueItemSubtitle } from '@/utils/queueHelpers'
 import { isItemOverdue } from '@/utils/dateHelpers'
-import { DndContext, closestCenter, DragOverlay, type DragStartEvent, type DragEndEvent } from '@dnd-kit/core'
-import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
+import {
+  DndContext,
+  closestCenter,
+  DragOverlay,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragStartEvent,
+  type DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+} from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { DragIcon, EditIcon, CheckCircleIcon, ClockIcon, AlertIcon, PlusIcon } from '@/components/icons'
 
@@ -64,6 +79,7 @@ const QueueListItem = memo(function QueueListItem({
       ref={setNodeRef}
       style={style}
       onClick={handleClick}
+      aria-roledescription="sortable"
       className={`queue-item cursor-pointer active:bg-surface-700 ${item.isCompleted ? 'opacity-60' : ''} ${isDragging ? 'z-10' : ''} ${isOverlay ? 'shadow-2xl bg-surface-800 rounded-lg' : ''}`}
     >
       {/* Completion checkbox for notes, drag handle for other types */}
@@ -156,6 +172,13 @@ export function QueueList({
 }: QueueListProps) {
   const [activeId, setActiveId] = useState<string | null>(null)
 
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  )
+
   const handleDragStart = useCallback((event: DragStartEvent) => {
     setActiveId(event.active.id as string)
   }, [])
@@ -200,6 +223,7 @@ export function QueueList({
       </div>
 
       <DndContext
+        sensors={onReorder ? sensors : undefined}
         collisionDetection={closestCenter}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}

@@ -3,6 +3,7 @@ import type { Screen } from '../../types'
 import { supabase, getSessionId } from '../../lib/supabase'
 import { logger } from '../../lib/logger'
 import { ChevronLeftIcon } from '../icons'
+import { HistorySkeleton } from '../ui/HistorySkeleton'
 
 const log = logger.createLogger('History')
 
@@ -18,91 +19,136 @@ export function HistoryScreen({ onNavigate }: { onNavigate: (screen: Screen) => 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [parties, setParties] = useState<PartyHistoryItem[]>([])
+  const [hasMore, setHasMore] = useState(true)
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
+  const [cursor, setCursor] = useState<string | null>(null)
+
+  const PAGE_SIZE = 10
+
+  async function fetchHistory(cursorValue?: string | null): Promise<PartyHistoryItem[]> {
+    const sessionId = getSessionId()
+
+    // Build the query — fetch PAGE_SIZE + 1 to detect if there are more
+    let query = supabase
+      .from('party_members')
+      .select(
+        `
+            party_id,
+            joined_at,
+            parties (id, code, name, created_at)
+          `,
+      )
+      .eq('session_id', sessionId)
+      .order('joined_at', { ascending: false })
+      .limit(PAGE_SIZE + 1)
+
+    if (cursorValue) {
+      query = query.lt('joined_at', cursorValue)
+    }
+
+    const { data: memberData, error: memberError } = await query
+
+    if (memberError) {
+      throw memberError
+    }
+
+    if (!memberData || memberData.length === 0) {
+      setHasMore(false)
+      return []
+    }
+
+    // Determine if there are more pages
+    if (memberData.length > PAGE_SIZE) {
+      setHasMore(true)
+      memberData.pop()
+    } else {
+      setHasMore(false)
+    }
+
+    // Update cursor to the joined_at of the last item in this page
+    if (memberData.length > 0) {
+      setCursor(memberData[memberData.length - 1].joined_at)
+    }
+
+    // Get unique party IDs
+    const partyIds = memberData.map((m) => m.party_id)
+
+    // Get member counts for each party
+    const { data: memberCounts, error: countError } = await supabase
+      .from('party_members')
+      .select('party_id')
+      .in('party_id', partyIds)
+
+    if (countError) {
+      throw countError
+    }
+
+    // Get item counts for each party
+    const { data: itemCounts, error: itemError } = await supabase
+      .from('queue_items')
+      .select('party_id')
+      .in('party_id', partyIds)
+
+    if (itemError) {
+      throw itemError
+    }
+
+    // Count members per party
+    const memberCountMap: Record<string, number> = {}
+    memberCounts?.forEach((m) => {
+      memberCountMap[m.party_id] = (memberCountMap[m.party_id] || 0) + 1
+    })
+
+    // Count items per party
+    const itemCountMap: Record<string, number> = {}
+    itemCounts?.forEach((i) => {
+      itemCountMap[i.party_id] = (itemCountMap[i.party_id] || 0) + 1
+    })
+
+    // Format the data
+    const formattedParties: PartyHistoryItem[] = memberData
+      .filter((m) => m.parties)
+      .map((m) => {
+        const party = m.parties as unknown as { id: string; code: string; name: string | null; created_at: string }
+        const createdAt = new Date(party.created_at)
+        const dateStr = createdAt.toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+        })
+        return {
+          id: party.id,
+          name: party.name || `Party ${party.code}`,
+          date: dateStr,
+          members: memberCountMap[party.id] || 1,
+          items: itemCountMap[party.id] || 0,
+        }
+      })
+
+    return formattedParties
+  }
+
+  const loadMore = async () => {
+    if (isLoadingMore || !hasMore || !cursor) return
+    setIsLoadingMore(true)
+    try {
+      const nextPage = await fetchHistory(cursor)
+      setParties((prev) => [...prev, ...nextPage])
+    } catch (err) {
+      log.error('Failed to load more party history', err)
+      setError('Failed to load more party history')
+    } finally {
+      setIsLoadingMore(false)
+    }
+  }
 
   useEffect(() => {
     async function fetchPartyHistory() {
       try {
         setLoading(true)
         setError(null)
-        const sessionId = getSessionId()
-
-        // Fetch parties the user has joined
-        const { data: memberData, error: memberError } = await supabase
-          .from('party_members')
-          .select(`
-            party_id,
-            joined_at,
-            parties (id, code, name, created_at)
-          `)
-          .eq('session_id', sessionId)
-          .order('joined_at', { ascending: false })
-          .limit(10)
-
-        if (memberError) {
-          throw memberError
-        }
-
-        if (!memberData || memberData.length === 0) {
-          setParties([])
-          return
-        }
-
-        // Get unique party IDs
-        const partyIds = memberData.map(m => m.party_id)
-
-        // Get member counts for each party
-        const { data: memberCounts, error: countError } = await supabase
-          .from('party_members')
-          .select('party_id')
-          .in('party_id', partyIds)
-
-        if (countError) {
-          throw countError
-        }
-
-        // Get item counts for each party
-        const { data: itemCounts, error: itemError } = await supabase
-          .from('queue_items')
-          .select('party_id')
-          .in('party_id', partyIds)
-
-        if (itemError) {
-          throw itemError
-        }
-
-        // Count members per party
-        const memberCountMap: Record<string, number> = {}
-        memberCounts?.forEach(m => {
-          memberCountMap[m.party_id] = (memberCountMap[m.party_id] || 0) + 1
-        })
-
-        // Count items per party
-        const itemCountMap: Record<string, number> = {}
-        itemCounts?.forEach(i => {
-          itemCountMap[i.party_id] = (itemCountMap[i.party_id] || 0) + 1
-        })
-
-        // Format the data
-        const formattedParties: PartyHistoryItem[] = memberData
-          .filter(m => m.parties)
-          .map(m => {
-            const party = m.parties as unknown as { id: string; code: string; name: string | null; created_at: string }
-            const createdAt = new Date(party.created_at)
-            const dateStr = createdAt.toLocaleDateString('en-US', {
-              month: 'short',
-              day: 'numeric',
-              year: 'numeric'
-            })
-            return {
-              id: party.id,
-              name: party.name || `Party ${party.code}`,
-              date: dateStr,
-              members: memberCountMap[party.id] || 1,
-              items: itemCountMap[party.id] || 0
-            }
-          })
-
-        setParties(formattedParties)
+        const initialParties = await fetchHistory()
+        setParties(initialParties)
       } catch (err) {
         log.error('Failed to fetch party history', err)
         setError('Failed to load party history')
@@ -112,6 +158,7 @@ export function HistoryScreen({ onNavigate }: { onNavigate: (screen: Screen) => 
     }
 
     fetchPartyHistory()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   return (
@@ -131,11 +178,7 @@ export function HistoryScreen({ onNavigate }: { onNavigate: (screen: Screen) => 
         Your past watch sessions
       </p>
 
-      {loading && (
-        <div className="flex justify-center py-12">
-          <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full"></div>
-        </div>
-      )}
+      {loading && <HistorySkeleton />}
 
       {error && (
         <div className="card p-4 text-center text-red-400 animate-fade-in-up delay-150">
@@ -171,6 +214,15 @@ export function HistoryScreen({ onNavigate }: { onNavigate: (screen: Screen) => 
               </div>
             </div>
           ))}
+          {hasMore && (
+            <button
+              onClick={loadMore}
+              disabled={isLoadingMore}
+              className="w-full py-3 text-sm font-medium text-purple-400 hover:text-purple-300 transition-colors disabled:opacity-50"
+            >
+              {isLoadingMore ? 'Loading...' : 'Load more'}
+            </button>
+          )}
         </div>
       )}
     </div>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { usePartyContext } from '@/contexts/PartyContext'
 import { getQueueItemTitle } from '@/utils/queueHelpers'
@@ -17,6 +17,8 @@ export default function TVModeClient() {
 
   const { queue, members, partyInfo, advanceQueue } = usePartyContext()
   const [lightboxImage, setLightboxImage] = useState<{ url: string; caption?: string } | null>(null)
+  const [autoAdvance, setAutoAdvance] = useState(false)
+  const [intervalSeconds, setIntervalSeconds] = useState(30)
 
   const sessionId = getSessionId()
   const isHost = partyInfo?.hostSessionId === sessionId
@@ -29,6 +31,16 @@ export default function TVModeClient() {
   const handleExit = () => {
     router.push(`/party/${partyId}`)
   }
+
+  useEffect(() => {
+    if (!autoAdvance || !isHost || !hasNext) return
+
+    const timer = setInterval(() => {
+      advanceQueue()
+    }, intervalSeconds * 1000)
+
+    return () => clearInterval(timer)
+  }, [autoAdvance, intervalSeconds, isHost, hasNext, advanceQueue])
 
   return (
     <div data-testid="tv-mode-root" className="min-h-screen bg-black flex flex-col">
@@ -173,7 +185,31 @@ export default function TVModeClient() {
 
           {/* Host playback controls */}
           {isHost && (currentItem || hasNext) && (
-            <div className="flex-shrink-0">
+            <div className="flex-shrink-0 flex items-center gap-3">
+              <button
+                onClick={() => setAutoAdvance(!autoAdvance)}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
+                  autoAdvance ? 'bg-green-600 text-white' : 'bg-white/10 text-white/70 hover:bg-white/20'
+                }`}
+                aria-label={autoAdvance ? 'Disable auto-advance' : 'Enable auto-advance'}
+              >
+                {autoAdvance ? 'Auto \u25CF' : 'Auto'}
+              </button>
+              {autoAdvance && (
+                <select
+                  value={intervalSeconds}
+                  onChange={(e) => setIntervalSeconds(Number(e.target.value))}
+                  className="bg-white/10 text-white text-sm rounded-lg px-2 py-1.5 border border-white/20"
+                  aria-label="Auto-advance interval"
+                >
+                  <option value={10}>10s</option>
+                  <option value={15}>15s</option>
+                  <option value={30}>30s</option>
+                  <option value={60}>1m</option>
+                  <option value={120}>2m</option>
+                  <option value={300}>5m</option>
+                </select>
+              )}
               <button
                 onClick={advanceQueue}
                 disabled={!hasNext && !currentItem}

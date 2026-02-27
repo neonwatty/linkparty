@@ -20,6 +20,13 @@ vi.mock('@/lib/csrf', () => ({
   validateOrigin: vi.fn(() => true),
 }))
 
+vi.mock('@/lib/serverRateLimit', () => ({
+  createRateLimiter: () => ({
+    check: () => ({ limited: false, retryAfterMs: 0 }),
+    _store: new Map(),
+  }),
+}))
+
 // Now import the route handler and mocked modules
 import { POST } from './route'
 import { validateOrigin } from '@/lib/csrf'

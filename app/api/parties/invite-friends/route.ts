@@ -2,11 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { sendPartyInvitation } from '@/lib/email'
 import { validateOrigin } from '@/lib/csrf'
+import { MAX_FRIEND_INVITES } from '@/lib/partyLimits'
 
 export const dynamic = 'force-dynamic'
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-const MAX_FRIENDS = 20
 
 export async function POST(request: NextRequest) {
   try {
@@ -46,8 +46,11 @@ export async function POST(request: NextRequest) {
     if (!Array.isArray(friendIds) || friendIds.length === 0) {
       return NextResponse.json({ error: 'friendIds must be a non-empty array' }, { status: 400 })
     }
-    if (friendIds.length > MAX_FRIENDS) {
-      return NextResponse.json({ error: `Cannot invite more than ${MAX_FRIENDS} friends at once` }, { status: 400 })
+    if (friendIds.length > MAX_FRIEND_INVITES) {
+      return NextResponse.json(
+        { error: `Cannot invite more than ${MAX_FRIEND_INVITES} friends at once` },
+        { status: 400 },
+      )
     }
     if (!friendIds.every((id: unknown) => typeof id === 'string' && UUID_REGEX.test(id))) {
       return NextResponse.json({ error: 'Invalid friendIds format' }, { status: 400 })

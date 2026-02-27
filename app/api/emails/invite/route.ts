@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { sendPartyInvitation } from '@/lib/email'
 import { validateOrigin } from '@/lib/csrf'
+import { createRateLimiter } from '@/lib/serverRateLimit'
+import { INVITE_RATE_LIMIT, INVITE_RATE_WINDOW_MS } from '@/lib/partyLimits'
 
 export const dynamic = 'force-dynamic'
 
@@ -13,26 +15,8 @@ interface InviteRequest {
   personalMessage?: string
 }
 
-// Rate limiting: max 10 invites per party per hour
-const rateLimitMap = new Map<string, { count: number; resetTime: number }>()
-
-function checkRateLimit(partyCode: string): boolean {
-  const now = Date.now()
-  const hourMs = 60 * 60 * 1000
-  const limit = rateLimitMap.get(partyCode)
-
-  if (!limit || now > limit.resetTime) {
-    rateLimitMap.set(partyCode, { count: 1, resetTime: now + hourMs })
-    return true
-  }
-
-  if (limit.count >= 10) {
-    return false
-  }
-
-  limit.count++
-  return true
-}
+// 10 invites per party per hour
+const rateLimiter = createRateLimiter({ maxRequests: INVITE_RATE_LIMIT, windowMs: INVITE_RATE_WINDOW_MS })
 
 // Validate email format
 function isValidEmail(email: string): boolean {
@@ -68,7 +52,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Check rate limit
-    if (!checkRateLimit(partyCode)) {
+    const { limited } = rateLimiter.check(partyCode)
+    if (limited) {
       return NextResponse.json({ error: 'Too many invitations sent. Please try again later.' }, { status: 429 })
     }
 

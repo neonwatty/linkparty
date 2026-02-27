@@ -13,7 +13,9 @@ import { validateImage, createPreviewUrl, revokePreviewUrl, deleteImage } from '
 import { UploadToast } from '../ui/UploadToast'
 import { ImageLightbox } from '../ui/ImageLightbox'
 import { ConflictToast } from '../ui/ConflictToast'
-import { PlusIcon, LoaderIcon } from '../icons'
+import { PlusIcon } from '../icons'
+import { QueueListSkeleton } from '../ui/QueueListSkeleton'
+import { PartyHeaderSkeleton } from '../ui/PartyHeaderSkeleton'
 import {
   PartyHeader,
   MembersList,
@@ -467,9 +469,11 @@ export function PartyRoomScreen({ onNavigate, partyId, partyCode, onLeaveParty }
 
   if (isLoading) {
     return (
-      <div className="container-mobile bg-surface-950 flex flex-col items-center justify-center">
-        <LoaderIcon />
-        <p className="text-text-muted mt-4">Loading party...</p>
+      <div className="container-mobile bg-surface-950 flex flex-col min-h-screen">
+        <PartyHeaderSkeleton />
+        <div className="px-4 pt-4">
+          <QueueListSkeleton />
+        </div>
       </div>
     )
   }
