@@ -3,6 +3,10 @@ import { createClient } from '@supabase/supabase-js'
 
 export const dynamic = 'force-dynamic'
 
+export async function HEAD() {
+  return new Response(null, { status: 200 })
+}
+
 export async function GET() {
   const checks: Record<string, 'ok' | 'error'> = {}
 

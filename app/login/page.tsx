@@ -63,6 +63,8 @@ export default function LoginPage() {
     setIsLoading(true)
     setError(null)
     try {
+      // Clear stale redirect from sessionStorage (legacy cleanup)
+      sessionStorage.removeItem('auth-redirect')
       const params = new URLSearchParams(window.location.search)
       const redirect = params.get('redirect') || '/'
       await signInWithGoogle(redirect)

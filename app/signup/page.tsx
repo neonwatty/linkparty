@@ -28,6 +28,11 @@ function SignupForm() {
     document.title = 'Sign Up | Link Party'
   }, [])
 
+  // Clear stale redirect from sessionStorage (legacy cleanup)
+  useEffect(() => {
+    sessionStorage.removeItem('auth-redirect')
+  }, [])
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !isLoading) {
       e.preventDefault()

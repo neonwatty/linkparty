@@ -362,6 +362,12 @@ export const AddContentModal = memo(function AddContentModal({
                     <span className="text-gray-400 text-sm">Your note</span>
                   </div>
                   <p className="text-sm">{noteText}</p>
+                  {noteDueDate && (
+                    <div className="flex items-center gap-1.5 mt-2 text-text-muted text-xs">
+                      <CalendarIcon size={12} />
+                      <span>Due: {new Date(noteDueDate).toLocaleString()}</span>
+                    </div>
+                  )}
                 </div>
               )}
 

@@ -8,7 +8,7 @@ import { tryAction } from '@/lib/rateLimit'
 const log = logger.createLogger('useImageUpload')
 
 export interface UseImageUploadOptions {
-  onSuccess?: (result: ImageUploadResult, caption?: string) => void
+  onSuccess?: (result: ImageUploadResult, caption?: string) => void | Promise<void>
   onError?: (error: string) => void
 }
 
@@ -99,14 +99,16 @@ export function useImageUpload(options: UseImageUploadOptions = {}): UseImageUpl
         const result = await uploadImage(fileToUpload, partyId)
 
         clearInterval(progressInterval)
-        setUploadProgress(100)
 
-        // Small delay to show 100% before completing
-        setTimeout(async () => {
+        // Call onSuccess (adds to queue) BEFORE showing success state
+        await onSuccess?.(result, caption)
+
+        // Only show success if onSuccess didn't throw
+        setUploadProgress(100)
+        setTimeout(() => {
           setIsUploading(false)
           setSelectedFile(null)
           lastUploadRef.current = null
-          await onSuccess?.(result, caption)
         }, 300)
       } catch (err) {
         setIsOptimizing(false)

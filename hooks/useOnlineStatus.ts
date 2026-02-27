@@ -4,17 +4,36 @@ import { useState, useEffect } from 'react'
 
 /**
  * Hook to track online/offline status
- * Returns true when online, false when offline
+ * Uses navigator.onLine + fetch probe for accuracy
  */
 export function useOnlineStatus(): boolean {
-  const [isOnline, setIsOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true)
+  const [isOnline, setIsOnline] = useState(true)
 
   useEffect(() => {
-    const handleOnline = () => setIsOnline(true)
+    const checkConnection = async () => {
+      if (!navigator.onLine) {
+        setIsOnline(false)
+        return
+      }
+      try {
+        const res = await fetch('/api/health', {
+          method: 'HEAD',
+          cache: 'no-store',
+        })
+        setIsOnline(res.ok)
+      } catch {
+        setIsOnline(false)
+      }
+    }
+
+    const handleOnline = () => {
+      checkConnection()
+    }
     const handleOffline = () => setIsOnline(false)
 
     window.addEventListener('online', handleOnline)
     window.addEventListener('offline', handleOffline)
+    checkConnection()
 
     return () => {
       window.removeEventListener('online', handleOnline)
