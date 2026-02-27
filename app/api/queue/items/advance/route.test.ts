@@ -20,9 +20,11 @@ import { POST } from './route'
 import type { NextRequest } from 'next/server'
 
 // --- Supabase chain mock ---
+// Chain: from().update().eq('id', ...).eq('party_id', ...) → result
 function createMockSupabase() {
   const eqResult = { error: null }
-  const mockEq = vi.fn(() => Promise.resolve(eqResult))
+  const mockEqPartyId = vi.fn(() => Promise.resolve(eqResult))
+  const mockEq = vi.fn(() => ({ eq: mockEqPartyId }))
   const mockUpdate = vi.fn(() => ({ eq: mockEq }))
 
   const supabase = {
@@ -31,7 +33,7 @@ function createMockSupabase() {
     })),
   }
 
-  return { supabase, mockUpdate, mockEq }
+  return { supabase, mockUpdate, mockEq, mockEqPartyId }
 }
 
 const mockRequest = {} as NextRequest
@@ -149,6 +151,7 @@ describe('Queue Items Advance API Route', () => {
     expect(mock.supabase.from).toHaveBeenCalledWith('queue_items')
     expect(mock.mockUpdate).toHaveBeenCalledWith({ status: 'shown' })
     expect(mock.mockEq).toHaveBeenCalledWith('id', 'show-item-1')
+    expect(mock.mockEqPartyId).toHaveBeenCalledWith('party_id', 'party-1')
   })
 
   it('marks pending item as showing', async () => {
@@ -166,6 +169,7 @@ describe('Queue Items Advance API Route', () => {
 
     expect(mock.mockUpdate).toHaveBeenCalledWith({ status: 'showing' })
     expect(mock.mockEq).toHaveBeenCalledWith('id', 'pending-item-1')
+    expect(mock.mockEqPartyId).toHaveBeenCalledWith('party_id', 'party-1')
   })
 
   it('handles both transitions at once', async () => {
@@ -192,6 +196,7 @@ describe('Queue Items Advance API Route', () => {
     expect(mock.mockUpdate).toHaveBeenCalledWith({ status: 'showing' })
     expect(mock.mockEq).toHaveBeenCalledWith('id', 'show-item-1')
     expect(mock.mockEq).toHaveBeenCalledWith('id', 'pending-item-1')
+    expect(mock.mockEqPartyId).toHaveBeenCalledWith('party_id', 'party-1')
   })
 
   it('DB update failure on showing item returns 500', async () => {
@@ -201,7 +206,7 @@ describe('Queue Items Advance API Route', () => {
       body: { partyId: 'party-1', sessionId: 'session-1', showingItemId: 'show-item-1' },
       error: undefined,
     })
-    mock.mockEq.mockReturnValue(Promise.resolve({ error: { message: 'DB write failed' } } as never))
+    mock.mockEqPartyId.mockReturnValue(Promise.resolve({ error: { message: 'DB write failed' } } as never))
 
     const response = await POST(mockRequest)
     expect(response.status).toBe(500)
@@ -216,7 +221,7 @@ describe('Queue Items Advance API Route', () => {
       body: { partyId: 'party-1', sessionId: 'session-1', firstPendingItemId: 'pending-item-1' },
       error: undefined,
     })
-    mock.mockEq.mockReturnValue(Promise.resolve({ error: { message: 'DB write failed' } } as never))
+    mock.mockEqPartyId.mockReturnValue(Promise.resolve({ error: { message: 'DB write failed' } } as never))
 
     const response = await POST(mockRequest)
     expect(response.status).toBe(500)

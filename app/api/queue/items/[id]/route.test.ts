@@ -20,9 +20,11 @@ import { PATCH, DELETE } from './route'
 import type { NextRequest } from 'next/server'
 
 // --- Supabase chain mock ---
+// Chain: from().update().eq('id', ...).eq('party_id', ...) → result
 function createMockSupabase() {
   const eqResult = { error: null }
-  const mockEq = vi.fn(() => Promise.resolve(eqResult))
+  const mockEqPartyId = vi.fn(() => Promise.resolve(eqResult))
+  const mockEq = vi.fn(() => ({ eq: mockEqPartyId }))
   const mockUpdate = vi.fn(() => ({ eq: mockEq }))
   const mockDelete = vi.fn(() => ({ eq: mockEq }))
 
@@ -33,7 +35,7 @@ function createMockSupabase() {
     })),
   }
 
-  return { supabase, mockUpdate, mockDelete, mockEq, eqResult }
+  return { supabase, mockUpdate, mockDelete, mockEq, mockEqPartyId, eqResult }
 }
 
 const mockRequest = {} as NextRequest
@@ -165,6 +167,7 @@ describe('Queue Items [id] API Route', () => {
       expect(mock.supabase.from).toHaveBeenCalledWith('queue_items')
       expect(mock.mockUpdate).toHaveBeenCalledWith({ position: 5 })
       expect(mock.mockEq).toHaveBeenCalledWith('id', 'item-123')
+      expect(mock.mockEqPartyId).toHaveBeenCalledWith('party_id', 'party-1')
     })
 
     it('updateNote: successful update', async () => {
@@ -181,6 +184,7 @@ describe('Queue Items [id] API Route', () => {
       expect(json.success).toBe(true)
 
       expect(mock.mockUpdate).toHaveBeenCalledWith({ note_content: 'Updated note' })
+      expect(mock.mockEqPartyId).toHaveBeenCalledWith('party_id', 'party-1')
     })
 
     it('toggleComplete: successful toggle on (sets completed_at and completed_by_user_id)', async () => {
@@ -257,8 +261,8 @@ describe('Queue Items [id] API Route', () => {
     it('DB update failure returns 500', async () => {
       const mock = createMockSupabase()
       setupHappyPath(mock)
-      // Make eq return an error
-      mock.mockEq.mockReturnValue(Promise.resolve({ error: { message: 'DB write failed' } } as never))
+      // Make the final eq (party_id filter) return an error
+      mock.mockEqPartyId.mockReturnValue(Promise.resolve({ error: { message: 'DB write failed' } } as never))
 
       const response = await PATCH(mockRequest, mockParams)
       expect(response.status).toBe(500)
@@ -296,6 +300,7 @@ describe('Queue Items [id] API Route', () => {
       expect(mock.supabase.from).toHaveBeenCalledWith('queue_items')
       expect(mock.mockDelete).toHaveBeenCalled()
       expect(mock.mockEq).toHaveBeenCalledWith('id', 'item-123')
+      expect(mock.mockEqPartyId).toHaveBeenCalledWith('party_id', 'party-1')
     })
 
     it('DB delete failure returns 500', async () => {
@@ -305,7 +310,7 @@ describe('Queue Items [id] API Route', () => {
         body: { partyId: 'party-1', sessionId: 'session-1' },
         error: undefined,
       })
-      mock.mockEq.mockReturnValue(Promise.resolve({ error: { message: 'DB delete failed' } } as never))
+      mock.mockEqPartyId.mockReturnValue(Promise.resolve({ error: { message: 'DB delete failed' } } as never))
 
       const response = await DELETE(mockRequest, mockParams)
       expect(response.status).toBe(500)
