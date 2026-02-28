@@ -1,13 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 // Mock supabase module
+const mockSetDisplayName = vi.fn()
 vi.mock('@/lib/supabase', () => ({
   supabase: {
     auth: {
       getUser: vi.fn(),
+      updateUser: vi.fn().mockResolvedValue({ data: {}, error: null }),
     },
     from: vi.fn(),
   },
+  setDisplayName: (...args: unknown[]) => mockSetDisplayName(...args),
 }))
 
 import { supabase } from '@/lib/supabase'
@@ -72,6 +75,40 @@ describe('profile', () => {
       mockGetUser.mockResolvedValue({ data: { user: null } })
       const result = await updateProfile({ display_name: 'New' })
       expect(result.error).toBe('Not authenticated')
+    })
+
+    it('syncs display_name to localStorage and user_metadata on success', async () => {
+      mockGetUser.mockResolvedValue({ data: { user: { id: 'user-1' } } })
+      mockFrom.mockReturnValue({
+        update: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            select: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({ data: { id: 'user-1', display_name: 'NewName' }, error: null }),
+            }),
+          }),
+        }),
+      })
+      const result = await updateProfile({ display_name: 'NewName' })
+      expect(result.error).toBeNull()
+      expect(mockSetDisplayName).toHaveBeenCalledWith('NewName')
+      expect(supabase.auth.updateUser).toHaveBeenCalledWith({ data: { display_name: 'NewName' } })
+    })
+
+    it('does not sync display_name when not in updates', async () => {
+      mockGetUser.mockResolvedValue({ data: { user: { id: 'user-1' } } })
+      mockFrom.mockReturnValue({
+        update: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            select: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({ data: { id: 'user-1', avatar_value: '🦊' }, error: null }),
+            }),
+          }),
+        }),
+      })
+      const result = await updateProfile({ avatar_value: '🦊' })
+      expect(result.error).toBeNull()
+      expect(mockSetDisplayName).not.toHaveBeenCalled()
+      expect(supabase.auth.updateUser).not.toHaveBeenCalled()
     })
 
     it('returns username taken error on unique violation', async () => {

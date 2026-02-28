@@ -656,7 +656,14 @@ export function useParty(partyId: string | null) {
           throw new Error(errorData.error || 'Failed to add item to queue')
         }
 
-        // Clear syncing state (real-time subscription will update with real ID)
+        // Replace temp ID with real ID from API response so subsequent
+        // operations (delete, update) use a valid UUID instead of "temp-..."
+        const responseData = await apiResponse.json()
+        if (responseData.item?.id) {
+          setQueue((prev) => prev.map((q) => (q.id === tempId ? { ...q, id: responseData.item.id } : q)))
+        }
+
+        // Clear syncing state
         setSyncingItemIds((prev) => {
           const next = new Set(prev)
           next.delete(tempId)

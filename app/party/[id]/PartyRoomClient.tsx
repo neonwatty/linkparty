@@ -257,10 +257,11 @@ export default function PartyRoomClient() {
           await deleteImage(selectedItem.imageStoragePath)
         }
         await deleteItem(selectedItem.id)
-        setShowDeleteConfirm(false)
-        setSelectedItem(null)
       } catch (err) {
         log.error('Failed to delete item', err)
+      } finally {
+        setShowDeleteConfirm(false)
+        setSelectedItem(null)
       }
     }
   }

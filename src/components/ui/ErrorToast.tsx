@@ -25,9 +25,9 @@ export function ErrorToast({
   }, [autoDismissMs, onDismiss])
 
   return (
-    <div className="fixed bottom-6 left-4 right-4 z-50 animate-fade-in-up">
+    <div className="fixed bottom-6 left-4 right-4 z-50 animate-fade-in-up pointer-events-none">
       <div
-        className="bg-red-500/90 backdrop-blur-sm text-white px-4 py-3 rounded-xl shadow-lg max-w-sm mx-auto"
+        className="bg-red-500/90 backdrop-blur-sm text-white px-4 py-3 rounded-xl shadow-lg max-w-sm mx-auto pointer-events-auto"
         role="alert"
         aria-live="assertive"
       >

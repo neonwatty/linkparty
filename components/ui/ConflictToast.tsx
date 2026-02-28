@@ -28,9 +28,9 @@ export function ConflictToast({ conflicts, onDismiss }: ConflictToastProps) {
   }
 
   return (
-    <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 animate-fade-in-up">
+    <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 animate-fade-in-up pointer-events-none">
       <div
-        className="bg-amber-500/90 backdrop-blur-sm text-black px-4 py-3 rounded-xl shadow-lg flex items-center gap-3 max-w-sm"
+        className="bg-amber-500/90 backdrop-blur-sm text-black px-4 py-3 rounded-xl shadow-lg flex items-center gap-3 max-w-sm pointer-events-auto"
         role="alert"
         aria-live="polite"
       >
