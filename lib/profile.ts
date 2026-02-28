@@ -1,6 +1,6 @@
 'use client'
 
-import { supabase } from '@/lib/supabase'
+import { supabase, setDisplayName } from '@/lib/supabase'
 import { validateDisplayName } from '@/lib/validation'
 
 export interface UserProfile {
@@ -59,6 +59,13 @@ export async function updateProfile(updates: {
       return { data: null, error: 'Username must be 3-20 characters, lowercase letters, numbers, and underscores only' }
     return { data: null, error: error.message }
   }
+
+  // Sync display_name to auth user_metadata and localStorage so other pages (e.g. /create) can read it
+  if (updates.display_name) {
+    setDisplayName(updates.display_name)
+    await supabase.auth.updateUser({ data: { display_name: updates.display_name } })
+  }
+
   return { data: data as UserProfile, error: null }
 }
 
