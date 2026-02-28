@@ -48,8 +48,10 @@ describe('Friends Request API Route', () => {
       if (table === 'user_blocks') {
         return {
           select: vi.fn(() => ({
-            or: vi.fn(() => ({
-              limit: vi.fn(() => Promise.resolve({ data: [], error: null })),
+            eq: vi.fn(() => ({
+              eq: vi.fn(() => ({
+                limit: vi.fn(() => Promise.resolve({ data: [], error: null })),
+              })),
             })),
           })),
         }
@@ -66,7 +68,9 @@ describe('Friends Request API Route', () => {
       if (table === 'friendships') {
         return {
           select: vi.fn(() => ({
-            or: vi.fn(() => Promise.resolve({ data: [], error: null })),
+            eq: vi.fn(() => ({
+              eq: vi.fn(() => Promise.resolve({ data: [], error: null })),
+            })),
           })),
           insert: vi.fn(() => ({
             select: vi.fn(() => ({
@@ -187,8 +191,10 @@ describe('Friends Request API Route', () => {
         if (table === 'user_blocks') {
           return {
             select: vi.fn(() => ({
-              or: vi.fn(() => ({
-                limit: vi.fn(() => Promise.resolve({ data: [{ id: 'block-1' }], error: null })),
+              eq: vi.fn(() => ({
+                eq: vi.fn(() => ({
+                  limit: vi.fn(() => Promise.resolve({ data: [{ id: 'block-1' }], error: null })),
+                })),
               })),
             })),
           }
@@ -207,8 +213,10 @@ describe('Friends Request API Route', () => {
         if (table === 'user_blocks') {
           return {
             select: vi.fn(() => ({
-              or: vi.fn(() => ({
-                limit: vi.fn(() => Promise.resolve({ data: [], error: null })),
+              eq: vi.fn(() => ({
+                eq: vi.fn(() => ({
+                  limit: vi.fn(() => Promise.resolve({ data: [], error: null })),
+                })),
               })),
             })),
           }
@@ -236,8 +244,10 @@ describe('Friends Request API Route', () => {
         if (table === 'user_blocks') {
           return {
             select: vi.fn(() => ({
-              or: vi.fn(() => ({
-                limit: vi.fn(() => Promise.resolve({ data: [], error: null })),
+              eq: vi.fn(() => ({
+                eq: vi.fn(() => ({
+                  limit: vi.fn(() => Promise.resolve({ data: [], error: null })),
+                })),
               })),
             })),
           }
@@ -254,12 +264,14 @@ describe('Friends Request API Route', () => {
         if (table === 'friendships') {
           return {
             select: vi.fn(() => ({
-              or: vi.fn(() =>
-                Promise.resolve({
-                  data: [{ status: 'accepted', user_id: USER_UUID, friend_id: VALID_UUID }],
-                  error: null,
-                }),
-              ),
+              eq: vi.fn(() => ({
+                eq: vi.fn(() =>
+                  Promise.resolve({
+                    data: [{ status: 'accepted', user_id: USER_UUID, friend_id: VALID_UUID }],
+                    error: null,
+                  }),
+                ),
+              })),
             })),
           }
         }
@@ -277,8 +289,10 @@ describe('Friends Request API Route', () => {
         if (table === 'user_blocks') {
           return {
             select: vi.fn(() => ({
-              or: vi.fn(() => ({
-                limit: vi.fn(() => Promise.resolve({ data: [], error: null })),
+              eq: vi.fn(() => ({
+                eq: vi.fn(() => ({
+                  limit: vi.fn(() => Promise.resolve({ data: [], error: null })),
+                })),
               })),
             })),
           }
@@ -295,12 +309,14 @@ describe('Friends Request API Route', () => {
         if (table === 'friendships') {
           return {
             select: vi.fn(() => ({
-              or: vi.fn(() =>
-                Promise.resolve({
-                  data: [{ status: 'pending', user_id: USER_UUID, friend_id: VALID_UUID }],
-                  error: null,
-                }),
-              ),
+              eq: vi.fn(() => ({
+                eq: vi.fn(() =>
+                  Promise.resolve({
+                    data: [{ status: 'pending', user_id: USER_UUID, friend_id: VALID_UUID }],
+                    error: null,
+                  }),
+                ),
+              })),
             })),
           }
         }
@@ -318,8 +334,10 @@ describe('Friends Request API Route', () => {
         if (table === 'user_blocks') {
           return {
             select: vi.fn(() => ({
-              or: vi.fn(() => ({
-                limit: vi.fn(() => Promise.resolve({ data: [], error: null })),
+              eq: vi.fn(() => ({
+                eq: vi.fn(() => ({
+                  limit: vi.fn(() => Promise.resolve({ data: [], error: null })),
+                })),
               })),
             })),
           }
@@ -336,12 +354,14 @@ describe('Friends Request API Route', () => {
         if (table === 'friendships') {
           return {
             select: vi.fn(() => ({
-              or: vi.fn(() =>
-                Promise.resolve({
-                  data: [{ status: 'pending', user_id: VALID_UUID, friend_id: USER_UUID }],
-                  error: null,
-                }),
-              ),
+              eq: vi.fn(() => ({
+                eq: vi.fn(() =>
+                  Promise.resolve({
+                    data: [{ status: 'pending', user_id: VALID_UUID, friend_id: USER_UUID }],
+                    error: null,
+                  }),
+                ),
+              })),
             })),
           }
         }
@@ -359,8 +379,10 @@ describe('Friends Request API Route', () => {
         if (table === 'user_blocks') {
           return {
             select: vi.fn(() => ({
-              or: vi.fn(() => ({
-                limit: vi.fn(() => Promise.resolve({ data: [], error: null })),
+              eq: vi.fn(() => ({
+                eq: vi.fn(() => ({
+                  limit: vi.fn(() => Promise.resolve({ data: [], error: null })),
+                })),
               })),
             })),
           }
@@ -377,7 +399,9 @@ describe('Friends Request API Route', () => {
         if (table === 'friendships') {
           return {
             select: vi.fn(() => ({
-              or: vi.fn(() => Promise.resolve({ data: [], error: null })),
+              eq: vi.fn(() => ({
+                eq: vi.fn(() => Promise.resolve({ data: [], error: null })),
+              })),
             })),
             insert: vi.fn(() => ({
               select: vi.fn(() => ({
@@ -421,8 +445,10 @@ describe('Friends Request API Route', () => {
         if (table === 'user_blocks') {
           return {
             select: vi.fn(() => ({
-              or: vi.fn(() => ({
-                limit: vi.fn(() => Promise.resolve({ data: [], error: null })),
+              eq: vi.fn(() => ({
+                eq: vi.fn(() => ({
+                  limit: vi.fn(() => Promise.resolve({ data: [], error: null })),
+                })),
               })),
             })),
           }
@@ -439,12 +465,14 @@ describe('Friends Request API Route', () => {
         if (table === 'friendships') {
           return {
             select: vi.fn(() => ({
-              or: vi.fn(() =>
-                Promise.resolve({
-                  data: null,
-                  error: { message: 'DB error' },
-                }),
-              ),
+              eq: vi.fn(() => ({
+                eq: vi.fn(() =>
+                  Promise.resolve({
+                    data: null,
+                    error: { message: 'DB error' },
+                  }),
+                ),
+              })),
             })),
           }
         }

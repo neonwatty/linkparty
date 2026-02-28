@@ -49,6 +49,9 @@ function validatePatchBody(body: PatchBody): string | null {
       if (typeof body.noteContent !== 'string') {
         return 'Missing or invalid noteContent'
       }
+      if (body.noteContent.length > 5000) {
+        return 'noteContent exceeds maximum length of 5000 characters'
+      }
       break
     case 'toggleComplete':
       if (typeof body.isCompleted !== 'boolean') {
@@ -56,7 +59,11 @@ function validatePatchBody(body: PatchBody): string | null {
       }
       break
     case 'updateDueDate':
-      // dueDate can be a string or null — lenient validation
+      if (body.dueDate !== null && body.dueDate !== undefined) {
+        if (typeof body.dueDate !== 'string' || body.dueDate.length > 30 || !/^\d{4}-\d{2}-\d{2}/.test(body.dueDate)) {
+          return 'Invalid dueDate format (expected ISO 8601)'
+        }
+      }
       break
   }
 

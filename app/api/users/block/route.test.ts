@@ -180,7 +180,9 @@ describe('Users Block API Route', () => {
           if (table === 'friendships') {
             return {
               delete: vi.fn(() => ({
-                or: vi.fn(() => Promise.resolve({ error: null })),
+                eq: vi.fn(() => ({
+                  eq: vi.fn(() => Promise.resolve({ error: null })),
+                })),
               })),
             }
           }

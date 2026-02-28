@@ -79,15 +79,16 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if either user has blocked the other
-    const { data: blocks } = await supabase
-      .from('user_blocks')
-      .select('id')
-      .or(
-        `and(blocker_id.eq.${user.id},blocked_id.eq.${friendId}),and(blocker_id.eq.${friendId},blocked_id.eq.${user.id})`,
-      )
-      .limit(1)
+    // Use two separate parameterized queries instead of .or() with string interpolation
+    const [blocksResult1, blocksResult2] = await Promise.all([
+      supabase.from('user_blocks').select('id').eq('blocker_id', user.id).eq('blocked_id', friendId).limit(1),
+      supabase.from('user_blocks').select('id').eq('blocker_id', friendId).eq('blocked_id', user.id).limit(1),
+    ])
 
-    if (blocks && blocks.length > 0) {
+    const hasBlocks =
+      (blocksResult1.data && blocksResult1.data.length > 0) || (blocksResult2.data && blocksResult2.data.length > 0)
+
+    if (hasBlocks) {
       return NextResponse.json({ error: FRIENDS.BLOCKED }, { status: 403 })
     }
 
@@ -103,17 +104,20 @@ export async function POST(request: NextRequest) {
     }
 
     // Check for existing friendship rows in either direction
-    const { data: existing, error: existingError } = await supabase
-      .from('friendships')
-      .select('*')
-      .or(`and(user_id.eq.${user.id},friend_id.eq.${friendId}),and(user_id.eq.${friendId},friend_id.eq.${user.id})`)
+    // Use two separate parameterized queries instead of .or() with string interpolation
+    const [existingResult1, existingResult2] = await Promise.all([
+      supabase.from('friendships').select('*').eq('user_id', user.id).eq('friend_id', friendId),
+      supabase.from('friendships').select('*').eq('user_id', friendId).eq('friend_id', user.id),
+    ])
 
-    if (existingError) {
-      console.error('Failed to check existing friendships:', existingError)
+    if (existingResult1.error || existingResult2.error) {
+      console.error('Failed to check existing friendships:', existingResult1.error || existingResult2.error)
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
     }
 
-    if (existing && existing.length > 0) {
+    const existing = [...(existingResult1.data || []), ...(existingResult2.data || [])]
+
+    if (existing.length > 0) {
       for (const row of existing) {
         if (row.status === 'accepted') {
           return NextResponse.json({ error: FRIENDS.ALREADY_FRIENDS }, { status: 409 })

@@ -103,14 +103,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to block user' }, { status: 500 })
     }
 
-    // Remove any existing friendship between the two users
-    const { error: deleteError } = await supabase
-      .from('friendships')
-      .delete()
-      .or(`and(user_id.eq.${user.id},friend_id.eq.${userId}),and(user_id.eq.${userId},friend_id.eq.${user.id})`)
+    // Remove any existing friendship between the two users (both directions)
+    // Use two separate parameterized queries instead of .or() with string interpolation
+    const [deleteResult1, deleteResult2] = await Promise.all([
+      supabase.from('friendships').delete().eq('user_id', user.id).eq('friend_id', userId),
+      supabase.from('friendships').delete().eq('user_id', userId).eq('friend_id', user.id),
+    ])
 
-    if (deleteError) {
-      console.error('Failed to remove friendship after block:', deleteError)
+    if (deleteResult1.error) {
+      console.error('Failed to remove friendship after block:', deleteResult1.error)
+    }
+    if (deleteResult2.error) {
+      console.error('Failed to remove friendship after block:', deleteResult2.error)
     }
 
     return NextResponse.json({ success: true })

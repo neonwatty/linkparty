@@ -196,7 +196,9 @@ describe('friends', () => {
     it('returns none when no relationship exists', async () => {
       mockFrom.mockReturnValue({
         select: vi.fn().mockReturnValue({
-          or: vi.fn().mockResolvedValue({ data: [], error: null }),
+          eq: vi.fn().mockReturnValue({
+            eq: vi.fn().mockResolvedValue({ data: [], error: null }),
+          }),
         }),
       })
       expect(await getFriendshipStatus('user-2')).toBe('none')
@@ -205,9 +207,11 @@ describe('friends', () => {
     it('returns accepted when friends', async () => {
       mockFrom.mockReturnValue({
         select: vi.fn().mockReturnValue({
-          or: vi.fn().mockResolvedValue({
-            data: [{ id: 'fs-1', user_id: 'user-1', friend_id: 'user-2', status: 'accepted' }],
-            error: null,
+          eq: vi.fn().mockReturnValue({
+            eq: vi.fn().mockResolvedValue({
+              data: [{ id: 'fs-1', user_id: 'user-1', friend_id: 'user-2', status: 'accepted' }],
+              error: null,
+            }),
           }),
         }),
       })
@@ -217,9 +221,11 @@ describe('friends', () => {
     it('returns pending_sent when outgoing pending request', async () => {
       mockFrom.mockReturnValue({
         select: vi.fn().mockReturnValue({
-          or: vi.fn().mockResolvedValue({
-            data: [{ id: 'fs-1', user_id: 'user-1', friend_id: 'user-2', status: 'pending' }],
-            error: null,
+          eq: vi.fn().mockReturnValue({
+            eq: vi.fn().mockResolvedValue({
+              data: [{ id: 'fs-1', user_id: 'user-1', friend_id: 'user-2', status: 'pending' }],
+              error: null,
+            }),
           }),
         }),
       })
@@ -229,9 +235,11 @@ describe('friends', () => {
     it('returns pending_received when incoming pending request', async () => {
       mockFrom.mockReturnValue({
         select: vi.fn().mockReturnValue({
-          or: vi.fn().mockResolvedValue({
-            data: [{ id: 'fs-1', user_id: 'user-2', friend_id: 'user-1', status: 'pending' }],
-            error: null,
+          eq: vi.fn().mockReturnValue({
+            eq: vi.fn().mockResolvedValue({
+              data: [{ id: 'fs-1', user_id: 'user-2', friend_id: 'user-1', status: 'pending' }],
+              error: null,
+            }),
           }),
         }),
       })

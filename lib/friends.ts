@@ -155,10 +155,14 @@ export async function getFriendshipStatus(otherUserId: string): Promise<Friendsh
   } = await supabase.auth.getUser()
   if (!user) return 'none'
 
-  const { data, error } = await supabase
-    .from('friendships')
-    .select('*')
-    .or(`and(user_id.eq.${user.id},friend_id.eq.${otherUserId}),and(user_id.eq.${otherUserId},friend_id.eq.${user.id})`)
+  // Use two separate parameterized queries instead of .or() with string interpolation
+  const [result1, result2] = await Promise.all([
+    supabase.from('friendships').select('*').eq('user_id', user.id).eq('friend_id', otherUserId),
+    supabase.from('friendships').select('*').eq('user_id', otherUserId).eq('friend_id', user.id),
+  ])
+
+  const error = result1.error || result2.error
+  const data = [...(result1.data || []), ...(result2.data || [])]
 
   if (error || !data || data.length === 0) return 'none'
 
