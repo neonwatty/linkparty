@@ -20,22 +20,50 @@ import { PATCH, DELETE } from './route'
 import type { NextRequest } from 'next/server'
 
 // --- Supabase chain mock ---
-// Chain: from().update().eq('id', ...).eq('party_id', ...) → result
-function createMockSupabase() {
+// Supports two chains:
+//   select chain: from().select().eq('id').eq('party_id').single() → ownership check
+//   update chain: from().update().eq('id').eq('party_id') → mutation
+//   delete chain: from().delete().eq('id').eq('party_id') → deletion
+function createMockSupabase(ownershipData?: { added_by_session_id: string } | null) {
+  // Update/delete chain
   const eqResult = { error: null }
   const mockEqPartyId = vi.fn(() => Promise.resolve(eqResult))
   const mockEq = vi.fn(() => ({ eq: mockEqPartyId }))
   const mockUpdate = vi.fn(() => ({ eq: mockEq }))
   const mockDelete = vi.fn(() => ({ eq: mockEq }))
 
+  // Select chain for ownership check (updateNote)
+  const defaultOwnership = ownershipData === undefined ? { added_by_session_id: 'session-1' } : ownershipData
+  const mockSingle = vi.fn(() =>
+    Promise.resolve({
+      data: defaultOwnership,
+      error: defaultOwnership === null ? { message: 'Not found' } : null,
+    }),
+  )
+  const mockSelectEqPartyId = vi.fn(() => ({ single: mockSingle }))
+  const mockSelectEq = vi.fn(() => ({ eq: mockSelectEqPartyId }))
+  const mockSelect = vi.fn(() => ({ eq: mockSelectEq }))
+
   const supabase = {
     from: vi.fn(() => ({
       update: mockUpdate,
       delete: mockDelete,
+      select: mockSelect,
     })),
   }
 
-  return { supabase, mockUpdate, mockDelete, mockEq, mockEqPartyId, eqResult }
+  return {
+    supabase,
+    mockUpdate,
+    mockDelete,
+    mockEq,
+    mockEqPartyId,
+    eqResult,
+    mockSelect,
+    mockSelectEq,
+    mockSelectEqPartyId,
+    mockSingle,
+  }
 }
 
 const mockRequest = {} as NextRequest
@@ -170,8 +198,8 @@ describe('Queue Items [id] API Route', () => {
       expect(mock.mockEqPartyId).toHaveBeenCalledWith('party_id', 'party-1')
     })
 
-    it('updateNote: successful update', async () => {
-      const mock = createMockSupabase()
+    it('updateNote: successful update (owner matches)', async () => {
+      const mock = createMockSupabase({ added_by_session_id: 'session-1' })
       setupHappyPath(mock)
       vi.mocked(parseAndValidateRequest).mockResolvedValue({
         body: { partyId: 'party-1', sessionId: 'session-1', action: 'updateNote', noteContent: 'Updated note' },
@@ -183,8 +211,46 @@ describe('Queue Items [id] API Route', () => {
       const json = await response.json()
       expect(json.success).toBe(true)
 
+      // Verify ownership lookup was performed
+      expect(mock.mockSelect).toHaveBeenCalledWith('added_by_session_id')
+      expect(mock.mockSelectEq).toHaveBeenCalledWith('id', 'item-123')
+      expect(mock.mockSelectEqPartyId).toHaveBeenCalledWith('party_id', 'party-1')
+      expect(mock.mockSingle).toHaveBeenCalled()
+
       expect(mock.mockUpdate).toHaveBeenCalledWith({ note_content: 'Updated note' })
-      expect(mock.mockEqPartyId).toHaveBeenCalledWith('party_id', 'party-1')
+    })
+
+    it('updateNote: returns 403 when non-owner tries to edit', async () => {
+      const mock = createMockSupabase({ added_by_session_id: 'other-session' })
+      setupHappyPath(mock)
+      vi.mocked(parseAndValidateRequest).mockResolvedValue({
+        body: { partyId: 'party-1', sessionId: 'session-1', action: 'updateNote', noteContent: 'Hijack' },
+        error: undefined,
+      })
+
+      const response = await PATCH(mockRequest, mockParams)
+      expect(response.status).toBe(403)
+      const json = await response.json()
+      expect(json.error).toBe('You can only edit notes you created')
+
+      // Update should NOT have been called
+      expect(mock.mockUpdate).not.toHaveBeenCalled()
+    })
+
+    it('updateNote: returns 404 when queue item not found', async () => {
+      const mock = createMockSupabase(null)
+      setupHappyPath(mock)
+      vi.mocked(parseAndValidateRequest).mockResolvedValue({
+        body: { partyId: 'party-1', sessionId: 'session-1', action: 'updateNote', noteContent: 'Ghost' },
+        error: undefined,
+      })
+
+      const response = await PATCH(mockRequest, mockParams)
+      expect(response.status).toBe(404)
+      const json = await response.json()
+      expect(json.error).toBe('Queue item not found')
+
+      expect(mock.mockUpdate).not.toHaveBeenCalled()
     })
 
     it('toggleComplete: successful toggle on (sets completed_at and completed_by_user_id)', async () => {
