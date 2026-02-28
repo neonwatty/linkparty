@@ -93,6 +93,24 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const memberResult = await validateMembership(supabase, body.partyId, identity)
     if (memberResult.error) return memberResult.error
 
+    // Ownership check for note edits — only the creator can edit their notes
+    if (body.action === 'updateNote') {
+      const { data: existingItem, error: fetchError } = await supabase
+        .from('queue_items')
+        .select('added_by_session_id')
+        .eq('id', id)
+        .eq('party_id', body.partyId)
+        .single()
+
+      if (fetchError || !existingItem) {
+        return NextResponse.json({ error: 'Queue item not found' }, { status: 404 })
+      }
+
+      if (existingItem.added_by_session_id !== identity.sessionId) {
+        return NextResponse.json({ error: 'You can only edit notes you created' }, { status: 403 })
+      }
+    }
+
     // Execute the action-specific mutation
     let updateData: Record<string, unknown>
 
