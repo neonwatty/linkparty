@@ -1,9 +1,13 @@
 'use client'
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
+import { useRouter } from 'next/navigation'
 import type { AuthUser, AuthSession } from '@/lib/auth'
 import { getCurrentSession, onAuthStateChange, signOut as authSignOut } from '@/lib/auth'
 import { setDisplayName } from '@/lib/supabase'
+import { logger } from '@/lib/logger'
+
+const log = logger.createLogger('AuthContext')
 
 interface AuthContextType {
   user: AuthUser | null
@@ -16,17 +20,22 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const router = useRouter()
   const [user, setUser] = useState<AuthUser | null>(null)
   const [session, setSession] = useState<AuthSession | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     // Get initial session
-    getCurrentSession().then((session) => {
-      setSession(session)
-      setUser(session?.user ?? null)
-      setIsLoading(false)
-    })
+    getCurrentSession()
+      .then((session) => {
+        setSession(session)
+        setUser(session?.user ?? null)
+        setIsLoading(false)
+      })
+      .catch(() => {
+        setIsLoading(false)
+      })
 
     // Listen for auth changes
     const subscription = onAuthStateChange((session) => {
@@ -56,10 +65,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const handleSignOut = async () => {
-    localStorage.removeItem('link-party-session-id-owner')
-    await authSignOut()
-    setUser(null)
-    setSession(null)
+    try {
+      localStorage.removeItem('link-party-session-id-owner')
+      await authSignOut()
+    } catch (error) {
+      log.error('Sign out failed', error)
+    } finally {
+      setUser(null)
+      setSession(null)
+      router.push('/login')
+    }
   }
 
   const value: AuthContextType = {

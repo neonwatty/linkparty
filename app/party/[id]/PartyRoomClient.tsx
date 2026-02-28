@@ -118,14 +118,18 @@ export default function PartyRoomClient() {
     const ids = memberUserIdsKey.split(',')
 
     let cancelled = false
-    Promise.all(ids.map((uid) => getFriendshipStatus(uid).then((s) => [uid, s] as const))).then((results) => {
-      if (cancelled) return
-      const statuses: Record<string, FriendshipStatus> = {}
-      for (const [uid, status] of results) {
-        statuses[uid] = status
-      }
-      setFriendshipStatuses(statuses)
-    })
+    Promise.all(ids.map((uid) => getFriendshipStatus(uid).then((s) => [uid, s] as const)))
+      .then((results) => {
+        if (cancelled) return
+        const statuses: Record<string, FriendshipStatus> = {}
+        for (const [uid, status] of results) {
+          statuses[uid] = status
+        }
+        setFriendshipStatuses(statuses)
+      })
+      .catch((err) => {
+        log.error('Failed to fetch friendship statuses', err)
+      })
     return () => {
       cancelled = true
     }
@@ -290,50 +294,48 @@ export default function PartyRoomClient() {
   }
 
   // Add to queue
-  const handleAddToQueue = () => {
+  const handleAddToQueue = async () => {
     if (!detectedType) return
 
-    setAddContentStep('success')
+    try {
+      let queueItemData: Partial<QueueItem>
 
-    const doAddToQueue = async () => {
-      try {
-        let queueItemData: Partial<QueueItem>
-
-        if (detectedType === 'note') {
-          queueItemData = { noteContent: noteText, dueDate: noteDueDate || undefined }
-        } else if (fetchedPreview) {
-          queueItemData = {
-            title: fetchedPreview.title,
-            channel: fetchedPreview.channel,
-            duration: fetchedPreview.duration,
-            thumbnail: fetchedPreview.thumbnail,
-            tweetAuthor: fetchedPreview.tweetAuthor,
-            tweetHandle: fetchedPreview.tweetHandle,
-            tweetContent: fetchedPreview.tweetContent,
-            tweetTimestamp: fetchedPreview.tweetTimestamp,
-            subreddit: fetchedPreview.subreddit,
-            redditTitle: fetchedPreview.redditTitle,
-            redditBody: fetchedPreview.redditBody,
-            upvotes: fetchedPreview.upvotes,
-            commentCount: fetchedPreview.commentCount,
-          }
-        } else {
-          queueItemData = {}
+      if (detectedType === 'note') {
+        queueItemData = { noteContent: noteText, dueDate: noteDueDate || undefined }
+      } else if (fetchedPreview) {
+        queueItemData = {
+          title: fetchedPreview.title,
+          channel: fetchedPreview.channel,
+          duration: fetchedPreview.duration,
+          thumbnail: fetchedPreview.thumbnail,
+          tweetAuthor: fetchedPreview.tweetAuthor,
+          tweetHandle: fetchedPreview.tweetHandle,
+          tweetContent: fetchedPreview.tweetContent,
+          tweetTimestamp: fetchedPreview.tweetTimestamp,
+          subreddit: fetchedPreview.subreddit,
+          redditTitle: fetchedPreview.redditTitle,
+          redditBody: fetchedPreview.redditBody,
+          upvotes: fetchedPreview.upvotes,
+          commentCount: fetchedPreview.commentCount,
         }
-
-        await addToQueue({
-          type: detectedType,
-          status: queue.length === 0 ? 'showing' : 'pending',
-          addedBy: currentUserDisplayName,
-          isCompleted: false,
-          ...queueItemData,
-        })
-      } catch (err) {
-        log.error('Failed to add to queue', err)
+      } else {
+        queueItemData = {}
       }
-    }
 
-    doAddToQueue()
+      await addToQueue({
+        type: detectedType,
+        status: queue.length === 0 ? 'showing' : 'pending',
+        addedBy: currentUserDisplayName,
+        isCompleted: false,
+        ...queueItemData,
+      })
+      setAddContentStep('success')
+    } catch (err) {
+      log.error('Failed to add to queue', err)
+      setAddContentStep('input')
+      setFetchError('Failed to add item. Please try again.')
+      return
+    }
 
     setTimeout(() => {
       setShowAddContent(false)
@@ -447,9 +449,13 @@ export default function PartyRoomClient() {
 
   // Party actions
   const handleLeave = useCallback(async () => {
-    await leaveParty()
-    clearCurrentParty()
-    router.push('/')
+    try {
+      await leaveParty()
+      clearCurrentParty()
+      router.push('/')
+    } catch (err) {
+      log.error('Failed to leave party', err)
+    }
   }, [leaveParty, router])
 
   const copyToClipboard = useCallback(async (text: string) => {

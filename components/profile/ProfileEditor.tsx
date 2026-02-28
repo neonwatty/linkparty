@@ -117,10 +117,14 @@ export default function ProfileEditor() {
         return
       }
       setUsernameChecking(true)
-      checkUsernameAvailable(username).then((available) => {
-        setUsernameAvailable(available)
-        setUsernameChecking(false)
-      })
+      checkUsernameAvailable(username)
+        .then((available) => {
+          setUsernameAvailable(available)
+          setUsernameChecking(false)
+        })
+        .catch(() => {
+          setUsernameChecking(false)
+        })
     }, 500)
 
     return () => clearTimeout(timer)

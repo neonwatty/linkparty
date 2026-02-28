@@ -115,7 +115,10 @@ export async function POST(request: NextRequest) {
       invitee_email: email.toLowerCase(),
       party_code: partyCode.toUpperCase(),
     })
-    if (tokenError) console.error('Failed to create invite token:', tokenError.message)
+    if (tokenError) {
+      console.error('Failed to create invite token:', tokenError.message)
+      return NextResponse.json({ error: 'Failed to create invitation' }, { status: 500 })
+    }
 
     // Send the invitation email
     const result = await sendPartyInvitation({

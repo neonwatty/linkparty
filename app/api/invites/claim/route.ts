@@ -122,7 +122,13 @@ export async function POST(request: NextRequest) {
 
     // Mark tokens as claimed
     if (claimedTokenIds.length > 0) {
-      await supabase.from('invite_tokens').update({ claimed: true, claimed_by: user.id }).in('id', claimedTokenIds)
+      const { error: updateError } = await supabase
+        .from('invite_tokens')
+        .update({ claimed: true, claimed_by: user.id })
+        .in('id', claimedTokenIds)
+      if (updateError) {
+        console.error('Failed to mark invite tokens as claimed:', updateError.message)
+      }
     }
 
     return NextResponse.json({
