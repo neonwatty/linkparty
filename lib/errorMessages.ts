@@ -58,7 +58,8 @@ export function getUserFriendlyMessage(err: unknown): string {
     }
 
     // Return the error message if it's already user-friendly (short and clean)
-    if (err.message.length < 100 && !err.message.includes('Error:')) {
+    const technicalPatterns = /constraint|violates|duplicate key|relation|column|pkey|fkey|supabase|postgres/i
+    if (err.message.length < 100 && !err.message.includes('Error:') && !technicalPatterns.test(err.message)) {
       return err.message
     }
   }

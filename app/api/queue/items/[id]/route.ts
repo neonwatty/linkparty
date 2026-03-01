@@ -60,7 +60,12 @@ function validatePatchBody(body: PatchBody): string | null {
       break
     case 'updateDueDate':
       if (body.dueDate !== null && body.dueDate !== undefined) {
-        if (typeof body.dueDate !== 'string' || body.dueDate.length > 30 || !/^\d{4}-\d{2}-\d{2}/.test(body.dueDate)) {
+        if (
+          typeof body.dueDate !== 'string' ||
+          body.dueDate.length > 30 ||
+          !/^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d{3})?Z)?$/.test(body.dueDate) ||
+          isNaN(new Date(body.dueDate).getTime())
+        ) {
           return 'Invalid dueDate format (expected ISO 8601)'
         }
       }
