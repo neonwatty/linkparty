@@ -127,10 +127,11 @@ export async function POST(request: NextRequest) {
     if (parsed.error) return parsed.error
     const body = parsed.body
 
-    // Check rate limit (keyed on client IP to prevent spoofing)
+    // Check rate limit (keyed on IP + sessionId to prevent spoofing while allowing
+    // multiple legitimate sessions from the same IP, e.g. same household)
     const clientIp =
       request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || request.headers.get('x-real-ip') || 'unknown'
-    const { limited, retryAfterMs } = rateLimiter.check(clientIp)
+    const { limited, retryAfterMs } = rateLimiter.check(`${clientIp}:${body.sessionId}`)
     if (limited) {
       const retryAfterSec = Math.ceil(retryAfterMs / 1000)
       return NextResponse.json(

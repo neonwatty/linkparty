@@ -52,7 +52,6 @@ function createMockSupabase(overrides?: {
   const positionLimit = vi.fn().mockReturnValue({ maybeSingle: positionMaybeSingle })
   const positionOrder = vi.fn().mockReturnValue({ limit: positionLimit })
 
-  let fromCallCount = 0
   const supabase = {
     from: vi.fn(() => {
       fromCallCount++
