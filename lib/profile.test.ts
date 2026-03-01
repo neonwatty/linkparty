@@ -30,6 +30,18 @@ describe('profile', () => {
       expect(await getMyProfile()).toBeNull()
     })
 
+    it('returns null on query error', async () => {
+      mockGetUser.mockResolvedValue({ data: { user: { id: 'user-1' } } })
+      mockFrom.mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({ data: null, error: { message: 'not found' } }),
+          }),
+        }),
+      })
+      expect(await getMyProfile()).toBeNull()
+    })
+
     it('returns profile when authenticated', async () => {
       mockGetUser.mockResolvedValue({ data: { user: { id: 'user-1' } } })
       mockFrom.mockReturnValue({
@@ -125,6 +137,43 @@ describe('profile', () => {
       const result = await updateProfile({ username: 'taken' })
       expect(result.error).toBe('Username already taken')
     })
+
+    it('returns validation error for invalid display_name', async () => {
+      mockGetUser.mockResolvedValue({ data: { user: { id: 'user-1' } } })
+      const result = await updateProfile({ display_name: '' })
+      expect(result.error).toBeTruthy()
+      expect(result.data).toBeNull()
+    })
+
+    it('returns username format error on check constraint violation', async () => {
+      mockGetUser.mockResolvedValue({ data: { user: { id: 'user-1' } } })
+      mockFrom.mockReturnValue({
+        update: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            select: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({ data: null, error: { code: '23514', message: 'check' } }),
+            }),
+          }),
+        }),
+      })
+      const result = await updateProfile({ username: 'BAD!' })
+      expect(result.error).toContain('3-20 characters')
+    })
+
+    it('returns generic error for other DB errors', async () => {
+      mockGetUser.mockResolvedValue({ data: { user: { id: 'user-1' } } })
+      mockFrom.mockReturnValue({
+        update: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            select: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({ data: null, error: { code: '42000', message: 'unknown' } }),
+            }),
+          }),
+        }),
+      })
+      const result = await updateProfile({ avatar_value: '🦊' })
+      expect(result.error).toBe('Failed to update profile')
+    })
   })
 
   describe('checkUsernameAvailable', () => {
@@ -169,6 +218,26 @@ describe('profile', () => {
       })
       const results = await searchProfiles('ali')
       expect(results).toEqual([{ id: 'user-1', display_name: 'Alice', username: 'alice' }])
+    })
+
+    it('returns empty when escaped query too short', async () => {
+      // Query has enough chars but after escaping special chars, < 2 remain
+      expect(await searchProfiles('!@')).toEqual([])
+    })
+
+    it('returns empty array with null data', async () => {
+      mockFrom.mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          or: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue({
+              data: null,
+              error: null,
+            }),
+          }),
+        }),
+      })
+      const results = await searchProfiles('test')
+      expect(results).toEqual([])
     })
 
     it('returns empty array on error', async () => {
