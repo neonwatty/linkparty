@@ -65,6 +65,12 @@ vi.mock('@supabase/supabase-js', () => ({
   })),
 }))
 
+vi.mock('@/lib/serverRateLimit', () => ({
+  createRateLimiter: vi.fn(() => ({
+    check: vi.fn(() => ({ limited: false, retryAfterMs: 0 })),
+  })),
+}))
+
 vi.mock('@/lib/csrf', () => ({
   validateOrigin: vi.fn(() => true),
 }))
