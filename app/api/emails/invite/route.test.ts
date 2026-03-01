@@ -219,7 +219,7 @@ describe('Email Invite API Route', () => {
       const response = await POST(request)
       expect(response.status).toBe(500)
       const body = await response.json()
-      expect(body.error).toContain('SMTP error')
+      expect(body.error).toBe('Failed to send invitation')
     })
 
     it('returns 500 with generic message when email fails without error detail', async () => {

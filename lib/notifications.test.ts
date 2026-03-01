@@ -156,7 +156,7 @@ describe('notifications', () => {
       })
 
       const result = await markAsRead('n-999')
-      expect(result.error).toBe('Not found')
+      expect(result.error).toBe('Failed to update notification')
     })
 
     it('calls update with correct parameters', async () => {
@@ -201,7 +201,7 @@ describe('notifications', () => {
       })
 
       const result = await markAllAsRead()
-      expect(result.error).toBe('Update failed')
+      expect(result.error).toBe('Failed to update notifications')
     })
 
     it('filters by user_id and read=false', async () => {
