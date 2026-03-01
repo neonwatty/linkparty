@@ -114,3 +114,39 @@ Automated OWASP-aligned security audit. 10 categories to cover.
 
 - Security Headers (A05)
 - Data Exposure (A02)
+
+### Iteration 5 (2026-02-28)
+
+**Categories Audited:** Security Headers (A05), Data Exposure (A02)
+**Findings:** 0 (0 HIGH, 0 MEDIUM)
+**Fixed:** 0
+**Deferred:** 0
+
+#### Not Issues (False Positives)
+
+- `'unsafe-inline'` in CSP script-src/style-src — necessary for Tailwind CSS + Vercel Analytics; nonce-based CSP is a future hardening opportunity (LOW)
+- Email addresses logged in webhook handler (`app/api/webhooks/resend/route.ts`) — server-side logs only, not exposed to clients (LOW)
+- `inviterId` UUID in email invite URL query param — not PII alone, needed for post-signup friendship linking
+- Anonymous RLS fallback on queue_items SELECT — documented in migration 029, intentional for browser Realtime subscriptions
+
+#### Security Headers Present
+
+- Content-Security-Policy: comprehensive with frame-src: 'none', object-src: 'none'
+- X-Frame-Options: DENY
+- X-Content-Type-Options: nosniff
+- X-XSS-Protection: 1; mode=block
+- Referrer-Policy: strict-origin-when-cross-origin
+- Permissions-Policy: camera=(), microphone=(), geolocation=()
+- Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
+
+#### Data Protection Verified
+
+- Service role key isolated to server-side API routes
+- password_hash protected via column-level REVOKE + has_password generated column
+- No PII in URL parameters
+- API responses return minimal data, scoped to authenticated user
+- Email HTML properly escaped via escapeHtml()
+
+#### Categories Remaining
+
+- None — all 10 OWASP categories audited
