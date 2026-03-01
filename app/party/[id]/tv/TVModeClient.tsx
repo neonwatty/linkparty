@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import { useRouter, useParams } from 'next/navigation'
 import { usePartyContext } from '@/contexts/PartyContext'
 import { getQueueItemTitle } from '@/utils/queueHelpers'
@@ -58,10 +59,12 @@ export default function TVModeClient() {
       <div className="flex-1 flex items-center justify-center relative">
         {currentItem?.type === 'youtube' && (
           <>
-            <img
-              src={currentItem.thumbnail}
-              alt={currentItem.title}
-              className="w-full h-full object-cover absolute inset-0"
+            <Image
+              src={currentItem.thumbnail!}
+              alt={currentItem.title || 'YouTube thumbnail'}
+              fill
+              sizes="100vw"
+              className="object-cover"
             />
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="text-white/50 text-6xl">▶</div>
@@ -134,11 +137,16 @@ export default function TVModeClient() {
             >
               {currentItem.imageUrl ? (
                 <div className="text-center">
-                  <img
-                    src={currentItem.imageUrl}
-                    alt={currentItem.imageCaption || currentItem.imageName || 'Shared image'}
-                    className="max-w-full max-h-[70vh] object-contain rounded-2xl"
-                  />
+                  <div className="relative w-full max-w-5xl" style={{ height: '70vh' }}>
+                    <Image
+                      src={currentItem.imageUrl}
+                      alt={currentItem.imageCaption || currentItem.imageName || 'Shared image'}
+                      fill
+                      sizes="100vw"
+                      className="object-contain rounded-2xl"
+                      unoptimized
+                    />
+                  </div>
                   {currentItem.imageCaption && (
                     <p className="text-text-secondary text-xl mt-4">{currentItem.imageCaption}</p>
                   )}
@@ -236,18 +244,21 @@ export default function TVModeClient() {
                       className={`w-24 h-14 rounded-lg overflow-hidden ${badge.bg} flex items-center justify-center`}
                     >
                       {item.type === 'youtube' && item.thumbnail ? (
-                        <img
+                        <Image
                           src={item.thumbnail}
-                          alt={item.title}
+                          alt={item.title || 'YouTube thumbnail'}
+                          width={96}
+                          height={56}
                           className="w-full h-full object-cover opacity-70"
-                          loading="lazy"
                         />
                       ) : item.type === 'image' && item.imageUrl ? (
-                        <img
+                        <Image
                           src={item.imageUrl}
                           alt={item.imageCaption || item.imageName || 'Image'}
+                          width={96}
+                          height={56}
                           className="w-full h-full object-cover opacity-70"
-                          loading="lazy"
+                          unoptimized
                         />
                       ) : (
                         <span className={`${badge.color} opacity-70`}>
