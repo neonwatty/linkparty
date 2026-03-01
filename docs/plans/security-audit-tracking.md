@@ -63,3 +63,30 @@ Automated OWASP-aligned security audit. 10 categories to cover.
 - Rate Limiting (A04)
 - CSRF/Session (A07)
 - Data Exposure (A02)
+
+### Iteration 3 (2026-02-28)
+
+**Categories Audited:** Dependency Vulnerabilities (A06), Rate Limiting (A04)
+**Findings:** 2 (0 HIGH, 1 MEDIUM, 1 LOW)
+**Fixed:** 1
+**Deferred:** 1
+
+#### Fixed
+
+- [x] Missing rate limiting on friend invite endpoint `app/api/parties/invite-friends/route.ts` — added server-side rate limiter (5 requests/hour per user) with 429 response and Retry-After header (category: Rate Limiting, severity: MEDIUM)
+
+#### Deferred
+
+- [ ] 4 HIGH npm vulnerabilities in `minimatch` via `semantic-release` chain (dev-only) — fix requires breaking major version change to `semantic-release` (category: Dependency Vulnerabilities, severity: HIGH, reason: dev-only dependency, breaking change required)
+
+#### Not Issues (False Positives)
+
+- Auth callback (`app/auth/callback/page.tsx`) has no rate limiting — OAuth authorization codes are single-use and short-lived, rate limiting is unnecessary
+- All other public API endpoints already have rate limiting applied
+
+#### Categories Remaining
+
+- Authorization & Row-Level Security (A01)
+- Security Headers (A05)
+- CSRF/Session (A07)
+- Data Exposure (A02)

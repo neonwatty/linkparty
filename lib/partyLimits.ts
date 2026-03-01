@@ -47,3 +47,9 @@ export const CODE_THROTTLE_WINDOW_MS = 60_000
 
 /** Max friends that can be invited at once */
 export const MAX_FRIEND_INVITES = 20
+
+/** Rate limit: max friend invite batches per user per hour */
+export const FRIEND_INVITE_RATE_LIMIT = 5
+
+/** Rate limit window for friend invites in milliseconds (1 hour) */
+export const FRIEND_INVITE_RATE_WINDOW_MS = 60 * 60 * 1000

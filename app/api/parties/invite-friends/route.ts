@@ -2,11 +2,17 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { sendPartyInvitation } from '@/lib/email'
 import { validateOrigin } from '@/lib/csrf'
-import { MAX_FRIEND_INVITES } from '@/lib/partyLimits'
+import { MAX_FRIEND_INVITES, FRIEND_INVITE_RATE_LIMIT, FRIEND_INVITE_RATE_WINDOW_MS } from '@/lib/partyLimits'
+import { createRateLimiter } from '@/lib/serverRateLimit'
 
 export const dynamic = 'force-dynamic'
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+const rateLimiter = createRateLimiter({
+  maxRequests: FRIEND_INVITE_RATE_LIMIT,
+  windowMs: FRIEND_INVITE_RATE_WINDOW_MS,
+})
 
 export async function POST(request: NextRequest) {
   try {
@@ -34,6 +40,16 @@ export async function POST(request: NextRequest) {
     } = await supabase.auth.getUser(token)
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Rate limit by user ID
+    const { limited, retryAfterMs } = rateLimiter.check(user.id)
+    if (limited) {
+      const retryAfterSec = Math.ceil(retryAfterMs / 1000)
+      return NextResponse.json(
+        { error: 'Too many invitations. Please try again later.' },
+        { status: 429, headers: { 'Retry-After': retryAfterSec.toString() } },
+      )
     }
 
     // Parse and validate request body
