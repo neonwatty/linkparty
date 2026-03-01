@@ -17,7 +17,7 @@ import {
   validateMembership,
 } from '@/lib/apiHelpers'
 import { PATCH, DELETE } from './route'
-import type { NextRequest } from 'next/server'
+import { NextRequest } from 'next/server'
 
 // --- Supabase chain mock ---
 // Supports two chains:
@@ -66,8 +66,18 @@ function createMockSupabase(ownershipData?: { added_by_session_id: string } | nu
   }
 }
 
-const mockRequest = {} as NextRequest
 const mockParams = { params: Promise.resolve({ id: 'item-123' }) }
+
+/** Create a NextRequest with a JSON body for validation tests */
+function createRequestWithBody(body: Record<string, unknown>): NextRequest {
+  return new NextRequest('http://localhost:3000/api/queue/items/item-123', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', Origin: 'http://localhost:3000' },
+    body: JSON.stringify(body),
+  })
+}
+
+const mockRequest = {} as NextRequest
 
 describe('Queue Items [id] API Route', () => {
   beforeEach(() => {
@@ -382,6 +392,202 @@ describe('Queue Items [id] API Route', () => {
       expect(response.status).toBe(500)
       const json = await response.json()
       expect(json.error).toBe('Failed to delete item')
+    })
+  })
+
+  // ========== VALIDATION TESTS (exercise internal validators) ==========
+  describe('PATCH validation (validatePatchBody)', () => {
+    function setupValidationPassthrough() {
+      vi.mocked(parseAndValidateRequest).mockImplementation(async (request, validate) => {
+        const body = await (request as Request).json()
+        const error = validate(body)
+        if (error) return { body: undefined, error: NextResponse.json({ error }, { status: 400 }) }
+        return { body, error: undefined }
+      })
+    }
+
+    it('rejects missing partyId', async () => {
+      setupValidationPassthrough()
+      const req = createRequestWithBody({ sessionId: 's1', action: 'updateNote', noteContent: 'Hi' })
+      const response = await PATCH(req, mockParams)
+      expect(response.status).toBe(400)
+      const json = await response.json()
+      expect(json.error).toContain('partyId')
+    })
+
+    it('rejects missing sessionId', async () => {
+      setupValidationPassthrough()
+      const req = createRequestWithBody({ partyId: 'p1', action: 'updateNote', noteContent: 'Hi' })
+      const response = await PATCH(req, mockParams)
+      expect(response.status).toBe(400)
+      const json = await response.json()
+      expect(json.error).toContain('sessionId')
+    })
+
+    it('rejects missing action', async () => {
+      setupValidationPassthrough()
+      const req = createRequestWithBody({ partyId: 'p1', sessionId: 's1' })
+      const response = await PATCH(req, mockParams)
+      expect(response.status).toBe(400)
+      const json = await response.json()
+      expect(json.error).toContain('action')
+    })
+
+    it('rejects invalid action', async () => {
+      setupValidationPassthrough()
+      const req = createRequestWithBody({ partyId: 'p1', sessionId: 's1', action: 'invalidAction' })
+      const response = await PATCH(req, mockParams)
+      expect(response.status).toBe(400)
+      const json = await response.json()
+      expect(json.error).toContain('action')
+    })
+
+    it('rejects updatePosition without position', async () => {
+      setupValidationPassthrough()
+      const req = createRequestWithBody({ partyId: 'p1', sessionId: 's1', action: 'updatePosition' })
+      const response = await PATCH(req, mockParams)
+      expect(response.status).toBe(400)
+      const json = await response.json()
+      expect(json.error).toContain('position')
+    })
+
+    it('rejects updateNote without noteContent', async () => {
+      setupValidationPassthrough()
+      const req = createRequestWithBody({ partyId: 'p1', sessionId: 's1', action: 'updateNote' })
+      const response = await PATCH(req, mockParams)
+      expect(response.status).toBe(400)
+      const json = await response.json()
+      expect(json.error).toContain('noteContent')
+    })
+
+    it('rejects updateNote with noteContent exceeding 5000 chars', async () => {
+      setupValidationPassthrough()
+      const req = createRequestWithBody({
+        partyId: 'p1',
+        sessionId: 's1',
+        action: 'updateNote',
+        noteContent: 'x'.repeat(5001),
+      })
+      const response = await PATCH(req, mockParams)
+      expect(response.status).toBe(400)
+      const json = await response.json()
+      expect(json.error).toContain('5000')
+    })
+
+    it('rejects toggleComplete without isCompleted', async () => {
+      setupValidationPassthrough()
+      const req = createRequestWithBody({ partyId: 'p1', sessionId: 's1', action: 'toggleComplete' })
+      const response = await PATCH(req, mockParams)
+      expect(response.status).toBe(400)
+      const json = await response.json()
+      expect(json.error).toContain('isCompleted')
+    })
+
+    it('rejects updateDueDate with invalid format', async () => {
+      setupValidationPassthrough()
+      const req = createRequestWithBody({
+        partyId: 'p1',
+        sessionId: 's1',
+        action: 'updateDueDate',
+        dueDate: 'not-a-date',
+      })
+      const response = await PATCH(req, mockParams)
+      expect(response.status).toBe(400)
+      const json = await response.json()
+      expect(json.error).toContain('dueDate')
+    })
+
+    it('rejects updateDueDate with overly long string', async () => {
+      setupValidationPassthrough()
+      const req = createRequestWithBody({
+        partyId: 'p1',
+        sessionId: 's1',
+        action: 'updateDueDate',
+        dueDate: '2026-03-01T00:00:00.000Z-extra-padding-to-exceed-30-chars',
+      })
+      const response = await PATCH(req, mockParams)
+      expect(response.status).toBe(400)
+      const json = await response.json()
+      expect(json.error).toContain('dueDate')
+    })
+
+    it('accepts valid updateDueDate with null', async () => {
+      setupValidationPassthrough()
+      const mock = createMockSupabase()
+      vi.mocked(createServiceClient).mockReturnValue({ supabase: mock.supabase as never, error: undefined })
+      vi.mocked(validateParty).mockResolvedValue({
+        party: { id: 'p1', expires_at: new Date(Date.now() + 86400000).toISOString() },
+        error: undefined,
+      })
+      vi.mocked(getCallerIdentity).mockResolvedValue({ userId: 'u1', sessionId: 's1' })
+      vi.mocked(validateMembership).mockResolvedValue({ member: { id: 'm1' }, error: undefined })
+
+      const req = createRequestWithBody({
+        partyId: 'p1',
+        sessionId: 's1',
+        action: 'updateDueDate',
+        dueDate: null,
+      })
+      const response = await PATCH(req, mockParams)
+      expect(response.status).toBe(200)
+    })
+
+    it('accepts valid updatePosition', async () => {
+      setupValidationPassthrough()
+      const mock = createMockSupabase()
+      vi.mocked(createServiceClient).mockReturnValue({ supabase: mock.supabase as never, error: undefined })
+      vi.mocked(validateParty).mockResolvedValue({
+        party: { id: 'p1', expires_at: new Date(Date.now() + 86400000).toISOString() },
+        error: undefined,
+      })
+      vi.mocked(getCallerIdentity).mockResolvedValue({ userId: 'u1', sessionId: 's1' })
+      vi.mocked(validateMembership).mockResolvedValue({ member: { id: 'm1' }, error: undefined })
+
+      const req = createRequestWithBody({
+        partyId: 'p1',
+        sessionId: 's1',
+        action: 'updatePosition',
+        position: 3,
+      })
+      const response = await PATCH(req, mockParams)
+      expect(response.status).toBe(200)
+    })
+  })
+
+  describe('DELETE validation (validateDeleteBody)', () => {
+    function setupValidationPassthrough() {
+      vi.mocked(parseAndValidateRequest).mockImplementation(async (request, validate) => {
+        const body = await (request as Request).json()
+        const error = validate(body)
+        if (error) return { body: undefined, error: NextResponse.json({ error }, { status: 400 }) }
+        return { body, error: undefined }
+      })
+    }
+
+    it('rejects missing partyId', async () => {
+      setupValidationPassthrough()
+      const req = new NextRequest('http://localhost:3000/api/queue/items/item-123', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json', Origin: 'http://localhost:3000' },
+        body: JSON.stringify({ sessionId: 's1' }),
+      })
+      const response = await DELETE(req, mockParams)
+      expect(response.status).toBe(400)
+      const json = await response.json()
+      expect(json.error).toContain('partyId')
+    })
+
+    it('rejects missing sessionId', async () => {
+      setupValidationPassthrough()
+      const req = new NextRequest('http://localhost:3000/api/queue/items/item-123', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json', Origin: 'http://localhost:3000' },
+        body: JSON.stringify({ partyId: 'p1' }),
+      })
+      const response = await DELETE(req, mockParams)
+      expect(response.status).toBe(400)
+      const json = await response.json()
+      expect(json.error).toContain('sessionId')
     })
   })
 })

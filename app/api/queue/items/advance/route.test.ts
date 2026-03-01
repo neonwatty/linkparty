@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 
 vi.mock('@/lib/apiHelpers', () => ({
   parseAndValidateRequest: vi.fn(),
@@ -17,7 +17,6 @@ import {
   validateMembership,
 } from '@/lib/apiHelpers'
 import { POST } from './route'
-import type { NextRequest } from 'next/server'
 
 // --- Supabase chain mock ---
 // Chain: from().update().eq('id', ...).eq('party_id', ...) → result
@@ -227,5 +226,60 @@ describe('Queue Items Advance API Route', () => {
     expect(response.status).toBe(500)
     const json = await response.json()
     expect(json.error).toBe('Failed to advance queue')
+  })
+
+  // ========== VALIDATION TESTS (exercise internal validate function) ==========
+  describe('validation', () => {
+    function setupValidationPassthrough() {
+      vi.mocked(parseAndValidateRequest).mockImplementation(async (request, validate) => {
+        const body = await (request as Request).json()
+        const error = validate(body)
+        if (error) return { body: undefined, error: NextResponse.json({ error }, { status: 400 }) }
+        return { body, error: undefined }
+      })
+    }
+
+    function createReq(body: Record<string, unknown>) {
+      return new NextRequest('http://localhost:3000/api/queue/items/advance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Origin: 'http://localhost:3000' },
+        body: JSON.stringify(body),
+      })
+    }
+
+    it('rejects missing partyId', async () => {
+      setupValidationPassthrough()
+      const response = await POST(createReq({ sessionId: 's1', showingItemId: 'i1' }))
+      expect(response.status).toBe(400)
+      expect((await response.json()).error).toContain('partyId')
+    })
+
+    it('rejects missing sessionId', async () => {
+      setupValidationPassthrough()
+      const response = await POST(createReq({ partyId: 'p1', showingItemId: 'i1' }))
+      expect(response.status).toBe(400)
+      expect((await response.json()).error).toContain('sessionId')
+    })
+
+    it('rejects non-string showingItemId', async () => {
+      setupValidationPassthrough()
+      const response = await POST(createReq({ partyId: 'p1', sessionId: 's1', showingItemId: 123 }))
+      expect(response.status).toBe(400)
+      expect((await response.json()).error).toContain('showingItemId')
+    })
+
+    it('rejects non-string firstPendingItemId', async () => {
+      setupValidationPassthrough()
+      const response = await POST(createReq({ partyId: 'p1', sessionId: 's1', firstPendingItemId: true }))
+      expect(response.status).toBe(400)
+      expect((await response.json()).error).toContain('firstPendingItemId')
+    })
+
+    it('rejects when neither showingItemId nor firstPendingItemId provided', async () => {
+      setupValidationPassthrough()
+      const response = await POST(createReq({ partyId: 'p1', sessionId: 's1' }))
+      expect(response.status).toBe(400)
+      expect((await response.json()).error).toContain('At least one')
+    })
   })
 })

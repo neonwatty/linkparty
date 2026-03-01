@@ -172,6 +172,142 @@ describe('Queue Items API Route', () => {
       const body = await response.json()
       expect(body.error).toContain('Image URL')
     })
+
+    it('returns 400 for negative position', async () => {
+      const request = createRequest({
+        partyId: 'party-123',
+        sessionId: 'session-123',
+        type: 'note',
+        status: 'pending',
+        position: -1,
+        addedByName: 'Test User',
+        noteContent: 'Test note',
+      })
+
+      const response = await POST(request)
+      expect(response.status).toBe(400)
+      const body = await response.json()
+      expect(body.error).toContain('position')
+    })
+
+    it('returns 400 for non-number position', async () => {
+      const request = createRequest({
+        partyId: 'party-123',
+        sessionId: 'session-123',
+        type: 'note',
+        status: 'pending',
+        position: 'abc',
+        addedByName: 'Test User',
+        noteContent: 'Test note',
+      })
+
+      const response = await POST(request)
+      expect(response.status).toBe(400)
+      const body = await response.json()
+      expect(body.error).toContain('position')
+    })
+
+    it('returns 400 when addedByName exceeds max length', async () => {
+      const request = createRequest({
+        partyId: 'party-123',
+        sessionId: 'session-123',
+        type: 'note',
+        status: 'pending',
+        position: 0,
+        addedByName: 'x'.repeat(101),
+        noteContent: 'Test note',
+      })
+
+      const response = await POST(request)
+      expect(response.status).toBe(400)
+      const body = await response.json()
+      expect(body.error).toContain('addedByName')
+      expect(body.error).toContain('100')
+    })
+
+    it('returns 400 when noteContent exceeds max length', async () => {
+      const request = createRequest({
+        partyId: 'party-123',
+        sessionId: 'session-123',
+        type: 'note',
+        status: 'pending',
+        position: 0,
+        addedByName: 'Test User',
+        noteContent: 'x'.repeat(5001),
+      })
+
+      const response = await POST(request)
+      expect(response.status).toBe(400)
+      const body = await response.json()
+      expect(body.error).toContain('noteContent')
+      expect(body.error).toContain('5000')
+    })
+
+    it('returns 400 when title exceeds max length', async () => {
+      const request = createRequest({
+        partyId: 'party-123',
+        sessionId: 'session-123',
+        type: 'youtube',
+        status: 'pending',
+        position: 0,
+        addedByName: 'Test User',
+        title: 'x'.repeat(501),
+      })
+
+      const response = await POST(request)
+      expect(response.status).toBe(400)
+      const body = await response.json()
+      expect(body.error).toContain('title')
+      expect(body.error).toContain('500')
+    })
+
+    it('returns 400 for note with only whitespace content', async () => {
+      const request = createRequest({
+        partyId: 'party-123',
+        sessionId: 'session-123',
+        type: 'note',
+        status: 'pending',
+        position: 0,
+        addedByName: 'Test User',
+        noteContent: '   ',
+      })
+
+      const response = await POST(request)
+      expect(response.status).toBe(400)
+      const body = await response.json()
+      expect(body.error).toContain('Note content')
+    })
+
+    it('returns 400 for missing type', async () => {
+      const request = createRequest({
+        partyId: 'party-123',
+        sessionId: 'session-123',
+        status: 'pending',
+        position: 0,
+        addedByName: 'Test User',
+      })
+
+      const response = await POST(request)
+      expect(response.status).toBe(400)
+      const body = await response.json()
+      expect(body.error).toContain('type')
+    })
+
+    it('returns 400 for missing status', async () => {
+      const request = createRequest({
+        partyId: 'party-123',
+        sessionId: 'session-123',
+        type: 'note',
+        position: 0,
+        addedByName: 'Test User',
+        noteContent: 'Hello',
+      })
+
+      const response = await POST(request)
+      expect(response.status).toBe(400)
+      const body = await response.json()
+      expect(body.error).toContain('status')
+    })
   })
 
   describe('Server Configuration', () => {

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 
 vi.mock('@/lib/apiHelpers', () => ({
   parseAndValidateRequest: vi.fn(),
@@ -17,7 +17,6 @@ import {
   validateMembership,
 } from '@/lib/apiHelpers'
 import { POST } from './route'
-import type { NextRequest } from 'next/server'
 
 // --- Supabase mock with .rpc() support ---
 function createMockSupabase(rpcResult?: { error: { message: string } | null }) {
@@ -26,6 +25,15 @@ function createMockSupabase(rpcResult?: { error: { message: string } | null }) {
   const supabase = { rpc: mockRpc }
 
   return { supabase, mockRpc }
+}
+
+/** Create a NextRequest with a JSON body for validation tests */
+function createRequestWithBody(body: Record<string, unknown>): NextRequest {
+  return new NextRequest('http://localhost:3000/api/queue/items/reorder', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Origin: 'http://localhost:3000' },
+    body: JSON.stringify(body),
+  })
 }
 
 const mockRequest = {} as NextRequest
@@ -209,5 +217,89 @@ describe('Queue Items Reorder API Route', () => {
     expect(response.status).toBe(200)
     const json = await response.json()
     expect(json.success).toBe(true)
+  })
+
+  // ========== VALIDATION TESTS (exercise internal validateReorderRequest) ==========
+  describe('validation (validateReorderRequest)', () => {
+    function setupValidationPassthrough() {
+      vi.mocked(parseAndValidateRequest).mockImplementation(async (request, validate) => {
+        const body = await (request as Request).json()
+        const error = validate(body)
+        if (error) return { body: undefined, error: NextResponse.json({ error }, { status: 400 }) }
+        return { body, error: undefined }
+      })
+    }
+
+    it('rejects missing partyId', async () => {
+      setupValidationPassthrough()
+      const req = createRequestWithBody({ sessionId: 's1', updates: [{ id: 'i1', position: 0 }] })
+      const response = await POST(req)
+      expect(response.status).toBe(400)
+      const json = await response.json()
+      expect(json.error).toContain('partyId')
+    })
+
+    it('rejects non-string partyId', async () => {
+      setupValidationPassthrough()
+      const req = createRequestWithBody({ partyId: 123, sessionId: 's1', updates: [{ id: 'i1', position: 0 }] })
+      const response = await POST(req)
+      expect(response.status).toBe(400)
+      const json = await response.json()
+      expect(json.error).toContain('partyId')
+    })
+
+    it('rejects missing sessionId', async () => {
+      setupValidationPassthrough()
+      const req = createRequestWithBody({ partyId: 'p1', updates: [{ id: 'i1', position: 0 }] })
+      const response = await POST(req)
+      expect(response.status).toBe(400)
+      const json = await response.json()
+      expect(json.error).toContain('sessionId')
+    })
+
+    it('rejects missing updates', async () => {
+      setupValidationPassthrough()
+      const req = createRequestWithBody({ partyId: 'p1', sessionId: 's1' })
+      const response = await POST(req)
+      expect(response.status).toBe(400)
+      const json = await response.json()
+      expect(json.error).toContain('updates')
+    })
+
+    it('rejects empty updates array', async () => {
+      setupValidationPassthrough()
+      const req = createRequestWithBody({ partyId: 'p1', sessionId: 's1', updates: [] })
+      const response = await POST(req)
+      expect(response.status).toBe(400)
+      const json = await response.json()
+      expect(json.error).toContain('updates')
+    })
+
+    it('rejects update without id', async () => {
+      setupValidationPassthrough()
+      const req = createRequestWithBody({ partyId: 'p1', sessionId: 's1', updates: [{ position: 0 }] })
+      const response = await POST(req)
+      expect(response.status).toBe(400)
+      const json = await response.json()
+      expect(json.error).toContain('id')
+    })
+
+    it('rejects update without position', async () => {
+      setupValidationPassthrough()
+      const req = createRequestWithBody({ partyId: 'p1', sessionId: 's1', updates: [{ id: 'i1' }] })
+      const response = await POST(req)
+      expect(response.status).toBe(400)
+      const json = await response.json()
+      expect(json.error).toContain('position')
+    })
+
+    it('rejects update with non-number position', async () => {
+      setupValidationPassthrough()
+      const req = createRequestWithBody({ partyId: 'p1', sessionId: 's1', updates: [{ id: 'i1', position: 'abc' }] })
+      const response = await POST(req)
+      expect(response.status).toBe(400)
+      const json = await response.json()
+      expect(json.error).toContain('position')
+    })
   })
 })

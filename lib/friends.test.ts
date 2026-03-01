@@ -27,6 +27,10 @@ import {
   declineFriendRequest,
   cancelFriendRequest,
   removeFriend,
+  blockUser,
+  unblockUser,
+  listBlockedUsers,
+  isBlocked,
 } from './friends'
 
 const mockFrom = supabase.from as ReturnType<typeof vi.fn>
@@ -447,6 +451,309 @@ describe('friends', () => {
       })
       const result = await removeFriend('fs-1')
       expect(result.error).toBe('Friendship not found')
+    })
+  })
+
+  describe('blockUser', () => {
+    it('calls fetch with correct URL and body', async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ data: { id: 'block-1' } }),
+      })
+
+      const result = await blockUser('user-2')
+      expect(result.error).toBeNull()
+      expect(mockFetch).toHaveBeenCalledWith('/api/users/block', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer test-token-123',
+        },
+        body: JSON.stringify({ userId: 'user-2' }),
+      })
+    })
+
+    it('returns error when not authenticated', async () => {
+      mockGetSession.mockResolvedValue({ data: { session: null } })
+      const result = await blockUser('user-2')
+      expect(result.error).toBe('Not authenticated')
+    })
+
+    it('returns error message from API on failure', async () => {
+      mockFetch.mockResolvedValue({
+        ok: false,
+        json: () => Promise.resolve({ error: 'Cannot block yourself' }),
+      })
+      const result = await blockUser('user-1')
+      expect(result.error).toBe('Cannot block yourself')
+    })
+  })
+
+  describe('unblockUser', () => {
+    it('calls fetch with correct URL and method', async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ success: true }),
+      })
+
+      const result = await unblockUser('user-2')
+      expect(result.error).toBeNull()
+      expect(mockFetch).toHaveBeenCalledWith('/api/users/block?userId=user-2', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer test-token-123',
+        },
+      })
+    })
+
+    it('returns error when not authenticated', async () => {
+      mockGetSession.mockResolvedValue({ data: { session: null } })
+      const result = await unblockUser('user-2')
+      expect(result.error).toBe('Not authenticated')
+    })
+
+    it('returns error message from API on failure', async () => {
+      mockFetch.mockResolvedValue({
+        ok: false,
+        json: () => Promise.resolve({ error: 'User not blocked' }),
+      })
+      const result = await unblockUser('user-2')
+      expect(result.error).toBe('User not blocked')
+    })
+  })
+
+  describe('listBlockedUsers', () => {
+    it('returns empty array when not authenticated', async () => {
+      mockGetUser.mockResolvedValue({ data: { user: null } })
+      expect(await listBlockedUsers()).toEqual([])
+    })
+
+    it('returns empty array when no blocks', async () => {
+      mockFrom.mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockResolvedValue({ data: [], error: null }),
+        }),
+      })
+      expect(await listBlockedUsers()).toEqual([])
+    })
+
+    it('returns profiles of blocked users', async () => {
+      const blocks = [{ blocked_id: 'user-3' }, { blocked_id: 'user-4' }]
+      const profiles = [mockProfile('user-3', 'Blocked1'), mockProfile('user-4', 'Blocked2')]
+
+      let callCount = 0
+      mockFrom.mockImplementation(() => {
+        callCount++
+        if (callCount === 1) {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockResolvedValue({ data: blocks, error: null }),
+            }),
+          }
+        }
+        return {
+          select: vi.fn().mockReturnValue({
+            in: vi.fn().mockResolvedValue({ data: profiles, error: null }),
+          }),
+        }
+      })
+
+      const result = await listBlockedUsers()
+      expect(result).toHaveLength(2)
+      expect(result[0].display_name).toBe('Blocked1')
+      expect(result[1].display_name).toBe('Blocked2')
+    })
+
+    it('returns empty array on profile fetch error', async () => {
+      const blocks = [{ blocked_id: 'user-3' }]
+
+      let callCount = 0
+      mockFrom.mockImplementation(() => {
+        callCount++
+        if (callCount === 1) {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockResolvedValue({ data: blocks, error: null }),
+            }),
+          }
+        }
+        return {
+          select: vi.fn().mockReturnValue({
+            in: vi.fn().mockResolvedValue({ data: null, error: { message: 'db error' } }),
+          }),
+        }
+      })
+
+      expect(await listBlockedUsers()).toEqual([])
+    })
+  })
+
+  describe('isBlocked', () => {
+    it('returns false when not authenticated', async () => {
+      mockGetUser.mockResolvedValue({ data: { user: null } })
+      expect(await isBlocked('user-2')).toBe(false)
+    })
+
+    it('returns true when block exists', async () => {
+      mockFrom.mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          or: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue({ data: [{ id: 'block-1' }], error: null }),
+          }),
+        }),
+      })
+
+      expect(await isBlocked('user-2')).toBe(true)
+    })
+
+    it('returns false when no block exists', async () => {
+      mockFrom.mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          or: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue({ data: [], error: null }),
+          }),
+        }),
+      })
+
+      expect(await isBlocked('user-2')).toBe(false)
+    })
+
+    it('returns false when data is null', async () => {
+      mockFrom.mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          or: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue({ data: null, error: { message: 'error' } }),
+          }),
+        }),
+      })
+
+      expect(await isBlocked('user-2')).toBe(false)
+    })
+  })
+
+  describe('searchUsers (blocked user filtering)', () => {
+    it('filters out users who blocked me', async () => {
+      const profiles = [mockProfile('user-2', 'Alice'), mockProfile('user-5', 'BlockedMe')]
+
+      let callCount = 0
+      mockFrom.mockImplementation((table: string) => {
+        if (table === 'user_blocks') {
+          callCount++
+          if (callCount === 1) {
+            // blocker_id query (users I blocked)
+            return {
+              select: vi.fn().mockReturnValue({
+                eq: vi.fn().mockResolvedValue({ data: [], error: null }),
+              }),
+            }
+          }
+          // blocked_id query (users who blocked me)
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockResolvedValue({ data: [{ blocker_id: 'user-5' }], error: null }),
+            }),
+          }
+        }
+        // user_profiles
+        return {
+          select: vi.fn().mockReturnValue({
+            or: vi.fn().mockReturnValue({
+              limit: vi.fn().mockResolvedValue({ data: profiles, error: null }),
+            }),
+          }),
+        }
+      })
+
+      const result = await searchUsers('ali')
+      expect(result).toHaveLength(1)
+      expect(result[0].display_name).toBe('Alice')
+    })
+  })
+
+  describe('listFriends (error branches)', () => {
+    it('returns empty array on friendships query error', async () => {
+      mockFrom.mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            eq: vi.fn().mockResolvedValue({ data: null, error: { message: 'db error' } }),
+          }),
+        }),
+      })
+
+      expect(await listFriends()).toEqual([])
+    })
+
+    it('returns empty array on profiles query error', async () => {
+      const friendships = [
+        { id: 'fs-1', user_id: 'user-1', friend_id: 'user-2', status: 'accepted', created_at: '2026-01-15' },
+      ]
+
+      let callCount = 0
+      mockFrom.mockImplementation(() => {
+        callCount++
+        if (callCount === 1) {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                eq: vi.fn().mockResolvedValue({ data: friendships, error: null }),
+              }),
+            }),
+          }
+        }
+        return {
+          select: vi.fn().mockReturnValue({
+            in: vi.fn().mockResolvedValue({ data: null, error: { message: 'db error' } }),
+          }),
+        }
+      })
+
+      expect(await listFriends()).toEqual([])
+    })
+
+    it('filters out friendships with missing profiles', async () => {
+      const friendships = [
+        { id: 'fs-1', user_id: 'user-1', friend_id: 'user-2', status: 'accepted', created_at: '2026-01-15' },
+        { id: 'fs-2', user_id: 'user-1', friend_id: 'user-99', status: 'accepted', created_at: '2026-01-20' },
+      ]
+      const profiles = [mockProfile('user-2', 'Alice')]
+
+      let callCount = 0
+      mockFrom.mockImplementation(() => {
+        callCount++
+        if (callCount === 1) {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                eq: vi.fn().mockResolvedValue({ data: friendships, error: null }),
+              }),
+            }),
+          }
+        }
+        return {
+          select: vi.fn().mockReturnValue({
+            in: vi.fn().mockResolvedValue({ data: profiles, error: null }),
+          }),
+        }
+      })
+
+      const result = await listFriends()
+      expect(result).toHaveLength(1)
+      expect(result[0].user.display_name).toBe('Alice')
+    })
+  })
+
+  describe('getFriendshipStatus (error branch)', () => {
+    it('returns none when query errors', async () => {
+      mockFrom.mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            eq: vi.fn().mockResolvedValue({ data: null, error: { message: 'db error' } }),
+          }),
+        }),
+      })
+
+      expect(await getFriendshipStatus('user-2')).toBe('none')
     })
   })
 })

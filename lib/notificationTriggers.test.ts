@@ -167,5 +167,117 @@ describe('notificationTriggers', () => {
 
       expect(mockInsert).toHaveBeenCalled()
     })
+
+    it('handles reddit items with title', async () => {
+      const { triggerItemAddedNotification } = await import('./notificationTriggers')
+      await triggerItemAddedNotification('p1', { id: 'i1', type: 'reddit', redditTitle: 'Cool Post' }, 's1', [
+        { sessionId: 's1', name: 'A' },
+        { sessionId: 's2', name: 'B' },
+      ])
+
+      expect(mockInsert).toHaveBeenCalled()
+    })
+
+    it('handles reddit items without title (fallback)', async () => {
+      const { triggerItemAddedNotification } = await import('./notificationTriggers')
+      await triggerItemAddedNotification('p1', { id: 'i1', type: 'reddit' }, 's1', [
+        { sessionId: 's1', name: 'A' },
+        { sessionId: 's2', name: 'B' },
+      ])
+
+      expect(mockInsert).toHaveBeenCalled()
+    })
+
+    it('handles note items with content', async () => {
+      const { triggerItemAddedNotification } = await import('./notificationTriggers')
+      await triggerItemAddedNotification(
+        'p1',
+        { id: 'i1', type: 'note', noteContent: 'A long note that should be truncated after 50 characters if needed' },
+        's1',
+        [
+          { sessionId: 's1', name: 'A' },
+          { sessionId: 's2', name: 'B' },
+        ],
+      )
+
+      expect(mockInsert).toHaveBeenCalled()
+    })
+
+    it('handles note items without content (fallback)', async () => {
+      const { triggerItemAddedNotification } = await import('./notificationTriggers')
+      await triggerItemAddedNotification('p1', { id: 'i1', type: 'note' }, 's1', [
+        { sessionId: 's1', name: 'A' },
+        { sessionId: 's2', name: 'B' },
+      ])
+
+      expect(mockInsert).toHaveBeenCalled()
+    })
+
+    it('handles image items with imageName (no caption)', async () => {
+      const { triggerItemAddedNotification } = await import('./notificationTriggers')
+      await triggerItemAddedNotification('p1', { id: 'i1', type: 'image', imageName: 'photo.jpg' }, 's1', [
+        { sessionId: 's1', name: 'A' },
+        { sessionId: 's2', name: 'B' },
+      ])
+
+      expect(mockInsert).toHaveBeenCalled()
+    })
+
+    it('handles image items without caption or name (fallback)', async () => {
+      const { triggerItemAddedNotification } = await import('./notificationTriggers')
+      await triggerItemAddedNotification('p1', { id: 'i1', type: 'image' }, 's1', [
+        { sessionId: 's1', name: 'A' },
+        { sessionId: 's2', name: 'B' },
+      ])
+
+      expect(mockInsert).toHaveBeenCalled()
+    })
+
+    it('handles tweet items without author (fallback)', async () => {
+      const { triggerItemAddedNotification } = await import('./notificationTriggers')
+      await triggerItemAddedNotification('p1', { id: 'i1', type: 'tweet' }, 's1', [
+        { sessionId: 's1', name: 'A' },
+        { sessionId: 's2', name: 'B' },
+      ])
+
+      expect(mockInsert).toHaveBeenCalled()
+    })
+
+    it('handles youtube items without title (fallback)', async () => {
+      const { triggerItemAddedNotification } = await import('./notificationTriggers')
+      await triggerItemAddedNotification('p1', { id: 'i1', type: 'youtube' }, 's1', [
+        { sessionId: 's1', name: 'A' },
+        { sessionId: 's2', name: 'B' },
+      ])
+
+      expect(mockInsert).toHaveBeenCalled()
+    })
+  })
+
+  describe('logNotificationTrigger (error handling)', () => {
+    it('handles insert error gracefully', async () => {
+      process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://test.supabase.co'
+      mockInsert.mockResolvedValue({ error: { message: 'insert failed' } })
+
+      const { triggerItemAddedNotification } = await import('./notificationTriggers')
+      await triggerItemAddedNotification('p1', { id: 'i1', type: 'note', noteContent: 'Hello' }, 's1', [
+        { sessionId: 's1', name: 'A' },
+        { sessionId: 's2', name: 'B' },
+      ])
+
+      expect(mockInsert).toHaveBeenCalled()
+    })
+
+    it('skips in mock mode with placeholder URL', async () => {
+      process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://placeholder.supabase.co'
+
+      const { triggerItemAddedNotification } = await import('./notificationTriggers')
+      await triggerItemAddedNotification('p1', { id: 'i1', type: 'note' }, 's1', [
+        { sessionId: 's1', name: 'A' },
+        { sessionId: 's2', name: 'B' },
+      ])
+
+      expect(mockInsert).not.toHaveBeenCalled()
+    })
   })
 })
