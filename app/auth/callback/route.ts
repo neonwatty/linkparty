@@ -6,7 +6,8 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const code = searchParams.get('code')
   const rawRedirect = searchParams.get('redirect') || '/'
-  const redirect = rawRedirect.startsWith('/') && !rawRedirect.startsWith('//') ? rawRedirect : '/'
+  const isSafePath = rawRedirect.startsWith('/') && !rawRedirect.startsWith('//') && !rawRedirect.includes('\\')
+  const redirect = isSafePath ? rawRedirect : '/'
 
   if (code) {
     const cookieStore = await cookies()

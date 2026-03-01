@@ -49,6 +49,12 @@ describe('auth callback route', () => {
     expect(new URL(response.headers.get('location')!).pathname).toBe('/')
   })
 
+  it('blocks backslash open redirect (/\\evil.com)', async () => {
+    const request = new NextRequest('http://localhost:3000/auth/callback?code=abc123&redirect=/\\evil.com')
+    const response = await GET(request)
+    expect(new URL(response.headers.get('location')!).pathname).toBe('/')
+  })
+
   it('blocks javascript: scheme redirect', async () => {
     const request = new NextRequest('http://localhost:3000/auth/callback?code=abc123&redirect=javascript:alert(1)')
     const response = await GET(request)

@@ -90,3 +90,27 @@ Automated OWASP-aligned security audit. 10 categories to cover.
 - Security Headers (A05)
 - CSRF/Session (A07)
 - Data Exposure (A02)
+
+### Iteration 4 (2026-02-28)
+
+**Categories Audited:** Authorization & Row-Level Security (A01), CSRF/Session (A07)
+**Findings:** 2 (0 HIGH, 2 MEDIUM)
+**Fixed:** 2
+**Deferred:** 0
+
+#### Fixed
+
+- [x] `batch_reorder_queue_items` SECURITY DEFINER RPC callable by any authenticated user via PostgREST, bypassing API route membership check — revoked EXECUTE from anon/authenticated roles, recreated with schema-qualified names and empty search_path (category: Authorization & RLS, severity: MEDIUM)
+- [x] Open redirect in OAuth callback via backslash (`/\evil.com`) bypassing `startsWith('//')` check — added `!rawRedirect.includes('\\')` guard (category: CSRF/Session, severity: MEDIUM)
+
+#### Not Issues (False Positives)
+
+- Anonymous session IDs (x-session-id) are static per browser — not a session fixation vector because RLS scopes operations to own party_member rows, and session IDs can't be set externally (stored in same-origin localStorage, sent via header only)
+- All 24 state-changing API routes use `validateOrigin()` — comprehensive CSRF coverage
+- Supabase SSR cookies use secure defaults (HttpOnly, Secure, SameSite=Lax)
+- RLS policies extensively hardened across 34 migrations — no anonymous bypasses on write operations
+
+#### Categories Remaining
+
+- Security Headers (A05)
+- Data Exposure (A02)
