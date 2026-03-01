@@ -125,13 +125,43 @@ async function processWebhookEvent(event: ResendWebhookPayload): Promise<void> {
       console.log(`Email delivery delayed for ${event.data.to.join(', ')}`)
       break
 
-    case 'email.bounced':
+    case 'email.bounced': {
       console.error(`Email bounced for ${event.data.to.join(', ')}: ${event.data.bounce?.message}`)
+      const bouncedAddresses = event.data.to || []
+      for (const addr of bouncedAddresses) {
+        const { error: bounceErr } = await supabase.from('email_events').insert({
+          event_type: 'suppression',
+          email_id: event.data.email_id,
+          recipient: addr,
+          subject: event.data.subject,
+          metadata: { reason: 'bounce', bounce: event.data.bounce, original_event: event.type },
+          created_at: event.created_at,
+        })
+        if (bounceErr && !bounceErr.message.includes('does not exist')) {
+          console.error('Failed to log bounce suppression:', bounceErr)
+        }
+      }
       break
+    }
 
-    case 'email.complained':
+    case 'email.complained': {
       console.error(`Spam complaint from ${event.data.to.join(', ')}`)
+      const complainedAddresses = event.data.to || []
+      for (const addr of complainedAddresses) {
+        const { error: complaintErr } = await supabase.from('email_events').insert({
+          event_type: 'suppression',
+          email_id: event.data.email_id,
+          recipient: addr,
+          subject: event.data.subject,
+          metadata: { reason: 'complaint', original_event: event.type },
+          created_at: event.created_at,
+        })
+        if (complaintErr && !complaintErr.message.includes('does not exist')) {
+          console.error('Failed to log complaint suppression:', complaintErr)
+        }
+      }
       break
+    }
 
     case 'email.opened':
       console.log(`Email opened by ${event.data.to.join(', ')}`)

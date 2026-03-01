@@ -18,14 +18,9 @@ function escapeHtml(str: string): string {
 
 // Base URL for the app
 const getBaseUrl = () => {
-  if (process.env.VERCEL_URL) {
-    // Vercel deployment
-    return `https://${process.env.VERCEL_URL}`
-  }
-  if (process.env.NEXT_PUBLIC_VERCEL_URL) {
-    return `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
-  }
-  // Local development
+  if (process.env.APP_URL) return process.env.APP_URL
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`
+  if (process.env.NEXT_PUBLIC_VERCEL_URL) return `https://${process.env.NEXT_PUBLIC_VERCEL_URL}`
   return 'http://localhost:3000'
 }
 

@@ -110,13 +110,17 @@ export async function POST(request: NextRequest) {
     }
 
     // Create invite token for auto-friendship on sign-up
-    const { error: tokenError } = await supabase.from('invite_tokens').insert({
-      inviter_id: inviterId,
-      invitee_email: email.toLowerCase(),
-      party_code: partyCode.toUpperCase(),
-    })
-    if (tokenError) {
-      console.error('Failed to create invite token:', tokenError.message)
+    const { data: inviteToken, error: tokenError } = await supabase
+      .from('invite_tokens')
+      .insert({
+        inviter_id: inviterId,
+        invitee_email: email.toLowerCase(),
+        party_code: partyCode.toUpperCase(),
+      })
+      .select('id')
+      .single()
+    if (tokenError || !inviteToken) {
+      console.error('Failed to create invite token:', tokenError?.message)
       return NextResponse.json({ error: 'Failed to create invitation' }, { status: 500 })
     }
 
@@ -132,6 +136,7 @@ export async function POST(request: NextRequest) {
 
     if (!result.success) {
       console.error('Failed to send invitation:', result.error)
+      await supabase.from('invite_tokens').delete().eq('id', inviteToken.id)
       return NextResponse.json({ error: 'Failed to send invitation' }, { status: 500 })
     }
 
