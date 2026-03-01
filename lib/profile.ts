@@ -57,7 +57,8 @@ export async function updateProfile(updates: {
     if (error.code === '23505') return { data: null, error: 'Username already taken' }
     if (error.code === '23514')
       return { data: null, error: 'Username must be 3-20 characters, lowercase letters, numbers, and underscores only' }
-    return { data: null, error: error.message }
+    console.error('Profile update error:', error.message)
+    return { data: null, error: 'Failed to update profile' }
   }
 
   // Sync display_name to auth user_metadata and localStorage so other pages (e.g. /create) can read it

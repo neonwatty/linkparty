@@ -132,7 +132,7 @@ export async function POST(request: NextRequest) {
 
     if (!result.success) {
       console.error('Failed to send invitation:', result.error)
-      return NextResponse.json({ error: result.error || 'Failed to send invitation' }, { status: 500 })
+      return NextResponse.json({ error: 'Failed to send invitation' }, { status: 500 })
     }
 
     return NextResponse.json({

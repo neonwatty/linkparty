@@ -51,7 +51,10 @@ export async function getNotifications(limit = 50): Promise<AppNotification[]> {
 export async function markAsRead(notificationId: string): Promise<{ error: string | null }> {
   const { error } = await supabase.from('notifications').update({ read: true }).eq('id', notificationId)
 
-  if (error) return { error: error.message }
+  if (error) {
+    console.error('Failed to mark notification as read:', error.message)
+    return { error: 'Failed to update notification' }
+  }
   return { error: null }
 }
 
@@ -63,6 +66,9 @@ export async function markAllAsRead(): Promise<{ error: string | null }> {
 
   const { error } = await supabase.from('notifications').update({ read: true }).eq('user_id', user.id).eq('read', false)
 
-  if (error) return { error: error.message }
+  if (error) {
+    console.error('Failed to mark all notifications as read:', error.message)
+    return { error: 'Failed to update notifications' }
+  }
   return { error: null }
 }

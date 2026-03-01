@@ -388,7 +388,8 @@ serve(async (req) => {
       },
     })
   } catch (err) {
-    return new Response(JSON.stringify({ success: false, error: `Server error: ${err}` }), {
+    console.error('Metadata fetch error:', err)
+    return new Response(JSON.stringify({ success: false, error: 'Internal server error' }), {
       status: 500,
       headers: {
         'Content-Type': 'application/json',

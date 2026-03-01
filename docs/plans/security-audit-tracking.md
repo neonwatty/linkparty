@@ -35,3 +35,31 @@ Automated OWASP-aligned security audit. 10 categories to cover.
 - Error Handling (A09)
 - CSRF/Session (A07)
 - Data Exposure (A02)
+
+### Iteration 2 (2026-02-28)
+
+**Categories Audited:** Secret Management (A02), Error Handling (A09)
+**Findings:** 4 (0 HIGH, 4 MEDIUM)
+**Fixed:** 4
+**Deferred:** 0
+
+#### Fixed
+
+- [x] Edge function returns raw error `${err}` to client in `supabase/functions/fetch-content-metadata/index.ts` — replaced with generic "Internal server error" (category: Error Handling, severity: MEDIUM)
+- [x] Email invite route exposes `result.error` from email service to client in `app/api/emails/invite/route.ts` — replaced with generic "Failed to send invitation" (category: Error Handling, severity: MEDIUM)
+- [x] Raw Supabase `error.message` returned to client in `lib/profile.ts` — replaced with generic "Failed to update profile" (category: Error Handling, severity: MEDIUM)
+- [x] Raw Supabase `error.message` returned to client (2x) in `lib/notifications.ts` — replaced with generic error messages (category: Error Handling, severity: MEDIUM)
+
+#### Not Issues (False Positives)
+
+- `.env.local` containing production secrets — file is properly in `.gitignore`, standard Next.js local dev pattern
+- `console.error` logging database error details — server-side logging is standard debugging practice, not exposed to clients
+
+#### Categories Remaining
+
+- Authorization & Row-Level Security (A01)
+- Security Headers (A05)
+- Dependency Vulnerabilities (A06)
+- Rate Limiting (A04)
+- CSRF/Session (A07)
+- Data Exposure (A02)
