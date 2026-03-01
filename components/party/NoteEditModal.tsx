@@ -85,3 +85,5 @@ export function NoteEditModal({ isOpen, noteText, onNoteTextChange, onSave, onCa
     </div>
   )
 }
+
+export default NoteEditModal

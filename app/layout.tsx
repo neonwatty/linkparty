@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Instrument_Serif, Inter } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { Providers } from './providers'
+import ErrorBoundary from '@/components/ui/ErrorBoundary'
 import './globals.css'
 
 const instrumentSerif = Instrument_Serif({
@@ -52,8 +53,6 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
   viewportFit: 'cover',
   themeColor: '#1A1D2E',
 }
@@ -62,7 +61,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${instrumentSerif.variable} ${inter.variable}`}>
       <body>
-        <Providers>{children}</Providers>
+        <ErrorBoundary>
+          <Providers>{children}</Providers>
+        </ErrorBoundary>
         <Analytics />
       </body>
     </html>

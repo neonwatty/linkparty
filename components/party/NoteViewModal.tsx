@@ -79,3 +79,5 @@ export function NoteViewModal({ isOpen, note, isOwnNote, onClose, onEdit }: Note
     </div>
   )
 }
+
+export default NoteViewModal

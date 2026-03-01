@@ -248,3 +248,5 @@ export function InviteModal({ isOpen, partyId, partyCode, partyName, inviterName
     </div>
   )
 }
+
+export default InviteModal

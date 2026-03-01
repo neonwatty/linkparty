@@ -19,6 +19,10 @@ interface TwinklingStarsProps {
 
 export function TwinklingStars({ count = 35 }: TwinklingStarsProps) {
   const [stars] = useState(() => generateStars(count))
+  const [prefersReduced] = useState(() =>
+    typeof window !== 'undefined' ? window.matchMedia('(prefers-reduced-motion: reduce)').matches : false,
+  )
+  if (prefersReduced) return null
 
   return (
     <div className="stars-container">

@@ -223,3 +223,5 @@ export const QueueItemActionsSheet = memo(function QueueItemActionsSheet({
     </div>
   )
 })
+
+export default QueueItemActionsSheet
