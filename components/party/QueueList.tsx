@@ -1,6 +1,7 @@
 'use client'
 
 import { memo, useCallback, useState } from 'react'
+import Image from 'next/image'
 import type { QueueItem } from '@/hooks/useParty'
 import { getContentTypeBadge } from '@/utils/contentHelpers'
 import { getQueueItemTitle, getQueueItemSubtitle } from '@/utils/queueHelpers'
@@ -104,17 +105,21 @@ const QueueListItem = memo(function QueueListItem({
         className={`relative w-20 h-12 rounded-lg overflow-hidden flex-shrink-0 ${badge.bg} flex items-center justify-center`}
       >
         {item.type === 'youtube' && item.thumbnail ? (
-          <img src={item.thumbnail} alt={item.title} className="w-full h-full object-cover" loading="lazy" />
+          <Image
+            src={item.thumbnail}
+            alt={item.title || 'YouTube thumbnail'}
+            width={80}
+            height={45}
+            className="w-full h-full object-cover"
+          />
         ) : item.type === 'image' && item.imageUrl ? (
-          <img
+          <Image
             src={item.imageUrl}
             alt={item.imageCaption || item.imageName || 'Image'}
+            width={80}
+            height={45}
             className="w-full h-full object-cover"
-            loading="lazy"
-            onError={(e) => {
-              e.currentTarget.style.display = 'none'
-              e.currentTarget.nextElementSibling?.classList.remove('hidden')
-            }}
+            unoptimized
           />
         ) : (
           <span className={badge.color}>
@@ -173,7 +178,7 @@ export function QueueList({
   const [activeId, setActiveId] = useState<string | null>(null)
 
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     }),

@@ -68,7 +68,11 @@ export function useNotifications() {
           }
         },
       )
-      .subscribe()
+      .subscribe((status) => {
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          log.error('Realtime subscription failed', { channel: `notifications:${user.id}`, status })
+        }
+      })
 
     return () => {
       channel.unsubscribe()

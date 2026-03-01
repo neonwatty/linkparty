@@ -1,6 +1,7 @@
 'use client'
 
 import { memo, useEffect, useRef } from 'react'
+import Image from 'next/image'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
 import type { QueueItem } from '@/hooks/useParty'
 import { getContentTypeBadge } from '@/utils/contentHelpers'
@@ -78,7 +79,13 @@ export const QueueItemActionsSheet = memo(function QueueItemActionsSheet({
             className={`w-20 h-12 rounded-lg overflow-hidden flex-shrink-0 ${badge.bg} flex items-center justify-center`}
           >
             {item.type === 'youtube' && item.thumbnail ? (
-              <img src={item.thumbnail} alt={item.title} className="w-full h-full object-cover" loading="lazy" />
+              <Image
+                src={item.thumbnail}
+                alt={item.title || 'YouTube thumbnail'}
+                width={320}
+                height={180}
+                className="w-full h-full object-cover"
+              />
             ) : (
               <span className={badge.color}>
                 <BadgeIcon size={24} />
@@ -216,3 +223,5 @@ export const QueueItemActionsSheet = memo(function QueueItemActionsSheet({
     </div>
   )
 })
+
+export default QueueItemActionsSheet

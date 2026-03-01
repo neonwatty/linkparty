@@ -4,7 +4,12 @@ import { NextRequest } from 'next/server'
 // Mock Supabase with flexible chain that supports both party lookup and dedup query
 const mockPartySingle = vi.fn()
 const mockDedupMaybeSingle = vi.fn()
-const mockInsert = vi.fn().mockResolvedValue({ error: null })
+const mockInsertSingle = vi.fn().mockResolvedValue({ data: { id: 'token-id-123' }, error: null })
+const mockInsert = vi.fn(() => ({
+  select: vi.fn(() => ({
+    single: mockInsertSingle,
+  })),
+}))
 const mockFrom = vi.fn()
 const mockGetUser = vi.fn()
 
@@ -14,6 +19,7 @@ function createChain(terminal: Mock) {
   chain.select = vi.fn(handler)
   chain.eq = vi.fn(handler)
   chain.limit = vi.fn(handler)
+  chain.delete = vi.fn(handler)
   chain.insert = mockInsert
   chain.single = terminal
   chain.maybeSingle = terminal
@@ -56,7 +62,7 @@ describe('Email Invite API Route', () => {
       error: null,
     })
     mockDedupMaybeSingle.mockResolvedValue({ data: null, error: null })
-    mockInsert.mockResolvedValue({ error: null })
+    mockInsertSingle.mockResolvedValue({ data: { id: 'token-id-123' }, error: null })
   })
 
   afterEach(() => {

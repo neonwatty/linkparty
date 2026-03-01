@@ -58,13 +58,19 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if either user has blocked the other
-    const { data: blocks } = await supabase
+    const { data: blocks1 } = await supabase
       .from('user_blocks')
       .select('id')
-      .or(
-        `and(blocker_id.eq.${user.id},blocked_id.eq.${friendship.user_id}),and(blocker_id.eq.${friendship.user_id},blocked_id.eq.${user.id})`,
-      )
+      .eq('blocker_id', user.id)
+      .eq('blocked_id', friendship.user_id)
       .limit(1)
+    const { data: blocks2 } = await supabase
+      .from('user_blocks')
+      .select('id')
+      .eq('blocker_id', friendship.user_id)
+      .eq('blocked_id', user.id)
+      .limit(1)
+    const blocks = [...(blocks1 || []), ...(blocks2 || [])]
 
     if (blocks && blocks.length > 0) {
       return NextResponse.json({ error: FRIENDS.BLOCKED }, { status: 403 })

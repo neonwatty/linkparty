@@ -46,6 +46,6 @@ export function createRateLimiter(config: RateLimitConfig) {
     },
 
     /** Exposed for testing */
-    _store: store,
+    ...(process.env.NODE_ENV !== 'production' && { _store: store }),
   }
 }

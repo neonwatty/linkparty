@@ -18,19 +18,15 @@ import { ImageLightbox } from '@/components/ui/ImageLightbox'
 import { ConflictToast } from '@/components/ui/ConflictToast'
 import { TwinklingStars } from '@/components/ui/TwinklingStars'
 import { PlusIcon, LoaderIcon } from '@/components/icons'
-import {
-  PartyHeader,
-  MembersList,
-  NowShowingSection,
-  QueueList,
-  QueueItemActionsSheet,
-  AddContentModal,
-  DeleteConfirmDialog,
-  NoteViewModal,
-  NoteEditModal,
-  InviteModal,
-  PushPrompt,
-} from '@/components/party'
+import dynamic from 'next/dynamic'
+import { PartyHeader, MembersList, NowShowingSection, QueueList, PushPrompt } from '@/components/party'
+
+const AddContentModal = dynamic(() => import('@/components/party/AddContentModal'), { ssr: false })
+const InviteModal = dynamic(() => import('@/components/party/InviteModal'), { ssr: false })
+const NoteEditModal = dynamic(() => import('@/components/party/NoteEditModal'), { ssr: false })
+const NoteViewModal = dynamic(() => import('@/components/party/NoteViewModal'), { ssr: false })
+const DeleteConfirmDialog = dynamic(() => import('@/components/party/DeleteConfirmDialog'), { ssr: false })
+const QueueItemActionsSheet = dynamic(() => import('@/components/party/QueueItemActionsSheet'), { ssr: false })
 
 const log = logger.createLogger('PartyRoom')
 
@@ -46,6 +42,7 @@ export default function PartyRoomClient() {
     members,
     partyInfo,
     isLoading,
+    error,
     addToQueue,
     moveItem,
     deleteItem,
@@ -91,6 +88,7 @@ export default function PartyRoomClient() {
 
   // UI feedback states
   const [showCopied, setShowCopied] = useState(false)
+  const [friendError, setFriendError] = useState<string | null>(null)
   const [lightboxImage, setLightboxImage] = useState<{ url: string; caption?: string } | null>(null)
   const [showUploadToast, setShowUploadToast] = useState(false)
 
@@ -146,6 +144,8 @@ export default function PartyRoomClient() {
         setFriendshipStatuses((prev) => ({ ...prev, [userId]: 'pending_sent' }))
       } catch (err) {
         log.error('Failed to send friend request', err)
+        setFriendError('Failed to send friend request')
+        setTimeout(() => setFriendError(null), 3000)
       }
     },
     [setFriendshipStatuses],
@@ -551,6 +551,17 @@ export default function PartyRoomClient() {
     setShowInvite(false)
   }, [])
 
+  if (!isLoading && error) {
+    return (
+      <div className="container-mobile flex flex-col items-center justify-center min-h-screen gap-4">
+        <p className="text-red-400">{error}</p>
+        <a href="/" className="btn-primary">
+          Go Home
+        </a>
+      </div>
+    )
+  }
+
   if (isLoading) {
     return (
       <div className="container-mobile bg-surface-950 flex flex-col items-center justify-center">
@@ -698,6 +709,13 @@ export default function PartyRoomClient() {
       {showCopied && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-surface-800 text-white px-4 py-2 rounded-full shadow-lg z-50 animate-fade-in">
           Party link copied!
+        </div>
+      )}
+
+      {/* Friend request error toast */}
+      {friendError && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-red-800 text-white px-4 py-2 rounded-full shadow-lg z-50 animate-fade-in">
+          {friendError}
         </div>
       )}
 

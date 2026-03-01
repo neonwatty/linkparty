@@ -353,13 +353,19 @@ export async function isBlocked(otherUserId: string): Promise<boolean> {
   } = await supabase.auth.getUser()
   if (!user) return false
 
-  const { data } = await supabase
+  const { data: blocks1 } = await supabase
     .from('user_blocks')
     .select('id')
-    .or(
-      `and(blocker_id.eq.${user.id},blocked_id.eq.${otherUserId}),and(blocker_id.eq.${otherUserId},blocked_id.eq.${user.id})`,
-    )
+    .eq('blocker_id', user.id)
+    .eq('blocked_id', otherUserId)
     .limit(1)
+  const { data: blocks2 } = await supabase
+    .from('user_blocks')
+    .select('id')
+    .eq('blocker_id', otherUserId)
+    .eq('blocked_id', user.id)
+    .limit(1)
+  const data = [...(blocks1 || []), ...(blocks2 || [])]
 
-  return (data?.length ?? 0) > 0
+  return data.length > 0
 }

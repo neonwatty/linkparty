@@ -69,14 +69,14 @@ describe('createRateLimiter', () => {
     // Create some entries
     limiter.check('expired-1')
     limiter.check('expired-2')
-    expect(limiter._store.size).toBe(2)
+    expect(limiter._store!.size).toBe(2)
 
     // Advance past the window so entries expire
     vi.advanceTimersByTime(5_001)
 
     // Add a fresh entry that won't be expired
     limiter.check('fresh-1')
-    expect(limiter._store.size).toBe(3)
+    expect(limiter._store!.size).toBe(3)
 
     // We've made 3 checks so far. Need 97 more to reach 100 total (triggers cleanup).
     for (let i = 0; i < 97; i++) {
@@ -84,10 +84,10 @@ describe('createRateLimiter', () => {
     }
 
     // 100th check triggers cleanup — expired entries removed
-    expect(limiter._store.size).toBe(1)
-    expect(limiter._store.has('fresh-1')).toBe(true)
-    expect(limiter._store.has('expired-1')).toBe(false)
-    expect(limiter._store.has('expired-2')).toBe(false)
+    expect(limiter._store!.size).toBe(1)
+    expect(limiter._store!.has('fresh-1')).toBe(true)
+    expect(limiter._store!.has('expired-1')).toBe(false)
+    expect(limiter._store!.has('expired-2')).toBe(false)
   })
 
   it('retryAfterMs is positive and at most windowMs', () => {

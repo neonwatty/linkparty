@@ -464,3 +464,5 @@ export const AddContentModal = memo(function AddContentModal({
     </div>
   )
 })
+
+export default AddContentModal

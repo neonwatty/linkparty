@@ -63,3 +63,5 @@ export function DeleteConfirmDialog({ isOpen, onConfirm, onCancel }: DeleteConfi
     </div>
   )
 }
+
+export default DeleteConfirmDialog

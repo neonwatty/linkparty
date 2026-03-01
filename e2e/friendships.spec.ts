@@ -133,6 +133,7 @@ test.describe('Friend Request API — Authorization', () => {
     // Send a valid UUID without auth header
     const validUuid = '00000000-0000-0000-0000-000000000001'
     const response = await request.post('/api/friends/request', {
+      headers: { origin: 'http://localhost:3000' },
       data: { friendId: validUuid },
     })
 
@@ -152,6 +153,7 @@ test.describe('Friend Request API — Authorization', () => {
   test('accept API requires Bearer token when service key configured', async ({ request }) => {
     const validUuid = '00000000-0000-0000-0000-000000000001'
     const response = await request.post('/api/friends/accept', {
+      headers: { origin: 'http://localhost:3000' },
       data: { friendshipId: validUuid },
     })
 
@@ -161,7 +163,9 @@ test.describe('Friend Request API — Authorization', () => {
 
   test('delete API requires Bearer token when service key configured', async ({ request }) => {
     const validUuid = '00000000-0000-0000-0000-000000000001'
-    const response = await request.delete(`/api/friends/${validUuid}?action=unfriend`)
+    const response = await request.delete(`/api/friends/${validUuid}?action=unfriend`, {
+      headers: { origin: 'http://localhost:3000' },
+    })
 
     const status = response.status()
     expect([200, 401]).toContain(status)
@@ -176,6 +180,7 @@ test.describe('Block/Unblock API — Authorization', () => {
   test('block API handles missing service key gracefully', async ({ request }) => {
     const validUuid = '00000000-0000-0000-0000-000000000001'
     const response = await request.post('/api/users/block', {
+      headers: { origin: 'http://localhost:3000' },
       data: { userId: validUuid },
     })
 
@@ -186,7 +191,9 @@ test.describe('Block/Unblock API — Authorization', () => {
 
   test('unblock API handles missing service key gracefully', async ({ request }) => {
     const validUuid = '00000000-0000-0000-0000-000000000001'
-    const response = await request.delete(`/api/users/block?userId=${validUuid}`)
+    const response = await request.delete(`/api/users/block?userId=${validUuid}`, {
+      headers: { origin: 'http://localhost:3000' },
+    })
 
     const status = response.status()
     expect([401, 500]).toContain(status)

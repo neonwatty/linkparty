@@ -596,12 +596,21 @@ describe('friends', () => {
     })
 
     it('returns true when block exists', async () => {
-      mockFrom.mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          or: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue({ data: [{ id: 'block-1' }], error: null }),
+      let callCount = 0
+      mockFrom.mockImplementation(() => {
+        callCount++
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                limit: vi.fn().mockResolvedValue({
+                  data: callCount === 1 ? [{ id: 'block-1' }] : [],
+                  error: null,
+                }),
+              }),
+            }),
           }),
-        }),
+        }
       })
 
       expect(await isBlocked('user-2')).toBe(true)
@@ -610,8 +619,10 @@ describe('friends', () => {
     it('returns false when no block exists', async () => {
       mockFrom.mockReturnValue({
         select: vi.fn().mockReturnValue({
-          or: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue({ data: [], error: null }),
+          eq: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              limit: vi.fn().mockResolvedValue({ data: [], error: null }),
+            }),
           }),
         }),
       })
@@ -622,8 +633,10 @@ describe('friends', () => {
     it('returns false when data is null', async () => {
       mockFrom.mockReturnValue({
         select: vi.fn().mockReturnValue({
-          or: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue({ data: null, error: { message: 'error' } }),
+          eq: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              limit: vi.fn().mockResolvedValue({ data: null, error: { message: 'error' } }),
+            }),
           }),
         }),
       })

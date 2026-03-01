@@ -206,6 +206,12 @@ export function useParty(partyId: string | null) {
   const queueRef = useRef(queue)
   queueRef.current = queue
 
+  // Track if channels have subscribed once (for reconnection detection)
+  const hasSubscribedOnce = useRef(false)
+
+  // Refetch trigger — incrementing forces the subscription useEffect to re-run
+  const [_refetchCounter, setRefetchCounter] = useState(0)
+
   // Clear conflict notification after display
   const clearConflict = useCallback(() => {
     setLastConflict(null)
@@ -228,71 +234,6 @@ export function useParty(partyId: string | null) {
     }
     return fetch(url, { ...options, headers: { ...headers, ...options.headers } })
   }, [])
-
-  // Fetch initial data (skip in mock mode)
-  const fetchData = useCallback(async () => {
-    if (IS_MOCK_MODE) {
-      setIsLoading(false)
-      return
-    }
-
-    if (!partyId) {
-      setIsLoading(false)
-      return
-    }
-
-    setIsLoading(true)
-    setError(null)
-
-    try {
-      // Fetch party info
-      const { data: partyData, error: partyError } = await supabase
-        .from('parties')
-        .select('id, code, name, host_session_id, created_at, expires_at, visible_to_friends, has_password')
-        .eq('id', partyId)
-        .single()
-
-      if (partyError) throw partyError
-
-      const party = partyData as DbParty
-      setPartyInfo({
-        id: party.id,
-        code: party.code,
-        name: party.name,
-        hostSessionId: party.host_session_id,
-        createdAt: party.created_at,
-        expiresAt: party.expires_at,
-      })
-
-      // Fetch queue items
-      const { data: queueData, error: queueError } = await supabase
-        .from('queue_items')
-        .select('*')
-        .eq('party_id', partyId)
-        .neq('status', 'shown')
-        .order('position', { ascending: true })
-
-      if (queueError) throw queueError
-
-      setQueue((queueData as DbQueueItem[]).map(transformQueueItem))
-
-      // Fetch members
-      const { data: membersData, error: membersError } = await supabase
-        .from('party_members')
-        .select('*')
-        .eq('party_id', partyId)
-        .order('joined_at', { ascending: true })
-
-      if (membersError) throw membersError
-
-      setMembers((membersData as DbPartyMember[]).map(transformMember))
-    } catch (err) {
-      log.error('Failed to fetch party data', err)
-      setError(err instanceof Error ? err.message : 'Failed to load party')
-    } finally {
-      setIsLoading(false)
-    }
-  }, [partyId])
 
   // Set up real-time subscriptions
   useEffect(() => {
@@ -365,6 +306,9 @@ export function useParty(partyId: string | null) {
     }
 
     loadInitialData()
+
+    // Re-fetch function for reconnection scenarios
+    const refetchData = () => loadInitialData()
 
     // Subscribe to queue changes with incremental updates
     // Use partyIdRef.current in callbacks to always get the latest value
@@ -483,7 +427,19 @@ export function useParty(partyId: string | null) {
           }
         },
       )
-      .subscribe()
+      .subscribe((status) => {
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          log.error('Realtime subscription failed', { channel: `queue:${partyId}`, status })
+        }
+        if (status === 'SUBSCRIBED' && hasSubscribedOnce.current) {
+          // Re-fetch data on reconnection
+          log.info('Queue channel reconnected, re-fetching data')
+          refetchData()
+        }
+        if (status === 'SUBSCRIBED') {
+          hasSubscribedOnce.current = true
+        }
+      })
 
     // Subscribe to member changes with incremental updates
     const membersChannel: RealtimeChannel = supabase
@@ -562,14 +518,20 @@ export function useParty(partyId: string | null) {
           }
         },
       )
-      .subscribe()
+      .subscribe((status) => {
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          log.error('Realtime subscription failed', { channel: `members:${partyId}`, status })
+        }
+      })
 
     // Cleanup
     return () => {
       queueChannel.unsubscribe()
       membersChannel.unsubscribe()
+      pendingChanges.clearAll()
+      hasSubscribedOnce.current = false
     }
-  }, [partyId]) // Removed fetchData dependency to prevent stale closures
+  }, [partyId, _refetchCounter]) // _refetchCounter triggers re-subscription and data re-fetch
 
   // Queue operations
   const addToQueue = useCallback(
@@ -952,6 +914,9 @@ export function useParty(partyId: string | null) {
     const showingItem = currentQueue.find((q) => q.status === 'showing')
     const firstPending = currentQueue.find((q) => q.status === 'pending')
 
+    // Capture previous queue for rollback
+    const previousQueue = [...currentQueue]
+
     // Optimistic update: apply status changes immediately
     setQueue((prev) =>
       prev
@@ -996,7 +961,11 @@ export function useParty(partyId: string | null) {
       })
 
       if (!response.ok) {
-        log.error('Failed to advance queue', await response.json())
+        // Rollback: restore previous queue state
+        setQueue(previousQueue)
+        const errorData = await response.json()
+        log.error('Failed to advance queue', errorData)
+        setError(errorData.error || 'Failed to advance queue')
       }
     } finally {
       setSyncingItemIds((prev) => {
@@ -1260,7 +1229,7 @@ export function useParty(partyId: string | null) {
     toggleComplete,
     updateDueDate,
     leaveParty,
-    refetch: fetchData,
+    refetch: () => setRefetchCounter((c) => c + 1),
     // Memoized filtered queue items
     pendingItems,
     showingItem,

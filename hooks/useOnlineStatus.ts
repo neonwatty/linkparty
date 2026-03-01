@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react'
  * Uses navigator.onLine + fetch probe for accuracy
  */
 export function useOnlineStatus(): boolean {
-  const [isOnline, setIsOnline] = useState(true)
+  const [isOnline, setIsOnline] = useState(() => (typeof navigator !== 'undefined' ? navigator.onLine : true))
 
   useEffect(() => {
     const checkConnection = async () => {

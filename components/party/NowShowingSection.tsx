@@ -1,6 +1,7 @@
 'use client'
 
-import { memo, useMemo, useCallback } from 'react'
+import { memo, useCallback } from 'react'
+import Image from 'next/image'
 import type { QueueItem } from '@/hooks/useParty'
 import { PlayIcon, SkipIcon, TwitterIcon, RedditIcon, NoteIcon, ImageIcon } from '@/components/icons'
 
@@ -17,24 +18,6 @@ export const NowShowingSection = memo(function NowShowingSection({
   onNext,
   onImageClick,
 }: NowShowingSectionProps) {
-  // Memoize content type badge/icon calculation
-  const contentTypeInfo = useMemo(() => {
-    switch (currentItem.type) {
-      case 'youtube':
-        return { icon: PlayIcon, label: 'YouTube' }
-      case 'tweet':
-        return { icon: TwitterIcon, label: 'Tweet' }
-      case 'reddit':
-        return { icon: RedditIcon, label: 'Reddit' }
-      case 'note':
-        return { icon: NoteIcon, label: 'Note' }
-      case 'image':
-        return { icon: ImageIcon, label: 'Image' }
-      default:
-        return null
-    }
-  }, [currentItem.type])
-
   // Memoize the image click handler to prevent unnecessary re-renders
   const handleImageClick = useCallback(() => {
     if (currentItem.imageUrl) {
@@ -47,9 +30,6 @@ export const NowShowingSection = memo(function NowShowingSection({
     onNext()
   }, [onNext])
 
-  // Suppress unused variable warning - contentTypeInfo is available for future use
-  void contentTypeInfo
-
   return (
     <div className="p-4 bg-gradient-to-b from-surface-900 to-surface-950">
       <div className="text-xs text-accent-500 font-mono mb-2 flex items-center gap-2">
@@ -61,7 +41,14 @@ export const NowShowingSection = memo(function NowShowingSection({
       {currentItem.type === 'youtube' && (
         <>
           <div className="relative aspect-video bg-surface-800 rounded-xl overflow-hidden mb-4 glow-accent">
-            <img src={currentItem.thumbnail} alt={currentItem.title} className="w-full h-full object-cover" />
+            <Image
+              src={currentItem.thumbnail!}
+              alt={currentItem.title || 'YouTube thumbnail'}
+              fill
+              sizes="(max-width: 768px) 100vw, 640px"
+              className="object-cover"
+              priority
+            />
             <div className="absolute inset-0 flex items-center justify-center bg-black/30">
               <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur flex items-center justify-center">
                 <PlayIcon />
@@ -130,11 +117,14 @@ export const NowShowingSection = memo(function NowShowingSection({
         <div className="mb-4">
           <div className="relative rounded-xl overflow-hidden cursor-pointer" onClick={handleImageClick}>
             {currentItem.imageUrl ? (
-              <div className="w-full aspect-video bg-surface-800 rounded-xl flex items-center justify-center">
-                <img
+              <div className="relative w-full aspect-video bg-surface-800 rounded-xl overflow-hidden">
+                <Image
                   src={currentItem.imageUrl}
                   alt={currentItem.imageCaption || currentItem.imageName || 'Shared image'}
-                  className="w-full max-h-[50vh] object-contain"
+                  fill
+                  sizes="(max-width: 768px) 100vw, 640px"
+                  className="object-contain"
+                  unoptimized
                 />
               </div>
             ) : (

@@ -71,8 +71,10 @@ describe('Friends Accept API Route', () => {
       if (table === 'user_blocks') {
         return {
           select: vi.fn(() => ({
-            or: vi.fn(() => ({
-              limit: vi.fn(() => Promise.resolve({ data: [], error: null })),
+            eq: vi.fn(() => ({
+              eq: vi.fn(() => ({
+                limit: vi.fn(() => Promise.resolve({ data: [], error: null })),
+              })),
             })),
           })),
         }
@@ -201,6 +203,7 @@ describe('Friends Accept API Route', () => {
     })
 
     it('returns 403 when user is blocked', async () => {
+      let blockCallCount = 0
       mockFrom.mockImplementation((table: string) => {
         if (table === 'friendships') {
           return {
@@ -222,10 +225,18 @@ describe('Friends Accept API Route', () => {
           }
         }
         if (table === 'user_blocks') {
+          blockCallCount++
           return {
             select: vi.fn(() => ({
-              or: vi.fn(() => ({
-                limit: vi.fn(() => Promise.resolve({ data: [{ id: 'block-1' }], error: null })),
+              eq: vi.fn(() => ({
+                eq: vi.fn(() => ({
+                  limit: vi.fn(() =>
+                    Promise.resolve({
+                      data: blockCallCount === 1 ? [{ id: 'block-1' }] : [],
+                      error: null,
+                    }),
+                  ),
+                })),
               })),
             })),
           }
@@ -263,8 +274,10 @@ describe('Friends Accept API Route', () => {
         if (table === 'user_blocks') {
           return {
             select: vi.fn(() => ({
-              or: vi.fn(() => ({
-                limit: vi.fn(() => Promise.resolve({ data: [], error: null })),
+              eq: vi.fn(() => ({
+                eq: vi.fn(() => ({
+                  limit: vi.fn(() => Promise.resolve({ data: [], error: null })),
+                })),
               })),
             })),
           }
@@ -303,8 +316,10 @@ describe('Friends Accept API Route', () => {
         if (table === 'user_blocks') {
           return {
             select: vi.fn(() => ({
-              or: vi.fn(() => ({
-                limit: vi.fn(() => Promise.resolve({ data: [], error: null })),
+              eq: vi.fn(() => ({
+                eq: vi.fn(() => ({
+                  limit: vi.fn(() => Promise.resolve({ data: [], error: null })),
+                })),
               })),
             })),
           }
@@ -357,8 +372,10 @@ describe('Friends Accept API Route', () => {
         if (table === 'user_blocks') {
           return {
             select: vi.fn(() => ({
-              or: vi.fn(() => ({
-                limit: vi.fn(() => Promise.resolve({ data: [], error: null })),
+              eq: vi.fn(() => ({
+                eq: vi.fn(() => ({
+                  limit: vi.fn(() => Promise.resolve({ data: [], error: null })),
+                })),
               })),
             })),
           }
@@ -401,8 +418,10 @@ describe('Friends Accept API Route', () => {
         if (table === 'user_blocks') {
           return {
             select: vi.fn(() => ({
-              or: vi.fn(() => ({
-                limit: vi.fn(() => Promise.resolve({ data: [], error: null })),
+              eq: vi.fn(() => ({
+                eq: vi.fn(() => ({
+                  limit: vi.fn(() => Promise.resolve({ data: [], error: null })),
+                })),
               })),
             })),
           }

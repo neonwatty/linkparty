@@ -15,16 +15,21 @@
     "components/ui/index.ts",
     "components/ui/InstallPrompt.tsx",
     "components/ui/OfflineIndicator.tsx",
-    "types/index.ts"
+    "types/index.ts",
+    "components/party/AddContentModal.tsx",
+    "components/party/DeleteConfirmDialog.tsx",
+    "components/party/InviteModal.tsx",
+    "components/party/NoteEditModal.tsx",
+    "components/party/NoteViewModal.tsx",
+    "components/party/QueueItemActionsSheet.tsx"
   ],
   "ignoreDependencies": [
     "@capacitor/android",
     "@capacitor/core",
     "@capacitor/ios",
     "@capacitor/push-notifications",
-    "@vitest/coverage-v8",
     "postcss",
-    "@supabase/ssr",
+    "tailwindcss",
     "@semantic-release/commit-analyzer",
     "@semantic-release/release-notes-generator",
     "@semantic-release/github"

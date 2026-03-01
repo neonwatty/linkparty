@@ -16,6 +16,11 @@ const nextConfig: NextConfig = {
   // Disable image optimization only for static export (Capacitor builds)
   images: {
     unoptimized: useStaticExport,
+    remotePatterns: [
+      { protocol: 'https', hostname: 'i.ytimg.com' },
+      { protocol: 'https', hostname: 'pbs.twimg.com' },
+      { protocol: 'https', hostname: '*.supabase.co' },
+    ],
   },
 
   // Trailing slashes help with static hosting
