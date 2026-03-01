@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 /**
  * Hook to track online/offline status
@@ -8,6 +8,7 @@ import { useState, useEffect } from 'react'
  */
 export function useOnlineStatus(): boolean {
   const [isOnline, setIsOnline] = useState(() => (typeof navigator !== 'undefined' ? navigator.onLine : true))
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     const checkConnection = async () => {
@@ -27,9 +28,13 @@ export function useOnlineStatus(): boolean {
     }
 
     const handleOnline = () => {
-      checkConnection()
+      if (debounceTimer.current) clearTimeout(debounceTimer.current)
+      debounceTimer.current = setTimeout(checkConnection, 500)
     }
-    const handleOffline = () => setIsOnline(false)
+    const handleOffline = () => {
+      if (debounceTimer.current) clearTimeout(debounceTimer.current)
+      setIsOnline(false)
+    }
 
     window.addEventListener('online', handleOnline)
     window.addEventListener('offline', handleOffline)
@@ -38,6 +43,7 @@ export function useOnlineStatus(): boolean {
     return () => {
       window.removeEventListener('online', handleOnline)
       window.removeEventListener('offline', handleOffline)
+      if (debounceTimer.current) clearTimeout(debounceTimer.current)
     }
   }, [])
 

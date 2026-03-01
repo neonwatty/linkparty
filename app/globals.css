@@ -487,12 +487,12 @@ body {
 }
 
 .input-error {
-  border-color: #f87171;
+  border-color: #ff6b6b;
 }
 
 .input-error:focus {
-  border-color: #f87171;
-  box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.15);
+  border-color: #ff6b6b;
+  box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.2);
 }
 
 /* ========================================
