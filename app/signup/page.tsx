@@ -168,7 +168,11 @@ function SignupForm() {
         {/* Email form */}
         <div className="space-y-4 animate-fade-in-up delay-400">
           <div>
+            <label htmlFor="signup-name" className="sr-only">
+              Display name
+            </label>
             <input
+              id="signup-name"
               type="text"
               placeholder="Display name"
               value={displayName}
@@ -177,10 +181,13 @@ function SignupForm() {
               className={`input ${nameError ? 'input-error' : ''}`}
               disabled={isLoading}
               maxLength={50}
+              aria-describedby={nameError ? 'signup-name-error' : undefined}
             />
             <div className="flex justify-between mt-1">
               {nameError ? (
-                <span className="text-red-400 text-xs">{nameError}</span>
+                <span id="signup-name-error" className="text-red-400 text-xs" role="alert">
+                  {nameError}
+                </span>
               ) : (
                 <span
                   className={`text-xs ${displayName.trim().length > 0 && displayName.trim().length < 2 ? 'text-red-400' : 'text-text-muted'}`}
@@ -194,7 +201,11 @@ function SignupForm() {
             </div>
           </div>
           <div>
+            <label htmlFor="signup-email" className="sr-only">
+              Email address
+            </label>
             <input
+              id="signup-email"
               type="email"
               placeholder="Email address"
               value={email}
@@ -202,11 +213,20 @@ function SignupForm() {
               onKeyDown={handleKeyDown}
               className={`input ${emailError ? 'input-error' : ''}`}
               disabled={isLoading}
+              aria-describedby={emailError ? 'signup-email-error' : undefined}
             />
-            {emailError && <p className="text-red-400 text-sm mt-1">{emailError}</p>}
+            {emailError && (
+              <p id="signup-email-error" className="text-red-400 text-sm mt-1" role="alert">
+                {emailError}
+              </p>
+            )}
           </div>
           <div>
+            <label htmlFor="signup-password" className="sr-only">
+              Password
+            </label>
             <input
+              id="signup-password"
               type="password"
               placeholder="Password"
               value={password}
@@ -214,8 +234,13 @@ function SignupForm() {
               onKeyDown={handleKeyDown}
               className={`input ${passwordError ? 'input-error' : ''}`}
               disabled={isLoading}
+              aria-describedby={passwordError ? 'signup-password-error' : undefined}
             />
-            {passwordError && <p className="text-red-400 text-sm mt-1">{passwordError}</p>}
+            {passwordError && (
+              <p id="signup-password-error" className="text-red-400 text-sm mt-1" role="alert">
+                {passwordError}
+              </p>
+            )}
           </div>
           <button onClick={handleEmailSignUp} className="btn btn-primary w-full" disabled={isLoading}>
             {isLoading ? <LoaderIcon /> : 'Create Account'}

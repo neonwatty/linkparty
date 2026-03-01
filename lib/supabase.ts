@@ -121,7 +121,13 @@ export function getCurrentParty(): { partyId: string; partyCode: string } | null
 
   const storageKey = 'link-party-current-party'
   const data = localStorage.getItem(storageKey)
-  return data ? JSON.parse(data) : null
+  if (!data) return null
+  try {
+    return JSON.parse(data)
+  } catch {
+    localStorage.removeItem(storageKey)
+    return null
+  }
 }
 
 export function setCurrentParty(partyId: string, partyCode: string): void {

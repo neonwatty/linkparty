@@ -173,7 +173,11 @@ export default function LoginPage() {
 
               <div className="space-y-4 animate-fade-in-up delay-200">
                 <div>
+                  <label htmlFor="forgot-email" className="sr-only">
+                    Email address
+                  </label>
                   <input
+                    id="forgot-email"
                     type="email"
                     placeholder="Email address"
                     value={email}
@@ -181,8 +185,13 @@ export default function LoginPage() {
                     onKeyDown={handleKeyDown}
                     className={`input ${emailError ? 'input-error' : ''}`}
                     disabled={isLoading}
+                    aria-describedby={emailError ? 'forgot-email-error' : undefined}
                   />
-                  {emailError && <p className="text-red-400 text-sm mt-1">{emailError}</p>}
+                  {emailError && (
+                    <p id="forgot-email-error" className="text-red-400 text-sm mt-1" role="alert">
+                      {emailError}
+                    </p>
+                  )}
                 </div>
                 <button onClick={handleForgotPassword} className="btn btn-primary w-full" disabled={isLoading}>
                   {isLoading ? <LoaderIcon /> : 'Send Reset Link'}
@@ -237,7 +246,11 @@ export default function LoginPage() {
         {/* Email form */}
         <div className="space-y-4 animate-fade-in-up delay-400">
           <div>
+            <label htmlFor="login-email" className="sr-only">
+              Email address
+            </label>
             <input
+              id="login-email"
               type="email"
               placeholder="Email address"
               value={email}
@@ -245,11 +258,20 @@ export default function LoginPage() {
               onKeyDown={handleKeyDown}
               className={`input ${emailError ? 'input-error' : ''}`}
               disabled={isLoading}
+              aria-describedby={emailError ? 'login-email-error' : undefined}
             />
-            {emailError && <p className="text-red-400 text-sm mt-1">{emailError}</p>}
+            {emailError && (
+              <p id="login-email-error" className="text-red-400 text-sm mt-1" role="alert">
+                {emailError}
+              </p>
+            )}
           </div>
           <div>
+            <label htmlFor="login-password" className="sr-only">
+              Password
+            </label>
             <input
+              id="login-password"
               type="password"
               placeholder="Password"
               value={password}
@@ -257,8 +279,13 @@ export default function LoginPage() {
               onKeyDown={handleKeyDown}
               className={`input ${passwordError ? 'input-error' : ''}`}
               disabled={isLoading}
+              aria-describedby={passwordError ? 'login-password-error' : undefined}
             />
-            {passwordError && <p className="text-red-400 text-sm mt-1">{passwordError}</p>}
+            {passwordError && (
+              <p id="login-password-error" className="text-red-400 text-sm mt-1" role="alert">
+                {passwordError}
+              </p>
+            )}
           </div>
           <button onClick={handleEmailSignIn} className="btn btn-primary w-full" disabled={isLoading}>
             {isLoading ? <LoaderIcon /> : 'Sign In'}

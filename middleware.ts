@@ -37,9 +37,9 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // Allow fake auth cookie used by E2E tests — only in CI environments (GitHub Actions sets CI=true).
-  // NEVER active in production deployments (Vercel runtime does not set CI).
-  if (process.env.CI) {
+  // Allow fake auth cookie used by E2E tests — only when E2E_MOCK_AUTH is explicitly set.
+  // NEVER active in production deployments (Vercel does not set this variable).
+  if (process.env.E2E_MOCK_AUTH) {
     const hasFakeAuth = request.cookies.getAll().some((cookie) => cookie.name.includes('mock-auth-token'))
     if (hasFakeAuth) return NextResponse.next()
   }

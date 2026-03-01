@@ -122,6 +122,7 @@ export async function GET(request: NextRequest) {
       .from('email_events')
       .select('event_type')
       .in('recipient', invitedEmails)
+      .limit(10000)
 
     if (statsError) {
       console.error('Failed to fetch email stats:', statsError)

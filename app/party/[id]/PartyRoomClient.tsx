@@ -617,6 +617,7 @@ export default function PartyRoomClient() {
       <button
         onClick={handleOpenAddContent}
         className="fab bg-accent-500 hover:bg-accent-400 transition-all hover:scale-105 animate-pulse-glow"
+        aria-label="Add content to queue"
       >
         <PlusIcon />
       </button>

@@ -38,6 +38,7 @@ function createEmailStatsChain(result: Mock) {
   const self = () => chain
   chain.select = vi.fn(self)
   chain.in = vi.fn(self)
+  chain.limit = vi.fn(self)
   chain.then = vi.fn((resolve: (v: unknown) => void) => resolve(result()))
   return chain
 }

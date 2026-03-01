@@ -92,26 +92,44 @@ export default function ResetPasswordPage() {
 
         <div className="space-y-4 animate-fade-in-up delay-200">
           <div>
+            <label htmlFor="new-password" className="sr-only">
+              New password
+            </label>
             <input
+              id="new-password"
               type="password"
               placeholder="New password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               className={`input ${passwordError ? 'input-error' : ''}`}
               disabled={isLoading}
+              aria-describedby={passwordError ? 'new-password-error' : undefined}
             />
-            {passwordError && <p className="text-red-400 text-sm mt-1">{passwordError}</p>}
+            {passwordError && (
+              <p id="new-password-error" className="text-red-400 text-sm mt-1" role="alert">
+                {passwordError}
+              </p>
+            )}
           </div>
           <div>
+            <label htmlFor="confirm-password" className="sr-only">
+              Confirm new password
+            </label>
             <input
+              id="confirm-password"
               type="password"
               placeholder="Confirm new password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               className={`input ${confirmError ? 'input-error' : ''}`}
               disabled={isLoading}
+              aria-describedby={confirmError ? 'confirm-password-error' : undefined}
             />
-            {confirmError && <p className="text-red-400 text-sm mt-1">{confirmError}</p>}
+            {confirmError && (
+              <p id="confirm-password-error" className="text-red-400 text-sm mt-1" role="alert">
+                {confirmError}
+              </p>
+            )}
           </div>
           <button onClick={handleUpdatePassword} className="btn btn-primary w-full" disabled={isLoading}>
             {isLoading ? <LoaderIcon /> : 'Update Password'}

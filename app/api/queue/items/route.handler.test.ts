@@ -25,12 +25,15 @@ import {
 import { createRateLimiter } from '@/lib/serverRateLimit'
 import { POST } from './route'
 
-const mockRequest = {} as NextRequest
+const mockRequest = {
+  headers: new Headers({ 'x-forwarded-for': '127.0.0.1' }),
+} as unknown as NextRequest
 
 function createMockSupabase(overrides?: {
   countResult?: { count: number | null; error: { message: string } | null }
   imageCountResult?: { count: number | null; error: { message: string } | null }
   insertResult?: { data: Record<string, unknown> | null; error: { message: string } | null }
+  maxPosition?: number | null
 }) {
   const mockSingle = vi
     .fn()
@@ -40,15 +43,36 @@ function createMockSupabase(overrides?: {
 
   const countResult = overrides?.countResult ?? { count: 5, error: null }
   const imageCountResult = overrides?.imageCountResult ?? { count: 2, error: null }
+  const maxPosition = overrides?.maxPosition ?? 4
 
+  // Position query chain: .select('position').eq(...).order(...).limit(1).maybeSingle()
+  const positionMaybeSingle = vi
+    .fn()
+    .mockResolvedValue({ data: maxPosition !== null ? { position: maxPosition } : null, error: null })
+  const positionLimit = vi.fn().mockReturnValue({ maybeSingle: positionMaybeSingle })
+  const positionOrder = vi.fn().mockReturnValue({ limit: positionLimit })
+
+  let fromCallCount = 0
   const supabase = {
     from: vi.fn(() => {
+      fromCallCount++
       return {
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            neq: vi.fn().mockResolvedValue(countResult),
-            eq: vi.fn().mockResolvedValue(imageCountResult),
-          }),
+        select: vi.fn((selectArg: string) => {
+          // Position query uses select('position')
+          if (selectArg === 'position') {
+            return {
+              eq: vi.fn().mockReturnValue({
+                order: positionOrder,
+              }),
+            }
+          }
+          // Count queries use select('*', { count: 'exact', head: true })
+          return {
+            eq: vi.fn().mockReturnValue({
+              neq: vi.fn().mockResolvedValue(countResult),
+              eq: vi.fn().mockResolvedValue(imageCountResult),
+            }),
+          }
         }),
         insert: mockInsert,
       }
@@ -290,20 +314,20 @@ describe('Queue Items POST Handler', () => {
     const response = await POST(mockRequest)
     expect(response.status).toBe(200)
 
-    // Should only call from() for queue count + insert, NOT for image count
-    // from() called for: count check, insert
+    // Should only call from() for position query + queue count + insert, NOT for image count
+    // from() called for: position query, count check, insert
     const fromCalls = mock.supabase.from.mock.calls
     const queueItemsCalls = fromCalls.filter((c: string[]) => c[0] === 'queue_items')
-    expect(queueItemsCalls.length).toBe(2) // count + insert, no image count
+    expect(queueItemsCalls.length).toBe(3) // position + count + insert, no image count
   })
 
   it('inserts note item with correct DB fields', async () => {
-    const mock = createMockSupabase()
+    const mock = createMockSupabase({ maxPosition: 3 })
     setupHappyPath(mock, {
       type: 'note',
       noteContent: 'My note',
       addedByName: 'Alice',
-      position: 3,
+      position: 99, // client-supplied position should be ignored
       dueDate: '2026-03-01',
     })
 
@@ -315,7 +339,7 @@ describe('Queue Items POST Handler', () => {
         party_id: 'party-1',
         type: 'note',
         status: 'pending',
-        position: 3,
+        position: 4, // server-computed: maxPosition(3) + 1
         added_by_name: 'Alice',
         note_content: 'My note',
         due_date: '2026-03-01',

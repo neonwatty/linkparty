@@ -168,6 +168,7 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: ${{ env.API_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ env.ANON_KEY }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ env.SERVICE_ROLE_KEY }}
+          E2E_MOCK_AUTH: 'true'
       - name: Upload Playwright report
         uses: actions/upload-artifact@v4
         if: always()

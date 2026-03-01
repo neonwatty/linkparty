@@ -137,7 +137,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         updateData = {
           is_completed: body.isCompleted,
           completed_at: body.isCompleted ? body.completedAt || new Date().toISOString() : null,
-          completed_by_user_id: body.isCompleted ? body.completedByUserId || null : null,
+          completed_by_user_id: body.isCompleted ? identity.userId || null : null,
         }
         break
       case 'updateDueDate':
