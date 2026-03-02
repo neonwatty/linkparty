@@ -22,6 +22,8 @@ import { GET } from './route'
 describe('auth callback route', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    process.env.NEXT_PUBLIC_SUPABASE_URL = 'http://test.supabase.co'
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'test-anon-key'
   })
 
   it('redirects to / by default when no redirect param', async () => {

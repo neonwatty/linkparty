@@ -112,20 +112,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No valid friends found to invite' }, { status: 400 })
     }
 
-    // Send notifications and emails for each valid friend
-    for (const friendId of validFriendIds) {
-      // Insert notification
-      const { error: notifError } = await supabase.from('notifications').insert({
-        user_id: friendId,
-        type: 'party_invite',
-        title: `${inviterName} invited you to ${partyName || 'a party'}`,
-        data: { partyId, partyCode, inviterName, inviterId: user.id },
-      })
-      if (notifError) {
-        console.error(`Failed to create notification for ${friendId}:`, notifError)
-      }
+    // Batch-insert all notifications at once
+    const notifications = validFriendIds.map((friendId) => ({
+      user_id: friendId,
+      type: 'party_invite',
+      title: `${inviterName} invited you to ${partyName || 'a party'}`,
+      data: { partyId, partyCode, inviterName, inviterId: user.id },
+    }))
+    const { error: notifError } = await supabase.from('notifications').insert(notifications)
+    if (notifError) {
+      console.error('Failed to create notifications:', notifError)
+    }
 
-      // Send email (fire-and-forget)
+    // Send emails in parallel (fire-and-forget)
+    const emailPromises = validFriendIds.map(async (friendId) => {
       try {
         const { data: friendUser } = await supabase.auth.admin.getUserById(friendId)
         if (friendUser?.user?.email) {
@@ -139,7 +139,8 @@ export async function POST(request: NextRequest) {
       } catch (emailErr) {
         console.error(`Failed to send invite email to ${friendId}:`, emailErr)
       }
-    }
+    })
+    await Promise.all(emailPromises)
 
     return NextResponse.json({ success: true, invited: validFriendIds.length })
   } catch (err) {

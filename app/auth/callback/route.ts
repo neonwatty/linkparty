@@ -10,19 +10,24 @@ export async function GET(request: NextRequest) {
   const redirect = isSafePath ? rawRedirect : '/'
 
   if (code) {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    if (!supabaseUrl || !supabaseAnonKey) {
+      console.error('Auth callback: Supabase not configured')
+      const loginUrl = new URL('/login', request.url)
+      loginUrl.searchParams.set('error', 'server_config_error')
+      return NextResponse.redirect(loginUrl)
+    }
+
     const cookieStore = await cookies()
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll: () => cookieStore.getAll(),
-          setAll: (cookiesToSet) => {
-            cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options))
-          },
+    const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+      cookies: {
+        getAll: () => cookieStore.getAll(),
+        setAll: (cookiesToSet) => {
+          cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options))
         },
       },
-    )
+    })
     const { error } = await supabase.auth.exchangeCodeForSession(code)
     if (error) {
       console.error('Auth callback: failed to exchange code for session', error.message)

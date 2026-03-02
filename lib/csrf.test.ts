@@ -19,8 +19,8 @@ describe('validateOrigin', () => {
     expect(validateOrigin(mockRequest({ origin: 'https://linkparty.app' }))).toBe(true)
   })
 
-  it('allows requests from linkparty.app with path', () => {
-    expect(validateOrigin(mockRequest({ origin: 'https://linkparty.app/party/123' }))).toBe(true)
+  it('allows requests from linkparty.app via referer with path', () => {
+    expect(validateOrigin(mockRequest({ referer: 'https://linkparty.app/party/123' }))).toBe(true)
   })
 
   it('allows requests from http://localhost:3000', () => {

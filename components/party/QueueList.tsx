@@ -131,7 +131,6 @@ const QueueListItem = memo(function QueueListItem({
             width={80}
             height={45}
             className="w-full h-full object-cover"
-            unoptimized
           />
         ) : (
           <span className={badge.color}>

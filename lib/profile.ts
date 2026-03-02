@@ -70,9 +70,20 @@ export async function updateProfile(updates: {
   return { data: data as UserProfile, error: null }
 }
 
-export async function checkUsernameAvailable(username: string): Promise<boolean> {
-  const { data } = await supabase.from('user_profiles').select('id').eq('username', username.toLowerCase()).single()
-  return !data
+export async function checkUsernameAvailable(username: string): Promise<{ available: boolean; error?: string }> {
+  const { data, error } = await supabase
+    .from('user_profiles')
+    .select('id')
+    .eq('username', username.toLowerCase())
+    .single()
+  if (error && error.code === 'PGRST116') {
+    // No rows found — username is available
+    return { available: true }
+  }
+  if (error) {
+    return { available: false, error: 'Unable to check username availability' }
+  }
+  return { available: !data }
 }
 
 export async function searchProfiles(query: string): Promise<UserProfile[]> {

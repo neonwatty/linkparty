@@ -121,3 +121,30 @@ Holistic beta-readiness audit across feature completeness, error handling, UX po
 - [ ] Missing error.tsx boundaries for 8 route groups (dimension: error-handling, severity: MEDIUM, many files)
 - [ ] Missing loading.tsx for most routes (dimension: error-handling, severity: MEDIUM, many files)
 - [ ] Admin emails page orphaned — no navigation link (dimension: feature, severity: LOW)
+
+---
+
+### Iteration 4 (2026-03-01)
+
+**Findings:** 15+ total across 5 dimensions (2 HIGH, 5 MEDIUM, 8+ LOW)
+**Code fixes applied:** 7
+**Manual to-dos added:** 0
+**Deferred:** 5
+
+#### Fixed (Code)
+
+- [x] `checkUsernameAvailable` returned incorrect result on DB error — now returns structured `{ available, error }` with PGRST116 handling (dimension: error-handling, severity: HIGH)
+- [x] Auth callback route crashes on missing env vars via non-null assertion (`!`) — replaced with guard + redirect to login (dimension: error-handling, severity: HIGH)
+- [x] Members realtime channel missing reconnection refetch — now re-fetches data on SUBSCRIBED after reconnect (dimension: error-handling, severity: MEDIUM)
+- [x] InviteModal tab buttons missing `role="tab"` and `aria-selected` attributes (dimension: polish, severity: MEDIUM)
+- [x] CSRF origin validation used `startsWith` allowing subdomain bypass — changed to exact `includes` match (dimension: ops, severity: MEDIUM)
+- [x] Invite-friends API sent N+1 notification inserts — replaced with batch `.insert()` and parallel emails (dimension: performance, severity: MEDIUM)
+- [x] User images in QueueList had `unoptimized` prop bypassing Next.js image optimization (dimension: performance, severity: MEDIUM)
+
+#### Deferred
+
+- [ ] Queue virtualization for 100+ items (dimension: performance, severity: HIGH, architectural — carried from iteration 3)
+- [ ] @dnd-kit not code-split — 60KB in main bundle (dimension: performance, severity: MEDIUM, carried from iteration 3)
+- [ ] Missing error.tsx boundaries for route groups (dimension: error-handling, severity: MEDIUM, carried from iteration 3)
+- [ ] Missing loading.tsx for most routes (dimension: error-handling, severity: MEDIUM, carried from iteration 3)
+- [ ] AddContentModal/FriendsPicker missing form labels (dimension: polish, severity: LOW, carried from iteration 2)

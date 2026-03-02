@@ -177,26 +177,42 @@ describe('profile', () => {
   })
 
   describe('checkUsernameAvailable', () => {
-    it('returns true when username not found', async () => {
+    it('returns available true when username not found (PGRST116)', async () => {
       mockFrom.mockReturnValue({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({ data: null }),
+            single: vi.fn().mockResolvedValue({ data: null, error: { code: 'PGRST116', message: 'no rows' } }),
           }),
         }),
       })
-      expect(await checkUsernameAvailable('newuser')).toBe(true)
+      const result = await checkUsernameAvailable('newuser')
+      expect(result.available).toBe(true)
+      expect(result.error).toBeUndefined()
     })
 
-    it('returns false when username exists', async () => {
+    it('returns available false when username exists', async () => {
       mockFrom.mockReturnValue({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({ data: { id: 'someone' } }),
+            single: vi.fn().mockResolvedValue({ data: { id: 'someone' }, error: null }),
           }),
         }),
       })
-      expect(await checkUsernameAvailable('taken')).toBe(false)
+      const result = await checkUsernameAvailable('taken')
+      expect(result.available).toBe(false)
+    })
+
+    it('returns error on unexpected database failure', async () => {
+      mockFrom.mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({ data: null, error: { code: '42000', message: 'db error' } }),
+          }),
+        }),
+      })
+      const result = await checkUsernameAvailable('test')
+      expect(result.available).toBe(false)
+      expect(result.error).toBeTruthy()
     })
   })
 

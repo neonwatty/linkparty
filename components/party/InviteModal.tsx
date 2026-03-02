@@ -172,11 +172,21 @@ export function InviteModal({ isOpen, partyId, partyCode, partyName, inviterName
           </button>
         </div>
 
-        <div className="flex gap-1 bg-surface-800 p-1 rounded-xl mb-4">
-          <button onClick={() => setActiveTab('email')} className={tabCls(activeTab === 'email')}>
+        <div className="flex gap-1 bg-surface-800 p-1 rounded-xl mb-4" role="tablist">
+          <button
+            role="tab"
+            aria-selected={activeTab === 'email'}
+            onClick={() => setActiveTab('email')}
+            className={tabCls(activeTab === 'email')}
+          >
             Email
           </button>
-          <button onClick={() => setActiveTab('friends')} className={tabCls(activeTab === 'friends')}>
+          <button
+            role="tab"
+            aria-selected={activeTab === 'friends'}
+            onClick={() => setActiveTab('friends')}
+            className={tabCls(activeTab === 'friends')}
+          >
             Friends
           </button>
         </div>

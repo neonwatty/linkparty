@@ -522,6 +522,11 @@ export function useParty(partyId: string | null) {
         if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
           log.error('Realtime subscription failed', { channel: `members:${partyId}`, status })
         }
+        if (status === 'SUBSCRIBED' && hasSubscribedOnce.current) {
+          // Re-fetch data on reconnection to sync stale member state
+          log.info('Members channel reconnected, re-fetching data')
+          refetchData()
+        }
       })
 
     // Cleanup
