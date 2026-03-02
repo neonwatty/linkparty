@@ -18,7 +18,8 @@ function AvatarPicker({ value, onChange }: { value: string; onChange: (emoji: st
               key={emoji}
               type="button"
               onClick={() => onChange(emoji)}
-              className={`w-10 h-10 rounded-lg text-xl flex items-center justify-center transition-all ${
+              aria-label={`Select ${emoji} avatar`}
+              className={`w-11 h-11 rounded-lg text-xl flex items-center justify-center transition-all ${
                 value === emoji
                   ? 'bg-accent-500/20 ring-2 ring-accent-500 scale-110'
                   : 'bg-surface-800 hover:bg-surface-700'

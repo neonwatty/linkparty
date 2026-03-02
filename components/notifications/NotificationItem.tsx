@@ -68,7 +68,7 @@ export function NotificationItem({ notification, onMarkRead, onAcceptFriend, onD
                 e.stopPropagation()
                 onAcceptFriend(friendshipId)
               }}
-              className="text-sm font-medium px-3 py-1 rounded-lg bg-accent-500/20 text-accent-400 hover:bg-accent-500/30 transition-colors"
+              className="text-sm font-medium px-3 py-2 min-h-[44px] rounded-lg bg-accent-500/20 text-accent-400 hover:bg-accent-500/30 transition-colors"
             >
               Accept
             </button>
@@ -77,7 +77,7 @@ export function NotificationItem({ notification, onMarkRead, onAcceptFriend, onD
                 e.stopPropagation()
                 onDeclineFriend(friendshipId)
               }}
-              className="text-sm font-medium px-3 py-1 rounded-lg bg-surface-600 text-text-muted hover:bg-surface-500 transition-colors"
+              className="text-sm font-medium px-3 py-2 min-h-[44px] rounded-lg bg-surface-600 text-text-muted hover:bg-surface-500 transition-colors"
             >
               Decline
             </button>
