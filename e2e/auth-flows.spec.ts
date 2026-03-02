@@ -18,14 +18,11 @@ test.describe('Auth Flows — Reset Password Page', () => {
     await expect(page.getByRole('button', { name: 'Update Password' })).toBeVisible()
   })
 
-  test('shows validation error for empty password', async ({ page }) => {
+  test('disables submit button when fields are empty', async ({ page }) => {
     await page.goto('/reset-password')
 
-    // Click update without entering anything
-    await page.getByRole('button', { name: 'Update Password' }).click()
-
-    // Should show password validation error
-    await expect(page.getByText(/password is required|password must be at least/i)).toBeVisible()
+    // Button should be disabled when fields are empty
+    await expect(page.getByRole('button', { name: 'Update Password' })).toBeDisabled()
   })
 
   test('shows validation error for short password', async ({ page }) => {
