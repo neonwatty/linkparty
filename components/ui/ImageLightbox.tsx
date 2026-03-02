@@ -38,6 +38,9 @@ export function ImageLightbox({ imageUrl, caption, isOpen, onClose }: ImageLight
 
   return (
     <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={caption || 'Image lightbox'}
       className="fixed inset-0 bg-black/95 z-[60] flex items-center justify-center animate-fade-in"
       onClick={onClose}
     >
@@ -56,6 +59,7 @@ export function ImageLightbox({ imageUrl, caption, isOpen, onClose }: ImageLight
           src={imageUrl}
           alt={caption || 'Full size image'}
           className="max-w-full max-h-[85vh] object-contain rounded-lg"
+          loading="lazy"
         />
 
         {/* Caption */}

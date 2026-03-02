@@ -64,6 +64,16 @@ const QueueListItem = memo(function QueueListItem({
     onItemClick(item)
   }, [onItemClick, item])
 
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault()
+        onItemClick(item)
+      }
+    },
+    [onItemClick, item],
+  )
+
   const handleToggleComplete = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {
       e.stopPropagation()
@@ -79,7 +89,9 @@ const QueueListItem = memo(function QueueListItem({
     <div
       ref={setNodeRef}
       style={style}
+      tabIndex={0}
       onClick={handleClick}
+      onKeyDown={handleKeyDown}
       aria-roledescription="sortable"
       className={`queue-item cursor-pointer active:bg-surface-700 ${item.isCompleted ? 'opacity-60' : ''} ${isDragging ? 'z-10' : ''} ${isOverlay ? 'shadow-2xl bg-surface-800 rounded-lg' : ''}`}
     >

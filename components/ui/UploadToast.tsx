@@ -46,7 +46,7 @@ export function UploadToast({
   if (!isVisible && !showSuccess) return null
 
   return (
-    <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 animate-fade-in-up">
+    <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 animate-fade-in-up" role="status" aria-live="polite">
       <div className="bg-surface-800 border border-surface-700 rounded-full px-4 py-3 shadow-lg flex items-center gap-3 min-w-[200px]">
         {/* Optimizing state */}
         {isOptimizing && (
