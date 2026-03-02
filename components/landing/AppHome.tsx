@@ -26,8 +26,8 @@ export function AppHome() {
       .select('display_name')
       .eq('id', user.id)
       .single()
-      .then(({ data }) => {
-        if (!cancelled && data?.display_name) setProfileName(data.display_name)
+      .then(({ data, error }) => {
+        if (!cancelled && !error && data?.display_name) setProfileName(data.display_name)
       })
     return () => {
       cancelled = true

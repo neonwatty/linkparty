@@ -181,6 +181,7 @@ function SignupForm() {
               className={`input ${nameError ? 'input-error' : ''}`}
               disabled={isLoading}
               maxLength={50}
+              autoComplete="name"
               aria-describedby={nameError ? 'signup-name-error' : undefined}
             />
             <div className="flex justify-between mt-1">
@@ -213,6 +214,7 @@ function SignupForm() {
               onKeyDown={handleKeyDown}
               className={`input ${emailError ? 'input-error' : ''}`}
               disabled={isLoading}
+              autoComplete="email"
               aria-describedby={emailError ? 'signup-email-error' : undefined}
             />
             {emailError && (
@@ -234,6 +236,7 @@ function SignupForm() {
               onKeyDown={handleKeyDown}
               className={`input ${passwordError ? 'input-error' : ''}`}
               disabled={isLoading}
+              autoComplete="new-password"
               aria-describedby={passwordError ? 'signup-password-error' : undefined}
             />
             {passwordError && (

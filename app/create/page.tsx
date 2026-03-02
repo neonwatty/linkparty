@@ -38,6 +38,12 @@ export default function CreatePartyPage() {
   }
 
   const handleCreate = async () => {
+    // Client-side validation: password required when enabled
+    if (passwordEnabled && !password.trim()) {
+      setError('Please enter a party password')
+      return
+    }
+
     setIsCreating(true)
     setError(null)
 

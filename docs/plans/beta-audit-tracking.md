@@ -92,3 +92,32 @@ Holistic beta-readiness audit across feature completeness, error handling, UX po
 - [ ] AddContentModal textarea for notes missing label (dimension: polish, severity: LOW)
 - [ ] FriendsPicker search input missing form label (dimension: polish, severity: LOW)
 - [ ] PartyContext useMemo could include callback deps for completeness (dimension: performance, severity: LOW)
+
+---
+
+### Iteration 3 (2026-03-01)
+
+**Findings:** 20+ total across 5 dimensions (4 HIGH, 8 MEDIUM, 10+ LOW)
+**Code fixes applied:** 8
+**Manual to-dos added:** 0
+**Deferred:** 6
+
+#### Fixed (Code)
+
+- [x] CRON cleanup endpoint uses `===` for secret comparison — replaced with `crypto.timingSafeEqual` to prevent timing attacks (dimension: ops, severity: HIGH)
+- [x] AppHome profile fetch `.single()` ignores error — now checks `error` before updating state (dimension: error-handling, severity: HIGH)
+- [x] Queue items missing `focus-visible` outline — added `.queue-item:focus-visible` style in globals.css (dimension: polish, severity: HIGH)
+- [x] Create party allows submit with password enabled but empty — added client-side validation (dimension: feature, severity: HIGH)
+- [x] Queue items not keyboard-activatable — added `tabIndex={0}` and Enter/Space `onKeyDown` handler (dimension: polish, severity: MEDIUM)
+- [x] Login/signup form inputs missing `autocomplete` attributes — added `email`, `current-password`, `new-password`, `name` (dimension: polish, severity: MEDIUM)
+- [x] UploadToast missing `aria-live` region — added `role="status"` and `aria-live="polite"` (dimension: polish, severity: MEDIUM)
+- [x] ImageLightbox missing `role="dialog"`, `aria-modal`, and `loading="lazy"` — added all three (dimension: polish/performance, severity: MEDIUM)
+
+#### Deferred
+
+- [ ] Queue virtualization for 100+ items (dimension: performance, severity: HIGH, architectural — requires windowing library integration)
+- [ ] @dnd-kit not code-split — 60KB in main bundle (dimension: performance, severity: MEDIUM, requires dynamic import refactor)
+- [ ] Push notifications only support 1 trigger type (dimension: feature, severity: MEDIUM, feature scope)
+- [ ] Missing error.tsx boundaries for 8 route groups (dimension: error-handling, severity: MEDIUM, many files)
+- [ ] Missing loading.tsx for most routes (dimension: error-handling, severity: MEDIUM, many files)
+- [ ] Admin emails page orphaned — no navigation link (dimension: feature, severity: LOW)

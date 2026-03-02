@@ -185,6 +185,7 @@ export default function LoginPage() {
                     onKeyDown={handleKeyDown}
                     className={`input ${emailError ? 'input-error' : ''}`}
                     disabled={isLoading}
+                    autoComplete="email"
                     aria-describedby={emailError ? 'forgot-email-error' : undefined}
                   />
                   {emailError && (
@@ -258,6 +259,7 @@ export default function LoginPage() {
               onKeyDown={handleKeyDown}
               className={`input ${emailError ? 'input-error' : ''}`}
               disabled={isLoading}
+              autoComplete="email"
               aria-describedby={emailError ? 'login-email-error' : undefined}
             />
             {emailError && (
@@ -279,6 +281,7 @@ export default function LoginPage() {
               onKeyDown={handleKeyDown}
               className={`input ${passwordError ? 'input-error' : ''}`}
               disabled={isLoading}
+              autoComplete="current-password"
               aria-describedby={passwordError ? 'login-password-error' : undefined}
             />
             {passwordError && (
