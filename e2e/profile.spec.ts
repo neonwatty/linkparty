@@ -63,7 +63,7 @@ test.describe('Profile Page — Profile Editor', () => {
 
   test('Profile tab is active by default and shows editor', async ({ page }) => {
     // Profile tab should be active
-    const profileTab = page.getByRole('button', { name: 'Profile', exact: true })
+    const profileTab = page.getByRole('tab', { name: 'Profile', exact: true })
     await expect(profileTab).toBeVisible()
 
     // Editor elements should be visible
@@ -242,44 +242,28 @@ test.describe('Profile Page — Tab Switching', () => {
   })
 
   test('all four tabs are visible', async ({ page }) => {
-    await expect(page.getByRole('button', { name: 'Profile', exact: true })).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Friends', exact: true })).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Requests', exact: true })).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Blocked', exact: true })).toBeVisible()
+    await expect(page.getByRole('tab', { name: 'Profile', exact: true })).toBeVisible()
+    await expect(page.getByRole('tab', { name: 'Friends', exact: true })).toBeVisible()
+    await expect(page.getByRole('tab', { name: 'Requests', exact: true })).toBeVisible()
+    await expect(page.getByRole('tab', { name: 'Blocked', exact: true })).toBeVisible()
   })
 
   test('switching to Friends tab shows friends list or empty state', async ({ page }) => {
-    await page.getByRole('button', { name: 'Friends' }).click()
+    await page.getByRole('tab', { name: 'Friends' }).click()
 
     // In mock mode, shows empty state or friends list
-    const hasEmpty = await page
-      .getByText(/no friends/i)
-      .isVisible()
-      .catch(() => false)
-    const hasSearch = await page
-      .getByPlaceholder('Search friends...')
-      .isVisible()
-      .catch(() => false)
-    expect(hasEmpty || hasSearch).toBe(true)
+    await expect(page.getByText(/no friends/i).or(page.getByPlaceholder('Search friends...'))).toBeVisible()
   })
 
   test('switching to Requests tab shows requests or empty state', async ({ page }) => {
-    await page.getByRole('button', { name: 'Requests' }).click()
+    await page.getByRole('tab', { name: 'Requests' }).click()
 
     // In mock mode, shows empty state or request sections
-    const hasEmpty = await page
-      .getByText(/no friend requests/i)
-      .isVisible()
-      .catch(() => false)
-    const hasIncoming = await page
-      .getByText(/incoming/i)
-      .isVisible()
-      .catch(() => false)
-    expect(hasEmpty || hasIncoming).toBe(true)
+    await expect(page.getByText(/no friend requests/i).or(page.getByText(/incoming/i))).toBeVisible()
   })
 
   test('switching to Blocked tab shows blocked list or empty state', async ({ page }) => {
-    await page.getByRole('button', { name: 'Blocked' }).click()
+    await page.getByRole('tab', { name: 'Blocked' }).click()
 
     await expect(page.getByText(/no blocked users/i)).toBeVisible()
   })
@@ -289,18 +273,18 @@ test.describe('Profile Page — Tab Switching', () => {
     await expect(page.getByText('Display name')).toBeVisible()
 
     // Switch to Friends
-    await page.getByRole('button', { name: 'Friends' }).click()
+    await page.getByRole('tab', { name: 'Friends' }).click()
     await expect(page.getByText('Display name')).not.toBeVisible()
 
     // Switch to Requests
-    await page.getByRole('button', { name: 'Requests' }).click()
+    await page.getByRole('tab', { name: 'Requests' }).click()
 
     // Switch to Blocked
-    await page.getByRole('button', { name: 'Blocked' }).click()
+    await page.getByRole('tab', { name: 'Blocked' }).click()
     await expect(page.getByText(/no blocked users/i)).toBeVisible()
 
     // Back to Profile
-    await page.getByRole('button', { name: 'Profile' }).click()
+    await page.getByRole('tab', { name: 'Profile' }).click()
     await expect(page.getByText('Display name')).toBeVisible()
   })
 
@@ -310,7 +294,7 @@ test.describe('Profile Page — Tab Switching', () => {
     await expect(page.getByText('Display name')).toBeVisible()
 
     // Switch to Friends
-    await page.getByRole('button', { name: 'Friends' }).click()
+    await page.getByRole('tab', { name: 'Friends' }).click()
 
     // Profile editor content should be hidden
     await expect(page.getByText('Avatar')).not.toBeVisible()
@@ -319,13 +303,13 @@ test.describe('Profile Page — Tab Switching', () => {
   })
 
   test('Requests tab hides Profile editor content', async ({ page }) => {
-    await page.getByRole('button', { name: 'Requests' }).click()
+    await page.getByRole('tab', { name: 'Requests' }).click()
     await expect(page.getByPlaceholder('Your display name')).not.toBeVisible()
     await expect(page.getByRole('button', { name: 'Save Profile' })).not.toBeVisible()
   })
 
   test('Blocked tab hides Profile editor content', async ({ page }) => {
-    await page.getByRole('button', { name: 'Blocked' }).click()
+    await page.getByRole('tab', { name: 'Blocked' }).click()
     await expect(page.getByPlaceholder('Your display name')).not.toBeVisible()
     await expect(page.getByRole('button', { name: 'Save Profile' })).not.toBeVisible()
   })

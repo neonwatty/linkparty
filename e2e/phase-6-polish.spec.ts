@@ -9,19 +9,19 @@ test.describe('Phase 6 — Profile Blocked Tab', () => {
   })
 
   test('profile page shows Blocked tab', async ({ page }) => {
-    await expect(page.getByRole('button', { name: 'Blocked', exact: true })).toBeVisible()
+    await expect(page.getByRole('tab', { name: 'Blocked', exact: true })).toBeVisible()
   })
 
   test('Blocked tab shows empty state', async ({ page }) => {
-    await page.getByRole('button', { name: 'Blocked' }).click()
+    await page.getByRole('tab', { name: 'Blocked' }).click()
     await expect(page.getByText(/no blocked users/i)).toBeVisible()
   })
 
   test('all four tabs are present', async ({ page }) => {
-    await expect(page.getByRole('button', { name: 'Profile', exact: true })).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Friends', exact: true })).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Requests', exact: true })).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Blocked', exact: true })).toBeVisible()
+    await expect(page.getByRole('tab', { name: 'Profile', exact: true })).toBeVisible()
+    await expect(page.getByRole('tab', { name: 'Friends', exact: true })).toBeVisible()
+    await expect(page.getByRole('tab', { name: 'Requests', exact: true })).toBeVisible()
+    await expect(page.getByRole('tab', { name: 'Blocked', exact: true })).toBeVisible()
   })
 
   test('switching between all tabs works', async ({ page }) => {
@@ -29,19 +29,19 @@ test.describe('Phase 6 — Profile Blocked Tab', () => {
     await expect(page.getByText('Display name')).toBeVisible()
 
     // Friends
-    await page.getByRole('button', { name: 'Friends' }).click()
+    await page.getByRole('tab', { name: 'Friends' }).click()
     await expect(page.getByText(/no friends/i)).toBeVisible()
 
     // Requests
-    await page.getByRole('button', { name: 'Requests' }).click()
+    await page.getByRole('tab', { name: 'Requests' }).click()
     await expect(page.getByText(/no friend requests/i)).toBeVisible()
 
     // Blocked
-    await page.getByRole('button', { name: 'Blocked' }).click()
+    await page.getByRole('tab', { name: 'Blocked' }).click()
     await expect(page.getByText(/no blocked users/i)).toBeVisible()
 
     // Back to Profile
-    await page.getByRole('button', { name: 'Profile' }).click()
+    await page.getByRole('tab', { name: 'Profile' }).click()
     await expect(page.getByText('Display name')).toBeVisible()
   })
 })
@@ -54,7 +54,7 @@ test.describe('Phase 6 — Friends List Block Button', () => {
 
   test('Friends tab shows Remove and Block buttons when friends exist (mock mode renders empty)', async ({ page }) => {
     // In mock mode, the friends list is empty so we can only verify the empty state renders
-    await page.getByRole('button', { name: 'Friends' }).click()
+    await page.getByRole('tab', { name: 'Friends' }).click()
     await expect(page.getByText(/no friends/i)).toBeVisible()
   })
 })
