@@ -14,24 +14,24 @@ test.describe('Notification Bell and Dropdown', () => {
 
   test('clicking bell opens dropdown', async ({ page }) => {
     await page.getByRole('button', { name: /Notifications/ }).click()
-    await expect(page.getByRole('menu', { name: 'Notifications' })).toBeVisible()
+    await expect(page.getByRole('list', { name: 'Notifications' })).toBeVisible()
   })
 
   test('dropdown shows "No notifications" empty state', async ({ page }) => {
     await page.getByRole('button', { name: /Notifications/ }).click()
-    await expect(page.getByRole('menu', { name: 'Notifications' })).toBeVisible()
+    await expect(page.getByRole('list', { name: 'Notifications' })).toBeVisible()
     await expect(page.getByText('No notifications')).toBeVisible()
   })
 
   test('clicking outside closes dropdown', async ({ page }) => {
     // Open the dropdown
     await page.getByRole('button', { name: /Notifications/ }).click()
-    await expect(page.getByRole('menu', { name: 'Notifications' })).toBeVisible()
+    await expect(page.getByRole('list', { name: 'Notifications' })).toBeVisible()
 
     // Click outside the notification area (on the page body/hero area)
     await page.locator('h1').click()
 
     // Dropdown should be closed
-    await expect(page.getByRole('menu', { name: 'Notifications' })).not.toBeVisible()
+    await expect(page.getByRole('list', { name: 'Notifications' })).not.toBeVisible()
   })
 })
