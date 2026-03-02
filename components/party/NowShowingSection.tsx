@@ -115,7 +115,19 @@ export const NowShowingSection = memo(function NowShowingSection({
       {/* Image Content */}
       {currentItem.type === 'image' && (
         <div className="mb-4">
-          <div className="relative rounded-xl overflow-hidden cursor-pointer" onClick={handleImageClick}>
+          <div
+            role="button"
+            tabIndex={0}
+            aria-label={`View image: ${currentItem.imageCaption || currentItem.imageName || 'Shared image'}`}
+            className="relative rounded-xl overflow-hidden cursor-pointer"
+            onClick={handleImageClick}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                handleImageClick()
+              }
+            }}
+          >
             {currentItem.imageUrl ? (
               <div className="relative w-full aspect-video bg-surface-800 rounded-xl overflow-hidden">
                 <Image

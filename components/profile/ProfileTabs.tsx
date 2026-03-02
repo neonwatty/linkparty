@@ -155,10 +155,14 @@ export default function ProfileTabs() {
   return (
     <div>
       {/* Tab bar */}
-      <div className="flex gap-6 border-b border-surface-800 mb-6">
+      <div role="tablist" className="flex gap-6 border-b border-surface-800 mb-6">
         {tabs.map((tab) => (
           <button
             key={tab.key}
+            role="tab"
+            aria-selected={activeTab === tab.key}
+            aria-controls={`tabpanel-${tab.key}`}
+            id={`tab-${tab.key}`}
             onClick={() => setActiveTab(tab.key)}
             className={`pb-2 text-sm font-medium transition-colors cursor-pointer ${
               activeTab === tab.key
@@ -186,28 +190,30 @@ export default function ProfileTabs() {
       )}
 
       {/* Tab content */}
-      {activeTab === 'profile' && <ProfileEditor />}
-      {activeTab === 'friends' && (
-        <FriendsList
-          friends={friends}
-          loading={friendsLoading}
-          onRemoveFriend={handleRemoveFriend}
-          onBlockUser={handleBlockUser}
-        />
-      )}
-      {activeTab === 'requests' && (
-        <FriendRequests
-          incoming={incoming}
-          outgoing={outgoing}
-          loading={requestsLoading}
-          onAccept={handleAccept}
-          onDecline={handleDecline}
-          onCancel={handleCancel}
-        />
-      )}
-      {activeTab === 'blocked' && (
-        <BlockedUsers blockedUsers={blockedUsers} loading={blockedLoading} onUnblock={handleUnblock} />
-      )}
+      <div role="tabpanel" id={`tabpanel-${activeTab}`} aria-labelledby={`tab-${activeTab}`}>
+        {activeTab === 'profile' && <ProfileEditor />}
+        {activeTab === 'friends' && (
+          <FriendsList
+            friends={friends}
+            loading={friendsLoading}
+            onRemoveFriend={handleRemoveFriend}
+            onBlockUser={handleBlockUser}
+          />
+        )}
+        {activeTab === 'requests' && (
+          <FriendRequests
+            incoming={incoming}
+            outgoing={outgoing}
+            loading={requestsLoading}
+            onAccept={handleAccept}
+            onDecline={handleDecline}
+            onCancel={handleCancel}
+          />
+        )}
+        {activeTab === 'blocked' && (
+          <BlockedUsers blockedUsers={blockedUsers} loading={blockedLoading} onUnblock={handleUnblock} />
+        )}
+      </div>
     </div>
   )
 }

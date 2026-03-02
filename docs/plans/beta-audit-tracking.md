@@ -148,3 +148,36 @@ Holistic beta-readiness audit across feature completeness, error handling, UX po
 - [ ] Missing error.tsx boundaries for route groups (dimension: error-handling, severity: MEDIUM, carried from iteration 3)
 - [ ] Missing loading.tsx for most routes (dimension: error-handling, severity: MEDIUM, carried from iteration 3)
 - [ ] AddContentModal/FriendsPicker missing form labels (dimension: polish, severity: LOW, carried from iteration 2)
+
+---
+
+### Iteration 5 (2026-03-01)
+
+**Findings:** 25+ total across 5 dimensions (6 HIGH, 8 MEDIUM, 11+ LOW)
+**Code fixes applied:** 10
+**Manual to-dos added:** 0
+**Deferred:** 8
+
+#### Fixed (Code)
+
+- [x] `lib/friends.ts` — 7 mutation functions missing try/catch around fetch — network failures threw unhandled exceptions (dimension: error-handling, severity: HIGH)
+- [x] `ProfileTabs` missing ARIA tab pattern — screen readers couldn't navigate tabs; added role="tablist", role="tab", aria-selected, aria-controls, role="tabpanel" (dimension: polish, severity: HIGH)
+- [x] `NotificationDropdown` + `NotificationItem` — invalid ARIA role pairing (role="menu" with role="button" children); changed to role="list" + role="listitem" (dimension: polish, severity: HIGH)
+- [x] `NowShowingSection` image click target not keyboard-accessible — added role="button", tabIndex={0}, aria-label, onKeyDown (dimension: polish, severity: HIGH)
+- [x] Create party toggle switches missing `aria-label` — screen readers couldn't identify switch purpose (dimension: polish, severity: HIGH)
+- [x] TV mode exit button not safe-area aware — overlaps iOS notch; now uses `env(safe-area-inset-top)` (dimension: polish, severity: HIGH)
+- [x] `app/loading.tsx` spinner missing `role="status"` and screen reader text (dimension: polish, severity: MEDIUM)
+- [x] `PartyRoomClient` toast notifications missing `role="status"`/`role="alert"` and `aria-live` — invisible to screen readers (dimension: polish, severity: MEDIUM)
+- [x] `QueueList` note checkbox missing `onKeyDown` handler — not operable via keyboard (dimension: polish, severity: MEDIUM)
+- [x] No `prefers-reduced-motion` support — custom animations now disabled for users who prefer reduced motion (dimension: polish, severity: MEDIUM)
+
+#### Deferred
+
+- [ ] YouTube/Tweet/Reddit source URLs discarded — no "open original" link in queue items (dimension: feature, severity: HIGH, requires DB migration to store source URL)
+- [ ] `searchUsers` is a dead export — no friend discovery UI exists (dimension: feature, severity: HIGH, architectural — needs new search page)
+- [ ] Queue virtualization for 100+ items (dimension: performance, severity: HIGH, carried from iteration 3)
+- [ ] Admin page gate is client-side only — API routes not admin-restricted (dimension: ops, severity: HIGH, requires admin role in Supabase)
+- [ ] @dnd-kit not code-split — 60KB in main bundle (dimension: performance, severity: MEDIUM, carried from iteration 3)
+- [ ] Missing error.tsx boundaries for route groups (dimension: error-handling, severity: MEDIUM, carried from iteration 3)
+- [ ] Missing loading.tsx for most routes (dimension: error-handling, severity: MEDIUM, carried from iteration 3)
+- [ ] History page shows expired parties as clickable cards (dimension: feature, severity: MEDIUM, needs expired-state UI)

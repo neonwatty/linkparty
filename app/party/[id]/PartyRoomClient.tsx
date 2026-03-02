@@ -708,14 +708,22 @@ export default function PartyRoomClient() {
 
       {/* Share toast notification */}
       {showCopied && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-surface-800 text-white px-4 py-2 rounded-full shadow-lg z-50 animate-fade-in">
+        <div
+          role="status"
+          aria-live="polite"
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-surface-800 text-white px-4 py-2 rounded-full shadow-lg z-50 animate-fade-in"
+        >
           Party link copied!
         </div>
       )}
 
       {/* Friend request error toast */}
       {friendError && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-red-800 text-white px-4 py-2 rounded-full shadow-lg z-50 animate-fade-in">
+        <div
+          role="alert"
+          aria-live="assertive"
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-red-800 text-white px-4 py-2 rounded-full shadow-lg z-50 animate-fade-in"
+        >
           {friendError}
         </div>
       )}

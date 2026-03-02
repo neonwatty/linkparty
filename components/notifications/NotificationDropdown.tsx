@@ -39,7 +39,7 @@ export function NotificationDropdown({
   return (
     <div
       ref={dropdownRef}
-      role="menu"
+      role="list"
       aria-label="Notifications"
       className="absolute right-0 top-full mt-2 w-80 max-h-96 overflow-y-auto bg-surface-900 border border-surface-700 rounded-xl shadow-xl z-50"
     >

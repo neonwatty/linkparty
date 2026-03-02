@@ -180,6 +180,7 @@ export default function CreatePartyPage() {
                 type="button"
                 role="switch"
                 aria-checked={passwordEnabled}
+                aria-label="Password protect this party"
                 onClick={() => {
                   setPasswordEnabled(!passwordEnabled)
                   if (passwordEnabled) setPassword('')
@@ -256,6 +257,7 @@ export default function CreatePartyPage() {
                       type="button"
                       role="switch"
                       aria-checked={visibleToFriends}
+                      aria-label="Visible to friends"
                       onClick={() => setVisibleToFriends(!visibleToFriends)}
                       className={`relative w-11 h-6 rounded-full transition-colors ${visibleToFriends ? 'bg-primary' : 'bg-surface-600'}`}
                     >

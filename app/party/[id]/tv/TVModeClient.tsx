@@ -48,7 +48,8 @@ export default function TVModeClient() {
       {/* Exit button - clearly visible */}
       <button
         onClick={handleExit}
-        className="absolute top-12 left-4 z-10 bg-surface-800/90 backdrop-blur-sm border border-white/20 px-4 py-2 rounded-full text-sm text-white font-medium cursor-pointer hover:bg-surface-700 active:scale-95 transition-all flex items-center gap-2"
+        className="absolute left-4 z-10 bg-surface-800/90 backdrop-blur-sm border border-white/20 px-4 py-2 rounded-full text-sm text-white font-medium cursor-pointer hover:bg-surface-700 active:scale-95 transition-all flex items-center gap-2"
+        style={{ top: 'max(3rem, env(safe-area-inset-top, 3rem))' }}
         aria-label="Exit TV mode"
       >
         <ChevronLeftIcon />

@@ -360,6 +360,28 @@ body {
   animation-delay: 500ms;
 }
 
+/* Respect user motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in-up,
+  .animate-pulse-glow,
+  .animate-warm-glow,
+  .animate-logo-glow,
+  .animate-flicker {
+    animation: none !important;
+    opacity: 1;
+    transform: none;
+  }
+
+  .animate-spin {
+    animation-duration: 4s;
+  }
+
+  .animate-pulse {
+    animation: none !important;
+    opacity: 1;
+  }
+}
+
 /* ========================================
    BUTTON STYLES
    ======================================== */

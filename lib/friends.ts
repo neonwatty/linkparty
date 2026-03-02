@@ -238,67 +238,87 @@ export async function sendFriendRequest(friendId: string): Promise<{ error: stri
   const headers = await getAuthHeaders()
   if (!headers) return { error: 'Not authenticated' }
 
-  const res = await globalThis.fetch('/api/friends/request', {
-    method: 'POST',
-    headers,
-    body: JSON.stringify({ friendId }),
-  })
-  const result = await res.json()
-  if (!res.ok) return { error: result.error || 'Request failed' }
-  return { error: null }
+  try {
+    const res = await globalThis.fetch('/api/friends/request', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ friendId }),
+    })
+    const result = await res.json()
+    if (!res.ok) return { error: result.error || 'Request failed' }
+    return { error: null }
+  } catch {
+    return { error: 'Network error. Please try again.' }
+  }
 }
 
 export async function acceptFriendRequest(friendshipId: string): Promise<{ error: string | null }> {
   const headers = await getAuthHeaders()
   if (!headers) return { error: 'Not authenticated' }
 
-  const res = await globalThis.fetch('/api/friends/accept', {
-    method: 'POST',
-    headers,
-    body: JSON.stringify({ friendshipId }),
-  })
-  const result = await res.json()
-  if (!res.ok) return { error: result.error || 'Request failed' }
-  return { error: null }
+  try {
+    const res = await globalThis.fetch('/api/friends/accept', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ friendshipId }),
+    })
+    const result = await res.json()
+    if (!res.ok) return { error: result.error || 'Request failed' }
+    return { error: null }
+  } catch {
+    return { error: 'Network error. Please try again.' }
+  }
 }
 
 export async function declineFriendRequest(friendshipId: string): Promise<{ error: string | null }> {
   const headers = await getAuthHeaders()
   if (!headers) return { error: 'Not authenticated' }
 
-  const res = await globalThis.fetch(`/api/friends/${friendshipId}?action=decline`, {
-    method: 'DELETE',
-    headers,
-  })
-  const result = await res.json()
-  if (!res.ok) return { error: result.error || 'Request failed' }
-  return { error: null }
+  try {
+    const res = await globalThis.fetch(`/api/friends/${friendshipId}?action=decline`, {
+      method: 'DELETE',
+      headers,
+    })
+    const result = await res.json()
+    if (!res.ok) return { error: result.error || 'Request failed' }
+    return { error: null }
+  } catch {
+    return { error: 'Network error. Please try again.' }
+  }
 }
 
 export async function cancelFriendRequest(friendshipId: string): Promise<{ error: string | null }> {
   const headers = await getAuthHeaders()
   if (!headers) return { error: 'Not authenticated' }
 
-  const res = await globalThis.fetch(`/api/friends/${friendshipId}?action=cancel`, {
-    method: 'DELETE',
-    headers,
-  })
-  const result = await res.json()
-  if (!res.ok) return { error: result.error || 'Request failed' }
-  return { error: null }
+  try {
+    const res = await globalThis.fetch(`/api/friends/${friendshipId}?action=cancel`, {
+      method: 'DELETE',
+      headers,
+    })
+    const result = await res.json()
+    if (!res.ok) return { error: result.error || 'Request failed' }
+    return { error: null }
+  } catch {
+    return { error: 'Network error. Please try again.' }
+  }
 }
 
 export async function removeFriend(friendshipId: string): Promise<{ error: string | null }> {
   const headers = await getAuthHeaders()
   if (!headers) return { error: 'Not authenticated' }
 
-  const res = await globalThis.fetch(`/api/friends/${friendshipId}?action=unfriend`, {
-    method: 'DELETE',
-    headers,
-  })
-  const result = await res.json()
-  if (!res.ok) return { error: result.error || 'Request failed' }
-  return { error: null }
+  try {
+    const res = await globalThis.fetch(`/api/friends/${friendshipId}?action=unfriend`, {
+      method: 'DELETE',
+      headers,
+    })
+    const result = await res.json()
+    if (!res.ok) return { error: result.error || 'Request failed' }
+    return { error: null }
+  } catch {
+    return { error: 'Network error. Please try again.' }
+  }
 }
 
 // ---------- Block operations ----------
@@ -307,27 +327,35 @@ export async function blockUser(userId: string): Promise<{ error: string | null 
   const headers = await getAuthHeaders()
   if (!headers) return { error: 'Not authenticated' }
 
-  const res = await globalThis.fetch('/api/users/block', {
-    method: 'POST',
-    headers,
-    body: JSON.stringify({ userId }),
-  })
-  const result = await res.json()
-  if (!res.ok) return { error: result.error || 'Failed to block user' }
-  return { error: null }
+  try {
+    const res = await globalThis.fetch('/api/users/block', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ userId }),
+    })
+    const result = await res.json()
+    if (!res.ok) return { error: result.error || 'Failed to block user' }
+    return { error: null }
+  } catch {
+    return { error: 'Network error. Please try again.' }
+  }
 }
 
 export async function unblockUser(userId: string): Promise<{ error: string | null }> {
   const headers = await getAuthHeaders()
   if (!headers) return { error: 'Not authenticated' }
 
-  const res = await globalThis.fetch(`/api/users/block?userId=${userId}`, {
-    method: 'DELETE',
-    headers,
-  })
-  const result = await res.json()
-  if (!res.ok) return { error: result.error || 'Failed to unblock user' }
-  return { error: null }
+  try {
+    const res = await globalThis.fetch(`/api/users/block?userId=${userId}`, {
+      method: 'DELETE',
+      headers,
+    })
+    const result = await res.json()
+    if (!res.ok) return { error: result.error || 'Failed to unblock user' }
+    return { error: null }
+  } catch {
+    return { error: 'Network error. Please try again.' }
+  }
 }
 
 export async function listBlockedUsers(): Promise<UserProfile[]> {

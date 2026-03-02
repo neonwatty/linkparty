@@ -102,6 +102,14 @@ const QueueListItem = memo(function QueueListItem({
           tabIndex={0}
           onClick={handleToggleComplete}
           onTouchEnd={handleToggleComplete}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              e.stopPropagation()
+              onToggleComplete(item.id)
+            }
+          }}
+          aria-label={item.isCompleted ? 'Mark as incomplete' : 'Mark as complete'}
           className={`flex-shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center -ml-2 cursor-pointer ${item.isCompleted ? 'text-green-500' : overdue ? 'text-red-500' : 'text-text-muted'}`}
         >
           <CheckCircleIcon size={24} filled={item.isCompleted} />

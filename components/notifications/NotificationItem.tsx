@@ -38,7 +38,7 @@ export function NotificationItem({ notification, onMarkRead, onAcceptFriend, onD
 
   return (
     <div
-      role="button"
+      role="listitem"
       tabIndex={0}
       onClick={() => {
         if (!read) onMarkRead(id)
