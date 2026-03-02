@@ -82,28 +82,33 @@ export async function POST(request: NextRequest) {
       // Skip if inviter is the user themselves
       if (token.inviter_id === user.id) continue
 
-      // Check if friendship already exists
-      const { data: existing } = await supabase
-        .from('friendships')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('friend_id', token.inviter_id)
-        .maybeSingle()
+      // Check if friendship already exists (either direction)
+      const [{ data: existing1 }, { data: existing2 }] = await Promise.all([
+        supabase
+          .from('friendships')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('friend_id', token.inviter_id)
+          .maybeSingle(),
+        supabase
+          .from('friendships')
+          .select('id')
+          .eq('user_id', token.inviter_id)
+          .eq('friend_id', user.id)
+          .maybeSingle(),
+      ])
 
-      if (!existing) {
-        // Create mutual friendship (both directions, both accepted)
-        const { error: f1Error } = await supabase.from('friendships').insert({
-          user_id: user.id,
-          friend_id: token.inviter_id,
-          status: 'accepted',
-        })
-        const { error: f2Error } = await supabase.from('friendships').insert({
-          user_id: token.inviter_id,
-          friend_id: user.id,
-          status: 'accepted',
-        })
+      if (!existing1 || !existing2) {
+        // Create mutual friendship using upsert to prevent asymmetric state
+        const rows = []
+        if (!existing1) rows.push({ user_id: user.id, friend_id: token.inviter_id, status: 'accepted' })
+        if (!existing2) rows.push({ user_id: token.inviter_id, friend_id: user.id, status: 'accepted' })
 
-        if (!f1Error && !f2Error) {
+        const { error: upsertError } = await supabase
+          .from('friendships')
+          .upsert(rows, { onConflict: 'user_id,friend_id', ignoreDuplicates: true })
+
+        if (!upsertError) {
           friendshipsCreated++
 
           // Create notification for the inviter (best-effort)

@@ -24,7 +24,7 @@ export function NotificationDropdown({
   const dropdownRef = useRef<HTMLDivElement>(null)
   const hasUnread = notifications.some((n) => !n.read)
 
-  // Close on click outside (excludes the parent container which holds the bell toggle)
+  // Close on click outside or Escape key
   useEffect(() => {
     function handleMouseDown(e: MouseEvent) {
       const parent = dropdownRef.current?.parentElement
@@ -32,8 +32,17 @@ export function NotificationDropdown({
         onClose()
       }
     }
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        onClose()
+      }
+    }
     document.addEventListener('mousedown', handleMouseDown)
-    return () => document.removeEventListener('mousedown', handleMouseDown)
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('mousedown', handleMouseDown)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
   }, [onClose])
 
   return (

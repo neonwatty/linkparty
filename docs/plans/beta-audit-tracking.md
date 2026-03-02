@@ -181,3 +181,32 @@ Holistic beta-readiness audit across feature completeness, error handling, UX po
 - [ ] Missing error.tsx boundaries for route groups (dimension: error-handling, severity: MEDIUM, carried from iteration 3)
 - [ ] Missing loading.tsx for most routes (dimension: error-handling, severity: MEDIUM, carried from iteration 3)
 - [ ] History page shows expired parties as clickable cards (dimension: feature, severity: MEDIUM, needs expired-state UI)
+
+---
+
+### Iteration 6 (2026-03-01)
+
+**Findings:** 20+ total across 5 dimensions (1 HIGH, 5 MEDIUM, 14+ LOW)
+**Code fixes applied:** 6
+**Manual to-dos added:** 0
+**Deferred:** 8
+
+#### Fixed (Code)
+
+- [x] `invites/claim` asymmetric friendship on partial insert — replaced two separate `.insert()` calls with single `.upsert()` with `ignoreDuplicates`; checks both friendship directions before creating (dimension: error-handling, severity: HIGH)
+- [x] `NotificationDropdown` missing Escape key handler — keyboard users couldn't close dropdown (dimension: polish, severity: MEDIUM)
+- [x] Avatar picker emoji buttons 40px < WCAG 44px touch target — increased to 44px (`w-11 h-11`), added `aria-label` (dimension: polish, severity: MEDIUM)
+- [x] Notification accept/decline buttons too small for touch — added `min-h-[44px]` and `py-2` padding (dimension: polish, severity: MEDIUM)
+- [x] ImageLightbox close button touch target too small — added `min-w-[44px] min-h-[44px]`, improved aria-label to "Close image lightbox" (dimension: polish, severity: MEDIUM)
+- [x] `friends/accept` returns 500 for malformed JSON instead of 400 — added explicit try-catch for JSON parse consistency with other routes (dimension: error-handling, severity: MEDIUM)
+
+#### Deferred
+
+- [ ] YouTube/Tweet/Reddit source URLs discarded — no "open original" link (dimension: feature, severity: HIGH, requires DB migration)
+- [ ] `searchUsers` dead export — no friend discovery UI (dimension: feature, severity: HIGH, architectural)
+- [ ] Queue virtualization for 100+ items (dimension: performance, severity: HIGH, carried from iteration 3)
+- [ ] Admin page gate client-side only (dimension: ops, severity: HIGH, requires admin role in Supabase)
+- [ ] N+1 query in `invites/claim` loop (dimension: performance, severity: MEDIUM, loop is capped at 10 tokens)
+- [ ] @dnd-kit not code-split (dimension: performance, severity: MEDIUM, carried from iteration 3)
+- [ ] Missing error.tsx boundaries for route groups (dimension: error-handling, severity: MEDIUM, carried from iteration 3)
+- [ ] Missing loading.tsx for most routes (dimension: error-handling, severity: MEDIUM, carried from iteration 3)

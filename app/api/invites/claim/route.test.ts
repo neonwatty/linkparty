@@ -7,7 +7,7 @@ const mockFrom = vi.fn()
 // Terminal mocks
 const mockInviteTokensQueryLimit = vi.fn()
 const mockFriendshipCheckMaybeSingle = vi.fn()
-const mockFriendshipInsert = vi.fn()
+const mockFriendshipUpsert = vi.fn()
 const mockNotificationInsert = vi.fn()
 const mockTokenUpdateIn = vi.fn()
 
@@ -47,8 +47,8 @@ vi.mock('@supabase/supabase-js', () => ({
               })),
             })),
           })),
-          // Insert chain: .insert({...})
-          insert: mockFriendshipInsert,
+          // Upsert chain: .upsert(rows, options)
+          upsert: mockFriendshipUpsert,
         }
       }
       if (table === 'notifications') {
@@ -103,7 +103,7 @@ describe('Invites Claim API', () => {
       error: null,
     })
     mockFriendshipCheckMaybeSingle.mockResolvedValue({ data: null, error: null })
-    mockFriendshipInsert.mockResolvedValue({ error: null })
+    mockFriendshipUpsert.mockResolvedValue({ error: null })
     mockNotificationInsert.mockResolvedValue({ error: null })
     mockTokenUpdateIn.mockResolvedValue({ error: null })
   })
@@ -203,8 +203,9 @@ describe('Invites Claim API', () => {
       expect(body.friendshipsCreated).toBe(0)
     })
 
-    it('skips friendship creation when friendship already exists', async () => {
-      mockFriendshipCheckMaybeSingle.mockResolvedValueOnce({ data: { id: 'existing-friendship' }, error: null })
+    it('skips friendship creation when friendship already exists in both directions', async () => {
+      mockFriendshipCheckMaybeSingle.mockResolvedValueOnce({ data: { id: 'existing-1' }, error: null })
+      mockFriendshipCheckMaybeSingle.mockResolvedValueOnce({ data: { id: 'existing-2' }, error: null })
       const { POST } = await import('./route')
       const response = await POST(createRequest())
       expect(response.status).toBe(200)

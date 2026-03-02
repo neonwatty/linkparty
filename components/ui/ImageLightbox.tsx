@@ -47,8 +47,8 @@ export function ImageLightbox({ imageUrl, caption, isOpen, onClose }: ImageLight
       {/* Close button */}
       <button
         onClick={onClose}
-        className="absolute top-4 right-4 z-10 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors text-white"
-        aria-label="Close"
+        className="absolute top-4 right-4 z-10 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors text-white"
+        aria-label="Close image lightbox"
       >
         <CloseIcon size={24} />
       </button>
