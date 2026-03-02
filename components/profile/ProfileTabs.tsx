@@ -24,49 +24,73 @@ type Tab = 'profile' | 'friends' | 'requests' | 'blocked'
 
 export default function ProfileTabs() {
   const [activeTab, setActiveTab] = useState<Tab>('profile')
+  const [fetchError, setFetchError] = useState<string | null>(null)
 
   // Friends data
   const [friends, setFriends] = useState<FriendWithProfile[]>([])
   const [friendsLoading, setFriendsLoading] = useState(true)
+  const [friendsFetched, setFriendsFetched] = useState(false)
 
   // Requests data
   const [incoming, setIncoming] = useState<FriendRequest[]>([])
   const [outgoing, setOutgoing] = useState<OutgoingRequest[]>([])
   const [requestsLoading, setRequestsLoading] = useState(true)
+  const [requestsFetched, setRequestsFetched] = useState(false)
 
   // Blocked users data
   const [blockedUsers, setBlockedUsers] = useState<UserProfile[]>([])
   const [blockedLoading, setBlockedLoading] = useState(true)
+  const [blockedFetched, setBlockedFetched] = useState(false)
 
   const fetchFriends = useCallback(async () => {
     setFriendsLoading(true)
-    const data = await listFriends()
-    setFriends(data)
-    setFriendsLoading(false)
+    setFetchError(null)
+    try {
+      const data = await listFriends()
+      setFriends(data)
+      setFriendsFetched(true)
+    } catch {
+      setFetchError('Failed to load friends')
+    } finally {
+      setFriendsLoading(false)
+    }
   }, [])
 
   const fetchRequests = useCallback(async () => {
     setRequestsLoading(true)
-    const [inc, out] = await Promise.all([listIncomingRequests(), listOutgoingRequests()])
-    setIncoming(inc)
-    setOutgoing(out)
-    setRequestsLoading(false)
+    setFetchError(null)
+    try {
+      const [inc, out] = await Promise.all([listIncomingRequests(), listOutgoingRequests()])
+      setIncoming(inc)
+      setOutgoing(out)
+      setRequestsFetched(true)
+    } catch {
+      setFetchError('Failed to load requests')
+    } finally {
+      setRequestsLoading(false)
+    }
   }, [])
 
   const fetchBlocked = useCallback(async () => {
     setBlockedLoading(true)
-    const data = await listBlockedUsers()
-    setBlockedUsers(data)
-    setBlockedLoading(false)
+    setFetchError(null)
+    try {
+      const data = await listBlockedUsers()
+      setBlockedUsers(data)
+      setBlockedFetched(true)
+    } catch {
+      setFetchError('Failed to load blocked users')
+    } finally {
+      setBlockedLoading(false)
+    }
   }, [])
 
-  // Fetch all data on mount
+  // Lazy-load tab data when tab is first activated
   useEffect(() => {
-    async function loadData() {
-      await Promise.all([fetchFriends(), fetchRequests(), fetchBlocked()])
-    }
-    loadData()
-  }, [fetchFriends, fetchRequests, fetchBlocked])
+    if (activeTab === 'friends' && !friendsFetched) fetchFriends()
+    if (activeTab === 'requests' && !requestsFetched) fetchRequests()
+    if (activeTab === 'blocked' && !blockedFetched) fetchBlocked()
+  }, [activeTab, friendsFetched, requestsFetched, blockedFetched, fetchFriends, fetchRequests, fetchBlocked])
 
   // Mutation handlers
   const handleRemoveFriend = useCallback(
@@ -153,6 +177,13 @@ export default function ProfileTabs() {
           </button>
         ))}
       </div>
+
+      {/* Error banner */}
+      {fetchError && (
+        <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
+          {fetchError}
+        </div>
+      )}
 
       {/* Tab content */}
       {activeTab === 'profile' && <ProfileEditor />}

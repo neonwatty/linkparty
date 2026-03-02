@@ -117,11 +117,12 @@ export const AddContentModal = memo(function AddContentModal({
 
             {/* URL Input */}
             <div className="mb-4">
-              <div className="flex items-center gap-2 mb-2">
+              <label htmlFor="add-content-url" className="flex items-center gap-2 mb-2">
                 <LinkIcon />
                 <span className="text-sm text-text-secondary">Paste a URL</span>
-              </div>
+              </label>
               <input
+                id="add-content-url"
                 type="text"
                 placeholder="YouTube, Twitter/X, or Reddit URL..."
                 value={contentUrl}

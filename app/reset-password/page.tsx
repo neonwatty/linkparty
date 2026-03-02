@@ -131,7 +131,11 @@ export default function ResetPasswordPage() {
               </p>
             )}
           </div>
-          <button onClick={handleUpdatePassword} className="btn btn-primary w-full" disabled={isLoading}>
+          <button
+            onClick={handleUpdatePassword}
+            className="btn btn-primary w-full"
+            disabled={isLoading || !newPassword || !confirmPassword}
+          >
             {isLoading ? <LoaderIcon /> : 'Update Password'}
           </button>
         </div>
