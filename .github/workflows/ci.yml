@@ -125,6 +125,7 @@ jobs:
   e2e:
     name: E2E Tests (${{ matrix.shardIndex }}/${{ matrix.shardTotal }})
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     needs: [build]
     strategy:
       fail-fast: false

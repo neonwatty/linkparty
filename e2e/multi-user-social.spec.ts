@@ -71,7 +71,17 @@ async function createFriendship(baseURL: string, senderToken: string, recipientT
 // ---------------------------------------------------------------------------
 
 test.describe('Multi-User Social Workflows', () => {
-  test.describe.configure({ mode: 'serial' })
+  // Serial: social tests share user pairs and must not run in parallel.
+  // No retries: retrying re-runs the entire serial block (7 tests × 120s timeout).
+  // Chromium-only: these test backend logic, not browser rendering — skip Firefox/WebKit.
+  test.describe.configure({ mode: 'serial', retries: 0 })
+
+  // eslint-disable-next-line no-empty-pattern
+  test.beforeEach(async ({}, testInfo) => {
+    if (testInfo.project.name !== 'chromium') {
+      test.skip(true, 'Social workflow tests only run on chromium')
+    }
+  })
 
   // -------------------------------------------------------------------------
   // WF11: Friend Request from Party Room
