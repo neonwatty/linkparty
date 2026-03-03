@@ -4,15 +4,15 @@ Top-of-funnel marketing audit. 7 categories to cover.
 
 ## Categories
 
-| #   | Category                       | Status                     |
-| --- | ------------------------------ | -------------------------- |
-| 1   | CTAs & Conversion Points       | Completed                  |
-| 2   | Referral & Viral Mechanics     | Completed                  |
-| 3   | Email Capture & Lead Nurture   | Completed                  |
-| 4   | Onboarding & Activation        | Completed                  |
-| 5   | SEO & Content Discoverability  | Completed                  |
-| 6   | Demo-to-Signup Funnel          | Partial (1 HIGH remaining) |
-| 7   | Shareable & Exportable Content | Completed                  |
+| #   | Category                       | Status    |
+| --- | ------------------------------ | --------- |
+| 1   | CTAs & Conversion Points       | Completed |
+| 2   | Referral & Viral Mechanics     | Completed |
+| 3   | Email Capture & Lead Nurture   | Completed |
+| 4   | Onboarding & Activation        | Completed |
+| 5   | SEO & Content Discoverability  | Completed |
+| 6   | Demo-to-Signup Funnel          | Completed |
+| 7   | Shareable & Exportable Content | Completed |
 
 ---
 
@@ -189,3 +189,18 @@ Top-of-funnel marketing audit. 7 categories to cover.
 All 7 categories have been audited. Remaining HIGH finding:
 
 - Category 6 (Demo-to-Signup Funnel): No demo/trial mode — requires complex infrastructure changes (middleware, RLS, mock data).
+
+### Iteration 8 (2026-03-03)
+
+**Category:** Demo-to-Signup Funnel (revisit — remaining HIGH)
+**Findings:** 1 remaining HIGH from iteration 6
+**Fixed:** 1
+**Deferred:** 0
+
+#### Fixed
+
+- [x] [HIGH] No demo/trial mode — users couldn't see the core value prop without signing up. Added `PartyPreview` component to the landing page showing a visual demo of a party room with sample queue items (YouTube links, notes), live indicator, and member count. This demonstrates the core experience (shared queue, content types, "now playing" state) before signup — the standard SaaS approach for demonstrating value without requiring auth infrastructure changes.
+
+#### Summary
+
+All 7 categories audited. All HIGH and MEDIUM findings resolved. Remaining items are LOW (nice-to-have polish).

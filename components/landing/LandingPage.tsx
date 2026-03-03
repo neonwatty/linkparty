@@ -5,6 +5,7 @@ import { track } from '@vercel/analytics'
 import { PlusIcon, LinkIcon, TvIcon } from '@/components/icons'
 import { TwinklingStars } from '@/components/ui/TwinklingStars'
 import { EmailCapture } from '@/components/landing/EmailCapture'
+import { PartyPreview } from '@/components/landing/PartyPreview'
 
 const problems = [
   'Someone drops a video. Three memes later, it\u2019s gone.',
@@ -176,6 +177,9 @@ export function LandingPage() {
           ))}
         </div>
       </section>
+
+      {/* Party Preview */}
+      <PartyPreview />
 
       {/* Final CTA */}
       <section className="relative z-10 max-w-4xl mx-auto px-6 pb-16 sm:pb-24 text-center">
