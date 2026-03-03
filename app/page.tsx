@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers'
 import { createServerClient } from '@supabase/ssr'
-import { HomeView } from '@/components/landing/HomeView'
+import { HomeView } from '@/components/landing'
 
 export default async function HomePage() {
   const cookieStore = await cookies()
