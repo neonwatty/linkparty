@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useNotifications } from '@/hooks/useNotifications'
 import { acceptFriendRequest, declineFriendRequest } from '@/lib/friends'
 import { supabase } from '@/lib/supabase'
+import { GettingStarted } from '@/components/landing/GettingStarted'
 
 export function AppHome() {
   const { signOut, user } = useAuth()
@@ -129,6 +130,9 @@ export function AppHome() {
         <div className="animate-fade-in-up">
           {/* Greeting */}
           {displayName && <p className="text-text-secondary text-center mb-2">Hey, {displayName}</p>}
+
+          {/* Getting Started (shown for new users with no active friend parties) */}
+          {friendParties.length === 0 && <GettingStarted />}
 
           {/* Friends' Active Parties */}
           {friendParties.length > 0 && (

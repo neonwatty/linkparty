@@ -9,7 +9,7 @@ Top-of-funnel marketing audit. 7 categories to cover.
 | 1   | CTAs & Conversion Points       | Completed   |
 | 2   | Referral & Viral Mechanics     | Completed   |
 | 3   | Email Capture & Lead Nurture   | Completed   |
-| 4   | Onboarding & Activation        | Not Started |
+| 4   | Onboarding & Activation        | Completed   |
 | 5   | SEO & Content Discoverability  | Not Started |
 | 6   | Demo-to-Signup Funnel          | Not Started |
 | 7   | Shareable & Exportable Content | Not Started |
@@ -92,6 +92,30 @@ Top-of-funnel marketing audit. 7 categories to cover.
 #### Categories Remaining
 
 - Onboarding & Activation
+- SEO & Content Discoverability
+- Demo-to-Signup Funnel
+- Shareable & Exportable Content
+
+### Iteration 4 (2026-03-03)
+
+**Category:** Onboarding & Activation
+**Findings:** 5 total (1 HIGH, 2 MEDIUM, 2 LOW)
+**Fixed:** 1
+**Deferred:** 4
+
+#### Fixed
+
+- [x] [HIGH] No first-run experience — new authenticated users landed on blank home page with no guidance. Added `GettingStarted` component showing numbered "How it works" steps (Start a party, Drop your links, Watch together) that appears on AppHome when no friend parties are active. Dismissable via localStorage.
+
+#### Deferred
+
+- [ ] [MEDIUM] No celebration moment after first party creation — adding toast/confetti requires modifying the complex PartyRoomClient; current redirect-to-room flow is functional.
+- [ ] [MEDIUM] No progress indicators in onboarding — would require significant UX redesign across signup/create/join flows.
+- [ ] [LOW] No skip option — no formal onboarding exists to skip; the app's minimal design means users can immediately start using it.
+- [ ] [LOW] No personalized first-run using user data — limited personalization opportunities at current scale.
+
+#### Categories Remaining
+
 - SEO & Content Discoverability
 - Demo-to-Signup Funnel
 - Shareable & Exportable Content
