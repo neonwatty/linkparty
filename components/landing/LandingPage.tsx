@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { track } from '@vercel/analytics'
 import { PlusIcon, LinkIcon, TvIcon } from '@/components/icons'
 import { TwinklingStars } from '@/components/ui/TwinklingStars'
+import { EmailCapture } from '@/components/landing/EmailCapture'
 
 const problems = [
   'Someone drops a video. Three memes later, it\u2019s gone.',
@@ -207,6 +208,9 @@ export function LandingPage() {
           </p>
         </div>
       </section>
+
+      {/* Email Capture */}
+      <EmailCapture />
 
       {/* Share */}
       <section className="relative z-10 max-w-4xl mx-auto px-6 pb-16 sm:pb-24 text-center">

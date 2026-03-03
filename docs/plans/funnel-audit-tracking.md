@@ -8,7 +8,7 @@ Top-of-funnel marketing audit. 7 categories to cover.
 | --- | ------------------------------ | ----------- |
 | 1   | CTAs & Conversion Points       | Completed   |
 | 2   | Referral & Viral Mechanics     | Completed   |
-| 3   | Email Capture & Lead Nurture   | Not Started |
+| 3   | Email Capture & Lead Nurture   | Completed   |
 | 4   | Onboarding & Activation        | Not Started |
 | 5   | SEO & Content Discoverability  | Not Started |
 | 6   | Demo-to-Signup Funnel          | Not Started |
@@ -66,6 +66,31 @@ Top-of-funnel marketing audit. 7 categories to cover.
 #### Categories Remaining
 
 - Email Capture & Lead Nurture
+- Onboarding & Activation
+- SEO & Content Discoverability
+- Demo-to-Signup Funnel
+- Shareable & Exportable Content
+
+### Iteration 3 (2026-03-03)
+
+**Category:** Email Capture & Lead Nurture
+**Findings:** 5 total (1 HIGH, 2 MEDIUM, 2 LOW)
+**Fixed:** 3
+**Deferred:** 2
+
+#### Fixed
+
+- [x] [HIGH] No email capture on landing page — visitors who didn't sign up were permanently lost. Added `EmailCapture` component with clear value prop ("Drop your email to hear about new features"), inline form, and analytics tracking.
+- [x] [MEDIUM] No infrastructure to store captured emails — created `/api/subscribe` API route with Resend-compatible Supabase storage, CSRF protection, rate limiting (5/hr per IP), and email validation. Added `039_newsletter_subscribers.sql` migration.
+- [x] [MEDIUM] No session-aware capture — added localStorage persistence (`lp-email-subscribed`) so subscribed visitors see a confirmation instead of the form on return visits.
+
+#### Deferred
+
+- [ ] [LOW] No exit-intent or scroll-depth triggers — adds complexity (mouse tracking, IntersectionObserver); the inline form captures most engaged visitors already.
+- [ ] [LOW] No lead nurture sequences (drip campaigns) — requires email automation infrastructure beyond current stage.
+
+#### Categories Remaining
+
 - Onboarding & Activation
 - SEO & Content Discoverability
 - Demo-to-Signup Funnel
