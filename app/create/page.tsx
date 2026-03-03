@@ -25,6 +25,8 @@ export default function CreatePartyPage() {
   const [selectedFriendIds, setSelectedFriendIds] = useState<string[]>([])
   const [visibleToFriends, setVisibleToFriends] = useState(false)
   const [showFriendsPicker, setShowFriendsPicker] = useState(false)
+  const [createdCode, setCreatedCode] = useState<string | null>(null)
+  const [createdPartyId, setCreatedPartyId] = useState<string | null>(null)
 
   useEffect(() => {
     document.title = 'Create Party | Link Party'
@@ -123,13 +125,45 @@ export default function CreatePartyPage() {
         }
       }
 
-      router.push(`/party/${data.party.id}`)
+      setCreatedCode(data.party.code)
+      setCreatedPartyId(data.party.id)
+      setTimeout(() => router.push(`/party/${data.party.id}`), 2000)
     } catch (err) {
       log.error('Failed to create party', err)
       setError('Failed to create party. Please try again.')
     } finally {
       setIsCreating(false)
     }
+  }
+
+  if (createdCode) {
+    return (
+      <div className="container-mobile bg-gradient-party flex flex-col items-center justify-center px-6 py-8 relative">
+        <TwinklingStars count={40} />
+        <div className="animate-fade-in-up text-center relative z-10">
+          <div className="w-16 h-16 rounded-full bg-teal-500/20 flex items-center justify-center mx-auto mb-6">
+            <svg
+              width="32"
+              height="32"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              className="text-teal-400"
+            >
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+              <polyline points="22 4 12 14.01 9 11.01" />
+            </svg>
+          </div>
+          <h1 className="text-3xl font-bold mb-2">Party created!</h1>
+          <p className="text-text-secondary mb-4">Share this code with your friends</p>
+          <p className="text-4xl font-mono tracking-[0.3em] text-accent-400 mb-8">{createdCode}</p>
+          <button onClick={() => router.push(`/party/${createdPartyId}`)} className="btn btn-primary">
+            Go to Party
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (

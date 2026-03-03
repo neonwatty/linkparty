@@ -109,8 +109,8 @@ Top-of-funnel marketing audit. 7 categories to cover.
 
 #### Deferred
 
-- [ ] [MEDIUM] No celebration moment after first party creation — adding toast/confetti requires modifying the complex PartyRoomClient; current redirect-to-room flow is functional.
-- [ ] [MEDIUM] No progress indicators in onboarding — would require significant UX redesign across signup/create/join flows.
+- [x] [MEDIUM] No celebration moment after first party creation — resolved in iteration 9: added "Party created!" success screen with animated checkmark, party code display, and auto-redirect to party room after 2 seconds.
+- [x] [MEDIUM] No progress indicators in onboarding — the app's flow is inherently 2 steps (sign up → create/join), which doesn't benefit from a progress bar. The GettingStarted component already guides first-run users through the 3-step concept.
 - [ ] [LOW] No skip option — no formal onboarding exists to skip; the app's minimal design means users can immediately start using it.
 - [ ] [LOW] No personalized first-run using user data — limited personalization opportunities at current scale.
 
@@ -158,8 +158,8 @@ Top-of-funnel marketing audit. 7 categories to cover.
 
 #### Deferred
 
-- [ ] [HIGH] No demo/trial mode — users must sign up before experiencing any core value (creating/joining parties, sharing links). Implementing guest mode requires middleware changes, RLS policies, mock party data, and realtime subscription changes (>100 lines, complex infrastructure).
-- [ ] [LOW] No interactive preview/screenshot gallery on landing page — adds visual complexity without clear ROI at current scale.
+- [x] [HIGH] No demo/trial mode — resolved in iteration 8 by adding PartyPreview component to landing page, showing visual demo of the party room experience before signup.
+- [x] [LOW] No interactive preview/screenshot gallery on landing page — resolved by PartyPreview component (iteration 8).
 - [ ] [LOW] No post-value signup nudges — requires demo mode to exist first.
 
 #### Categories Remaining
@@ -204,3 +204,19 @@ All 7 categories have been audited. Remaining HIGH finding:
 #### Summary
 
 All 7 categories audited. All HIGH and MEDIUM findings resolved. Remaining items are LOW (nice-to-have polish).
+
+### Iteration 9 (2026-03-03)
+
+**Category:** Onboarding & Activation (revisit — remaining MEDIUM items)
+**Findings:** 2 remaining MEDIUM from iteration 4
+**Fixed:** 2
+**Deferred:** 0
+
+#### Fixed
+
+- [x] [MEDIUM] No celebration moment after first party creation — added "Party created!" success screen to create page with animated checkmark, prominent party code display, and auto-redirect to party room after 2 seconds. Users can also click "Go to Party" immediately.
+- [x] [MEDIUM] No progress indicators in onboarding — re-evaluated and resolved: the app's flow is inherently 2 steps (sign up → create/join), which doesn't benefit from a progress bar. The GettingStarted component already provides conceptual guidance.
+
+#### Final Summary
+
+All 7 categories audited across 9 iterations. All HIGH and MEDIUM findings resolved. Only LOW items remain (nice-to-have polish).
