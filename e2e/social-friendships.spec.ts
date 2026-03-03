@@ -18,7 +18,7 @@ test.describe('Friends Tab — UI Structure', () => {
   test.beforeEach(async ({ context, page }) => {
     await context.addCookies([FAKE_AUTH_COOKIE])
     await page.goto('/profile')
-    await page.getByRole('button', { name: 'Friends' }).click()
+    await page.getByRole('tab', { name: 'Friends' }).click()
   })
 
   test('Friends tab shows empty state in mock mode', async ({ page }) => {
@@ -47,7 +47,7 @@ test.describe('Requests Tab — UI Structure', () => {
   test.beforeEach(async ({ context, page }) => {
     await context.addCookies([FAKE_AUTH_COOKIE])
     await page.goto('/profile')
-    await page.getByRole('button', { name: 'Requests' }).click()
+    await page.getByRole('tab', { name: 'Requests' }).click()
   })
 
   test('Requests tab shows empty state in mock mode', async ({ page }) => {
@@ -72,7 +72,7 @@ test.describe('Blocked Tab — UI Structure', () => {
   test.beforeEach(async ({ context, page }) => {
     await context.addCookies([FAKE_AUTH_COOKIE])
     await page.goto('/profile')
-    await page.getByRole('button', { name: 'Blocked' }).click()
+    await page.getByRole('tab', { name: 'Blocked' }).click()
   })
 
   test('Blocked tab shows empty state in mock mode', async ({ page }) => {
@@ -97,7 +97,7 @@ test.describe('Requests Tab — Badge Count', () => {
 
   test('Requests tab does not show badge in mock mode (no pending requests)', async ({ page }) => {
     // In mock mode, incoming requests are empty so no badge should appear
-    const requestsButton = page.getByRole('button', { name: 'Requests' })
+    const requestsButton = page.getByRole('tab', { name: 'Requests' })
     await expect(requestsButton).toBeVisible()
 
     // The badge is rendered as a span inside the button; in mock mode, no badge expected
@@ -114,7 +114,7 @@ test.describe('Friends Tab — Search Input', () => {
   test.beforeEach(async ({ context, page }) => {
     await context.addCookies([FAKE_AUTH_COOKIE])
     await page.goto('/profile')
-    await page.getByRole('button', { name: 'Friends' }).click()
+    await page.getByRole('tab', { name: 'Friends' }).click()
   })
 
   test('empty state does not show search input (no friends to search)', async ({ page }) => {
@@ -135,21 +135,21 @@ test.describe('Tab Active State Styling', () => {
   })
 
   test('Profile tab is visually active by default', async ({ page }) => {
-    const profileTab = page.getByRole('button', { name: 'Profile', exact: true })
+    const profileTab = page.getByRole('tab', { name: 'Profile', exact: true })
     // Active tab gets accent-400 text and accent-500 border
     await expect(profileTab).toHaveClass(/text-accent-400/)
   })
 
   test('switching tabs updates active state styling', async ({ page }) => {
     // Click Friends tab
-    const friendsTab = page.getByRole('button', { name: 'Friends', exact: true })
+    const friendsTab = page.getByRole('tab', { name: 'Friends', exact: true })
     await friendsTab.click()
 
     // Friends tab should now be active
     await expect(friendsTab).toHaveClass(/text-accent-400/)
 
     // Profile tab should be inactive
-    const profileTab = page.getByRole('button', { name: 'Profile', exact: true })
+    const profileTab = page.getByRole('tab', { name: 'Profile', exact: true })
     await expect(profileTab).toHaveClass(/text-text-muted/)
   })
 
@@ -157,14 +157,14 @@ test.describe('Tab Active State Styling', () => {
     const tabs = ['Profile', 'Friends', 'Requests', 'Blocked']
 
     for (const tabName of tabs) {
-      const tab = page.getByRole('button', { name: tabName, exact: true })
+      const tab = page.getByRole('tab', { name: tabName, exact: true })
       await tab.click()
       await expect(tab).toHaveClass(/text-accent-400/)
 
       // All other tabs should be inactive
       for (const otherTabName of tabs) {
         if (otherTabName !== tabName) {
-          const otherTab = page.getByRole('button', { name: otherTabName, exact: true })
+          const otherTab = page.getByRole('tab', { name: otherTabName, exact: true })
           await expect(otherTab).toHaveClass(/text-text-muted/)
         }
       }
@@ -187,7 +187,7 @@ test.describe('Rapid Tab Switching — Stability', () => {
     const tabNames = ['Friends', 'Requests', 'Blocked', 'Profile', 'Friends', 'Blocked', 'Profile']
 
     for (const tabName of tabNames) {
-      await page.getByRole('button', { name: tabName, exact: true }).click()
+      await page.getByRole('tab', { name: tabName, exact: true }).click()
     }
 
     // Should end on Profile tab and show editor content

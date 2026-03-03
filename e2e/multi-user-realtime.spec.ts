@@ -24,7 +24,10 @@ import {
  * Or against a real dev server: npm run dev (with Doppler credentials)
  */
 
-const shouldSkip = shouldSkipLive()
+// Skip when no live Supabase OR when using mock auth cookies (E2E_MOCK_AUTH).
+// These tests use FAKE_AUTH_COOKIE which can bypass middleware but can't perform
+// real Supabase data operations (create parties, add queue items, etc.).
+const shouldSkip = shouldSkipLive() || !!process.env.E2E_MOCK_AUTH
 
 // ---------------------------------------------------------------------------
 // WF1: Create and Join Party

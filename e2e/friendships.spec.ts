@@ -13,10 +13,10 @@ test.describe('Profile Page Tabs', () => {
   })
 
   test('profile page shows tabs: Profile, Friends, Requests, Blocked', async ({ page }) => {
-    await expect(page.getByRole('button', { name: 'Profile', exact: true })).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Friends', exact: true })).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Requests', exact: true })).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Blocked', exact: true })).toBeVisible()
+    await expect(page.getByRole('tab', { name: 'Profile', exact: true })).toBeVisible()
+    await expect(page.getByRole('tab', { name: 'Friends', exact: true })).toBeVisible()
+    await expect(page.getByRole('tab', { name: 'Requests', exact: true })).toBeVisible()
+    await expect(page.getByRole('tab', { name: 'Blocked', exact: true })).toBeVisible()
   })
 
   test('default tab is Profile and shows ProfileEditor', async ({ page }) => {
@@ -27,19 +27,19 @@ test.describe('Profile Page Tabs', () => {
   })
 
   test('Friends tab shows empty state', async ({ page }) => {
-    await page.getByRole('button', { name: 'Friends' }).click()
+    await page.getByRole('tab', { name: 'Friends' }).click()
     // In mock mode, no friends exist
     await expect(page.getByText(/no friends/i)).toBeVisible()
   })
 
   test('Requests tab shows empty state', async ({ page }) => {
-    await page.getByRole('button', { name: 'Requests' }).click()
+    await page.getByRole('tab', { name: 'Requests' }).click()
     // In mock mode, no requests exist
     await expect(page.getByText(/no friend requests/i)).toBeVisible()
   })
 
   test('Blocked tab shows empty state', async ({ page }) => {
-    await page.getByRole('button', { name: 'Blocked' }).click()
+    await page.getByRole('tab', { name: 'Blocked' }).click()
     // In mock mode, no blocked users exist
     await expect(page.getByText(/no blocked users/i)).toBeVisible()
   })
@@ -49,19 +49,19 @@ test.describe('Profile Page Tabs', () => {
     await expect(page.getByText('Display name')).toBeVisible()
 
     // Switch to Friends
-    await page.getByRole('button', { name: 'Friends' }).click()
+    await page.getByRole('tab', { name: 'Friends' }).click()
     await expect(page.getByText(/no friends/i)).toBeVisible()
 
     // Switch to Requests
-    await page.getByRole('button', { name: 'Requests' }).click()
+    await page.getByRole('tab', { name: 'Requests' }).click()
     await expect(page.getByText(/no friend requests/i)).toBeVisible()
 
     // Switch to Blocked
-    await page.getByRole('button', { name: 'Blocked' }).click()
+    await page.getByRole('tab', { name: 'Blocked' }).click()
     await expect(page.getByText(/no blocked users/i)).toBeVisible()
 
     // Switch back to Profile
-    await page.getByRole('button', { name: 'Profile' }).click()
+    await page.getByRole('tab', { name: 'Profile' }).click()
     await expect(page.getByText('Display name')).toBeVisible()
   })
 })
@@ -81,17 +81,17 @@ test.describe('Profile Page Tabs — Mutual Exclusion', () => {
     await expect(page.getByText('Display name')).toBeVisible()
 
     // Switch to Friends: Profile editor hidden
-    await page.getByRole('button', { name: 'Friends' }).click()
+    await page.getByRole('tab', { name: 'Friends' }).click()
     await expect(page.getByText(/no friends/i)).toBeVisible()
     await expect(page.getByText('Display name')).not.toBeVisible()
 
     // Switch to Requests: Friends hidden
-    await page.getByRole('button', { name: 'Requests' }).click()
+    await page.getByRole('tab', { name: 'Requests' }).click()
     await expect(page.getByText(/no friend requests/i)).toBeVisible()
     await expect(page.getByText(/no friends/i)).not.toBeVisible()
 
     // Switch to Blocked: Requests hidden
-    await page.getByRole('button', { name: 'Blocked' }).click()
+    await page.getByRole('tab', { name: 'Blocked' }).click()
     await expect(page.getByText(/no blocked users/i)).toBeVisible()
     await expect(page.getByText(/no friend requests/i)).not.toBeVisible()
   })
