@@ -57,9 +57,24 @@ export const viewport: Viewport = {
   themeColor: '#1A1D2E',
 }
 
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebApplication',
+  name: 'Link Party',
+  url: 'https://linkparty.app',
+  description:
+    'Great links get buried in group chats. Link Party gives your crew one shared queue — so every link actually gets watched.',
+  applicationCategory: 'EntertainmentApplication',
+  operatingSystem: 'Any',
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+}
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${instrumentSerif.variable} ${inter.variable}`}>
+      <head>
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      </head>
       <body>
         <a
           href="#main-content"

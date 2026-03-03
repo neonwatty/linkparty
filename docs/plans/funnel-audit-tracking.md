@@ -10,7 +10,7 @@ Top-of-funnel marketing audit. 7 categories to cover.
 | 2   | Referral & Viral Mechanics     | Completed   |
 | 3   | Email Capture & Lead Nurture   | Completed   |
 | 4   | Onboarding & Activation        | Completed   |
-| 5   | SEO & Content Discoverability  | Not Started |
+| 5   | SEO & Content Discoverability  | Completed   |
 | 6   | Demo-to-Signup Funnel          | Not Started |
 | 7   | Shareable & Exportable Content | Not Started |
 
@@ -117,5 +117,29 @@ Top-of-funnel marketing audit. 7 categories to cover.
 #### Categories Remaining
 
 - SEO & Content Discoverability
+- Demo-to-Signup Funnel
+- Shareable & Exportable Content
+
+### Iteration 5 (2026-03-03)
+
+**Category:** SEO & Content Discoverability
+**Findings:** 6 total (3 HIGH, 1 MEDIUM, 2 LOW)
+**Fixed:** 4
+**Deferred:** 2
+
+#### Fixed
+
+- [x] [HIGH] 5 public pages (login, signup, create, join, reset-password) had no server-side metadata — used client-side `document.title` only, invisible to crawlers. Added `layout.tsx` files with proper `Metadata` exports including title, description, OG, and Twitter cards.
+- [x] [HIGH] No sitemap — created `app/sitemap.ts` with all 5 public URLs using Next.js `MetadataRoute.Sitemap` typed export.
+- [x] [HIGH] No robots.txt — created `app/robots.ts` allowing public pages and disallowing private routes (`/api/`, `/party/`, `/history/`, `/profile/`, `/admin/`).
+- [x] [MEDIUM] No structured data — added JSON-LD `WebApplication` schema to root `app/layout.tsx` with app name, URL, description, category, and free pricing.
+
+#### Deferred
+
+- [ ] [LOW] No explicit canonical URLs on individual pages — Next.js handles canonical via `metadataBase` in root layout; explicit per-page canonicals are redundant.
+- [ ] [LOW] No breadcrumb or FAQ schema — limited value for a single-page-app-style product; WebApplication schema covers the primary use case.
+
+#### Categories Remaining
+
 - Demo-to-Signup Funnel
 - Shareable & Exportable Content
