@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, afterEach } from 'vitest'
+import { describe, it, expect, afterEach } from 'vitest'
 import { isNativePlatform, isIOS } from './capacitor'
 
 describe('capacitor platform detection', () => {
