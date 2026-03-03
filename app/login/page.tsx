@@ -216,7 +216,9 @@ export default function LoginPage() {
 
       <div className="flex-1 flex flex-col">
         <h1 className="text-3xl font-bold mb-2 animate-fade-in-up">Welcome back</h1>
-        <p className="text-text-secondary mb-8 animate-fade-in-up delay-100">Sign in to access your party history</p>
+        <p className="text-text-secondary mb-8 animate-fade-in-up delay-100">
+          Sign in to start sharing links with your crew
+        </p>
 
         {error && <div className="text-red-400 text-sm text-center mb-4">{error}</div>}
 

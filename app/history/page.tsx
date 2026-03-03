@@ -146,7 +146,15 @@ export default function HistoryPage() {
         <div className="card p-8 text-center animate-fade-in-up delay-150">
           <div className="text-4xl mb-4">🎉</div>
           <div className="text-text-secondary">No party history yet</div>
-          <div className="text-text-muted text-sm mt-2">Join or create a party to get started!</div>
+          <div className="text-text-muted text-sm mt-2 mb-6">Join or create a party to get started!</div>
+          <div className="flex flex-col gap-3">
+            <Link href="/create" className="btn btn-primary w-full">
+              Start a Party
+            </Link>
+            <Link href="/join" className="btn btn-secondary w-full">
+              Join with Code
+            </Link>
+          </div>
         </div>
       )}
 

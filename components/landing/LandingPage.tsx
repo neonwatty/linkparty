@@ -153,10 +153,20 @@ export function LandingPage() {
             >
               Start a Party
             </Link>
-            <Link href="/login" className="text-sm text-text-muted hover:text-text-secondary transition-colors">
-              Already have an account?
+            <Link
+              href="/join"
+              onClick={() => track('cta_join_with_code_bottom')}
+              className="btn btn-secondary text-lg px-8 py-3"
+            >
+              Join with Code
             </Link>
           </div>
+          <p className="mt-4 text-sm text-text-muted">
+            Already have an account?{' '}
+            <Link href="/login" className="text-accent-400 hover:text-accent-300 transition-colors">
+              Sign in
+            </Link>
+          </p>
         </div>
       </section>
 

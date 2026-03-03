@@ -7,8 +7,8 @@ const PUBLIC_ROUTES = ['/login', '/signup', '/reset-password', '/auth/callback']
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // Allow public routes
-  if (PUBLIC_ROUTES.some((route) => pathname.startsWith(route))) {
+  // Allow public routes (exact match for root, prefix match for others)
+  if (pathname === '/' || PUBLIC_ROUTES.some((route) => pathname.startsWith(route))) {
     return NextResponse.next()
   }
 
