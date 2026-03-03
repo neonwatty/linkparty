@@ -41,12 +41,14 @@ export const metadata: Metadata = {
     type: 'website',
     url: 'https://linkparty.app',
     siteName: 'Link Party',
+    images: [{ url: '/icons/icon-512.png', width: 512, height: 512, alt: 'Link Party' }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Link Party — Stop losing links in chat',
     description:
       'Great links get buried in group chats. Link Party gives your crew one shared queue — so every link actually gets watched.',
+    images: ['/icons/icon-512.png'],
   },
 }
 

@@ -204,6 +204,12 @@ function JoinPartyForm() {
 
         <div className="mt-auto pt-12 text-center animate-fade-in-up delay-300">
           <p className="text-text-muted text-sm">Ask your host for the 6-character code</p>
+          <p className="text-text-muted text-sm mt-3">
+            Want your own?{' '}
+            <Link href="/create" className="text-accent-400 hover:text-accent-300 transition-colors">
+              Start a party
+            </Link>
+          </p>
           {IS_MOCK_MODE && <p className="text-yellow-500 text-xs mt-2">Dev mode: Any code will work</p>}
         </div>
       </div>

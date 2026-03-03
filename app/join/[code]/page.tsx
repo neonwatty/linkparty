@@ -24,6 +24,7 @@ export async function generateMetadata({ params }: { params: Promise<{ code: str
         : 'Join a Link Party and watch together.',
       type: 'website',
       siteName: 'Link Party',
+      images: [{ url: '/icons/icon-512.png', width: 512, height: 512, alt: 'Link Party' }],
     },
     twitter: {
       card: 'summary_large_image',
@@ -31,6 +32,7 @@ export async function generateMetadata({ params }: { params: Promise<{ code: str
       description: displayCode
         ? `You've been invited! Use code ${displayCode} to join and watch together.`
         : 'Join a Link Party and watch together.',
+      images: ['/icons/icon-512.png'],
     },
   }
 }

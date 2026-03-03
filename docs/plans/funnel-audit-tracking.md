@@ -12,7 +12,7 @@ Top-of-funnel marketing audit. 7 categories to cover.
 | 4   | Onboarding & Activation        | Completed                  |
 | 5   | SEO & Content Discoverability  | Completed                  |
 | 6   | Demo-to-Signup Funnel          | Partial (1 HIGH remaining) |
-| 7   | Shareable & Exportable Content | Not Started                |
+| 7   | Shareable & Exportable Content | Completed                  |
 
 ---
 
@@ -165,3 +165,27 @@ Top-of-funnel marketing audit. 7 categories to cover.
 #### Categories Remaining
 
 - Shareable & Exportable Content
+
+### Iteration 7 (2026-03-03)
+
+**Category:** Shareable & Exportable Content
+**Findings:** 5 total (1 HIGH, 1 MEDIUM, 3 LOW)
+**Fixed:** 2
+**Deferred:** 3
+
+#### Fixed
+
+- [x] [HIGH] No og:image metadata — shared links on social media had no visual preview. Added `images` to both OG and Twitter card metadata in root `app/layout.tsx` and dynamic `app/join/[code]/page.tsx` using existing `icon-512.png`.
+- [x] [MEDIUM] Join pages had no secondary CTA — share recipients saw only a join form with no way to discover the app. Added "Want your own? Start a party" link on both `/join` and `/join/[code]` pages.
+
+#### Deferred
+
+- [ ] [LOW] No export functionality (PDF/CSV of queue/history) — acceptable for current product stage.
+- [ ] [LOW] No custom per-party share images — would require dynamic image generation (Vercel OG or similar), complex for minimal gain.
+- [ ] [LOW] No sharing incentive/referral program — requires backend tracking infrastructure beyond current scope.
+
+#### All Categories Audited
+
+All 7 categories have been audited. Remaining HIGH finding:
+
+- Category 6 (Demo-to-Signup Funnel): No demo/trial mode — requires complex infrastructure changes (middleware, RLS, mock data).
