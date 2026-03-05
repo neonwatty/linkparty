@@ -13,7 +13,7 @@ export default defineConfig({
   /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
   /* Use half available CPUs on CI (sharding handles the rest) */
-  workers: process.env.CI ? '50%' : undefined,
+  workers: process.env.CI ? '75%' : undefined,
   /* Increase test timeout on CI — WebKit on Linux needs more headroom */
   timeout: process.env.CI ? 60_000 : 30_000,
   /* Reporter to use */
@@ -64,7 +64,7 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: process.env.CI ? 'npm run build && npm start' : 'npm run dev:local',
+    command: process.env.CI ? 'npm start' : 'npm run dev:local',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,
