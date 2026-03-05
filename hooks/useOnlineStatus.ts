@@ -17,7 +17,7 @@ export function useOnlineStatus(): boolean {
         return
       }
       try {
-        const res = await fetch('/api/health', {
+        const res = await fetch('/api/health/', {
           method: 'HEAD',
           cache: 'no-store',
         })
