@@ -4,9 +4,9 @@ platform :ios do
   desc "Build and upload to TestFlight"
   lane :beta do
     build_app(
-      workspace: "App.xcworkspace",
+      project: "App.xcodeproj",
       scheme: "App",
-      export_options: "../../ExportOptions.plist"
+      export_options: "../ExportOptions.plist"
     )
     upload_to_testflight
   end
