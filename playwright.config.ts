@@ -13,7 +13,7 @@ export default defineConfig({
   /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
   /* Use half available CPUs on CI (sharding handles the rest) */
-  workers: process.env.CI ? '50%' : undefined,
+  workers: process.env.CI ? '75%' : undefined,
   /* Increase test timeout on CI — WebKit on Linux needs more headroom */
   timeout: process.env.CI ? 60_000 : 30_000,
   /* Reporter to use */
@@ -36,21 +36,18 @@ export default defineConfig({
   },
 
   /* Configure projects for major browsers
-   * - chromium: Desktop Chrome (covers Chromium engine + desktop viewport)
-   * - firefox: Desktop Firefox (covers Gecko engine)
+   * - chromium: Desktop Chrome (covers Blink engine + desktop viewport)
    * - Mobile Safari: iPhone 12 / WebKit (covers WebKit engine + mobile viewport)
    *
    * Dropped: 'webkit' desktop (same engine as Mobile Safari, redundant)
    *          'Mobile Chrome' (same engine as chromium, viewport coverage via Mobile Safari)
+   *          'firefox' (Gecko engine — zero browser-specific test skips, <3% mobile share,
+   *                     Blink + WebKit already cover the two dominant rendering engines)
    */
   projects: [
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
-    },
-    {
-      name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
     },
     {
       name: 'Mobile Safari',
@@ -64,7 +61,7 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: process.env.CI ? 'npm run build && npm start' : 'npm run dev:local',
+    command: process.env.CI ? 'npm start' : 'npm run dev:local',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,
