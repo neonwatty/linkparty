@@ -3,11 +3,31 @@ default_platform(:ios)
 platform :ios do
   desc "Build and upload to TestFlight"
   lane :beta do
+    api_key = app_store_connect_api_key(
+      key_id: ENV["ASC_KEY_ID"],
+      issuer_id: ENV["ASC_ISSUER_ID"],
+      key_filepath: File.expand_path("~/.appstoreconnect/private_keys/AuthKey_#{ENV['ASC_KEY_ID']}.p8")
+    )
+
+    current_build = latest_testflight_build_number(api_key: api_key)
+    new_build = current_build + 1
+    UI.message("Build number: #{current_build} → #{new_build}")
+
     build_app(
       project: "App.xcodeproj",
       scheme: "App",
-      export_options: "../ExportOptions.plist"
+      xcargs: "-authenticationKeyID #{ENV['ASC_KEY_ID']} -authenticationKeyIssuerID #{ENV['ASC_ISSUER_ID']} -authenticationKeyPath ~/.appstoreconnect/private_keys/AuthKey_#{ENV['ASC_KEY_ID']}.p8 -allowProvisioningUpdates CURRENT_PROJECT_VERSION=#{new_build}",
+      export_options: {
+        signingStyle: "automatic",
+        method: "app-store-connect"
+      }
     )
-    upload_to_testflight
+
+    unless ENV["SKIP_UPLOAD"] == "true"
+      upload_to_testflight(
+        api_key: api_key,
+        skip_waiting_for_build_processing: true
+      )
+    end
   end
 end

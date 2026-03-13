@@ -46,6 +46,17 @@ supabase/.temp/
 # iOS generated files
 ios/App/App.xcodeproj/project.xcworkspace/
 
+# Apple signing keys and certificates
+*.p8
+*.pem
+*.p12
+
+# iOS build output
+ios/App/build/
+
+# App Store Connect config
+.asc/
+
 # Test screenshots
 *.png
 workflows/screenshots/
