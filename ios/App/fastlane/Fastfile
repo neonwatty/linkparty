@@ -12,7 +12,7 @@ platform :ios do
     build_app(
       project: "App.xcodeproj",
       scheme: "App",
-      xcargs: "-allowProvisioningUpdates",
+      xcargs: "-authenticationKeyID #{ENV['ASC_KEY_ID']} -authenticationKeyIssuerID #{ENV['ASC_ISSUER_ID']} -authenticationKeyPath ~/.appstoreconnect/private_keys/AuthKey_#{ENV['ASC_KEY_ID']}.p8 -allowProvisioningUpdates",
       export_options: {
         method: "app-store",
         teamID: ENV["APPLE_TEAM_ID"],
