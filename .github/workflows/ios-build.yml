@@ -57,18 +57,6 @@ jobs:
           mkdir -p ~/.appstoreconnect/private_keys
           echo "$ASC_AUTH_KEY_P8" | base64 --decode > ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
 
-      - name: Verify ASC API key
-        env:
-          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
-        run: |
-          KEY_FILE=~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
-          echo "Key ID: [${#ASC_KEY_ID} chars]"
-          echo "Key file exists: $(test -f "$KEY_FILE" && echo yes || echo no)"
-          echo "Key file size: $(wc -c < "$KEY_FILE") bytes"
-          echo "Key file starts with: $(head -1 "$KEY_FILE")"
-          echo "Key file ends with: $(tail -1 "$KEY_FILE")"
-          echo "Line count: $(wc -l < "$KEY_FILE")"
-
       - name: Build & upload to TestFlight
         working-directory: ios/App
         env:
