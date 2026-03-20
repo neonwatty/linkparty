@@ -3,6 +3,7 @@ import { Instrument_Serif, Inter } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { Providers } from './providers'
 import ErrorBoundary from '@/components/ui/ErrorBoundary'
+import { CookieConsentBanner } from '@/components/CookieConsentBanner'
 import './globals.css'
 
 const instrumentSerif = Instrument_Serif({
@@ -88,6 +89,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           Skip to main content
         </a>
         <ErrorBoundary>
+          <CookieConsentBanner />
           <Providers>
             <main id="main-content">{children}</main>
           </Providers>

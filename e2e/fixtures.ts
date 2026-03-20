@@ -71,6 +71,7 @@ export async function resetSession(page: Page, displayName = 'Test User'): Promi
   await page.evaluate((name) => {
     localStorage.clear()
     localStorage.setItem('link-party-display-name', name)
+    localStorage.setItem('lp-cookie-consent', 'declined')
   }, displayName)
   await page.reload()
 }

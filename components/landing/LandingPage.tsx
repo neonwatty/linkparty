@@ -1,7 +1,9 @@
 'use client'
 
+import { useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { track } from '@vercel/analytics'
+import { trackCtaClicked, trackLandingSectionViewed } from '@/lib/analytics'
 import { PlusIcon, LinkIcon, TvIcon } from '@/components/icons'
 import { TwinklingStars } from '@/components/ui/TwinklingStars'
 import { EmailCapture } from '@/components/landing/EmailCapture'
@@ -30,6 +32,24 @@ const steps = [
     description: 'TV mode. Big screen. One tap to advance.',
   },
 ]
+
+function useSectionTracking(ref: React.RefObject<HTMLElement | null>, section: string) {
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          trackLandingSectionViewed(section)
+          observer.disconnect()
+        }
+      },
+      { threshold: 0.3 },
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [ref, section])
+}
 
 function ShareLinkPartyButton() {
   const handleShare = async () => {
@@ -70,6 +90,16 @@ function ShareLinkPartyButton() {
 }
 
 export function LandingPage() {
+  const heroRef = useRef<HTMLElement>(null)
+  const problemsRef = useRef<HTMLElement>(null)
+  const howItWorksRef = useRef<HTMLElement>(null)
+  const finalCtaRef = useRef<HTMLElement>(null)
+
+  useSectionTracking(heroRef, 'hero')
+  useSectionTracking(problemsRef, 'sound_familiar')
+  useSectionTracking(howItWorksRef, 'how_it_works')
+  useSectionTracking(finalCtaRef, 'final_cta')
+
   return (
     <div className="min-h-screen bg-gradient-party relative overflow-x-hidden">
       <TwinklingStars count={50} />
@@ -98,7 +128,7 @@ export function LandingPage() {
       </nav>
 
       {/* Hero */}
-      <section className="relative z-10 max-w-4xl mx-auto px-6 pt-12 pb-16 sm:pt-20 sm:pb-24 text-center">
+      <section ref={heroRef} className="relative z-10 max-w-4xl mx-auto px-6 pt-12 pb-16 sm:pt-20 sm:pb-24 text-center">
         <div className="animate-fade-in-up">
           <h1
             className="text-4xl sm:text-5xl md:text-6xl font-bold leading-tight mb-6"
@@ -114,7 +144,10 @@ export function LandingPage() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
               href="/create"
-              onClick={() => track('cta_start_party_hero')}
+              onClick={() => {
+                track('cta_start_party_hero')
+                trackCtaClicked('start_party', 'hero')
+              }}
               className="btn btn-primary text-lg px-8 py-3 flex items-center justify-center gap-3"
             >
               <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2">
@@ -124,7 +157,10 @@ export function LandingPage() {
             </Link>
             <Link
               href="/join"
-              onClick={() => track('cta_join_with_code')}
+              onClick={() => {
+                track('cta_join_with_code')
+                trackCtaClicked('join_with_code', 'hero')
+              }}
               className="btn btn-secondary text-lg px-8 py-3 flex items-center justify-center gap-3"
             >
               <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2">
@@ -137,7 +173,7 @@ export function LandingPage() {
       </section>
 
       {/* Sound Familiar? */}
-      <section className="relative z-10 max-w-4xl mx-auto px-6 pb-16 sm:pb-24">
+      <section ref={problemsRef} className="relative z-10 max-w-4xl mx-auto px-6 pb-16 sm:pb-24">
         <h2 className="text-2xl sm:text-3xl font-bold text-center mb-10" style={{ fontFamily: 'var(--font-display)' }}>
           Sound familiar?
         </h2>
@@ -156,7 +192,7 @@ export function LandingPage() {
       </section>
 
       {/* How It Works */}
-      <section className="relative z-10 max-w-4xl mx-auto px-6 pb-16 sm:pb-24">
+      <section ref={howItWorksRef} className="relative z-10 max-w-4xl mx-auto px-6 pb-16 sm:pb-24">
         <h2 className="text-2xl sm:text-3xl font-bold text-center mb-12" style={{ fontFamily: 'var(--font-display)' }}>
           How it works
         </h2>
@@ -182,7 +218,7 @@ export function LandingPage() {
       <PartyPreview />
 
       {/* Final CTA */}
-      <section className="relative z-10 max-w-4xl mx-auto px-6 pb-16 sm:pb-24 text-center">
+      <section ref={finalCtaRef} className="relative z-10 max-w-4xl mx-auto px-6 pb-16 sm:pb-24 text-center">
         <div className="card p-8 sm:p-12 animate-fade-in-up" style={{ animationDelay: '700ms' }}>
           <h2 className="text-2xl sm:text-3xl font-bold mb-4" style={{ fontFamily: 'var(--font-display)' }}>
             Your links are <span className="text-accent-500">piling up</span>.
@@ -191,14 +227,20 @@ export function LandingPage() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
               href="/create"
-              onClick={() => track('cta_start_party_bottom')}
+              onClick={() => {
+                track('cta_start_party_bottom')
+                trackCtaClicked('start_party', 'bottom_cta')
+              }}
               className="btn btn-primary text-lg px-8 py-3"
             >
               Start a Party
             </Link>
             <Link
               href="/join"
-              onClick={() => track('cta_join_with_code_bottom')}
+              onClick={() => {
+                track('cta_join_with_code_bottom')
+                trackCtaClicked('join_with_code', 'bottom_cta')
+              }}
               className="btn btn-secondary text-lg px-8 py-3"
             >
               Join with Code
