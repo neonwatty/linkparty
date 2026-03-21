@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useSyncExternalStore } from 'react'
 
 function generateStars(count: number) {
   return Array.from({ length: count }, (_, i) => ({
@@ -13,18 +13,17 @@ function generateStars(count: number) {
   }))
 }
 
+const subscribe = () => () => {}
+const getSnapshot = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
+const getServerSnapshot = () => false
+
 interface TwinklingStarsProps {
   count?: number
 }
 
 export function TwinklingStars({ count = 35 }: TwinklingStarsProps) {
   const [stars] = useState(() => generateStars(count))
-  const [prefersReduced, setPrefersReduced] = useState(false)
-
-  useEffect(() => {
-    setPrefersReduced(window.matchMedia('(prefers-reduced-motion: reduce)').matches)
-  }, [])
-
+  const prefersReduced = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
   if (prefersReduced) return null
 
   return (
