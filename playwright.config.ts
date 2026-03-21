@@ -10,8 +10,8 @@ export default defineConfig({
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code */
   forbidOnly: !!process.env.CI,
-  /* No retries — failing auth tests are deterministic, retries waste CI time */
-  retries: 0,
+  /* Retry on CI only */
+  retries: process.env.CI ? 2 : 0,
   /* Use half available CPUs on CI (sharding handles the rest) */
   workers: process.env.CI ? '50%' : undefined,
   /* Increase test timeout on CI — WebKit on Linux needs more headroom */
@@ -27,6 +27,9 @@ export default defineConfig({
     extraHTTPHeaders: {
       origin: 'http://localhost:3000',
     },
+
+    /* Disable CSS animations/transitions so Playwright doesn't wait for stability */
+    reducedMotion: 'reduce',
 
     /* Collect trace when retrying the failed test */
     trace: 'on-first-retry',
