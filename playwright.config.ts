@@ -34,8 +34,8 @@ export default defineConfig({
     /* Collect trace when retrying the failed test */
     trace: 'on-first-retry',
 
-    /* Don't wait for animations to settle before actions — prevents timeout on animated elements */
-    actionTimeout: process.env.CI ? 15_000 : 5_000,
+    /* CI needs more time for elements to stabilize after page load (hydration + layout settling) */
+    actionTimeout: process.env.CI ? 20_000 : 5_000,
 
     /* Capture screenshot on failure */
     screenshot: 'only-on-failure',
