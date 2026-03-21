@@ -380,6 +380,10 @@ body {
     animation: none !important;
     opacity: 1;
   }
+
+  .stars-container {
+    display: none !important;
+  }
 }
 
 /* ========================================
