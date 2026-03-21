@@ -117,6 +117,9 @@ export function LandingPage() {
           <span className="text-lg font-semibold text-text-primary" style={{ fontFamily: 'var(--font-display)' }}>
             Link Party
           </span>
+          <span className="text-[10px] font-semibold uppercase tracking-wider bg-accent-500/20 text-accent-400 px-1.5 py-0.5 rounded">
+            Beta
+          </span>
         </div>
         <Link
           href="/login"
@@ -265,7 +268,20 @@ export function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="relative z-10 max-w-4xl mx-auto px-6 pb-8 text-center">
+      <footer className="relative z-10 max-w-4xl mx-auto px-6 pb-8 text-center space-y-3">
+        <div className="flex items-center justify-center gap-4 text-text-muted text-sm">
+          <Link href="/terms" className="hover:text-text-secondary transition-colors">
+            Terms
+          </Link>
+          <span>&middot;</span>
+          <Link href="/privacy" className="hover:text-text-secondary transition-colors">
+            Privacy
+          </Link>
+          <span>&middot;</span>
+          <a href="mailto:hello@linkparty.app" className="hover:text-text-secondary transition-colors">
+            Contact
+          </a>
+        </div>
         <p className="text-text-muted text-sm">Link Party</p>
       </footer>
     </div>

@@ -197,23 +197,30 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Compute next position server-side (ignore client-supplied position)
-    const { data: maxPosRow } = await supabase
-      .from('queue_items')
-      .select('position')
-      .eq('party_id', body.partyId)
-      .order('position', { ascending: false })
-      .limit(1)
-      .maybeSingle()
+    // Compute next position atomically via RPC to avoid race conditions.
+    // Falls back to SELECT + INSERT if the RPC doesn't exist yet.
+    const { data: nextPosResult } = await supabase.rpc('next_queue_position', { p_party_id: body.partyId })
+    const nextPosition = typeof nextPosResult === 'number' ? nextPosResult : null
 
-    const nextPosition = (maxPosRow?.position ?? -1) + 1
+    let fallbackPosition = 0
+    if (nextPosition === null) {
+      // Fallback: compute position via query (non-atomic, but works before RPC is deployed)
+      const { data: maxPosRow } = await supabase
+        .from('queue_items')
+        .select('position')
+        .eq('party_id', body.partyId)
+        .order('position', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+      fallbackPosition = (maxPosRow?.position ?? -1) + 1
+    }
 
     // Insert the queue item
     const dbItem = {
       party_id: body.partyId,
       type: body.type,
       status: body.status,
-      position: nextPosition,
+      position: nextPosition ?? fallbackPosition,
       added_by_name: body.addedByName,
       added_by_session_id: body.sessionId,
       title: body.title ?? null,

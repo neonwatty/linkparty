@@ -207,6 +207,7 @@ export function InviteModal({ isOpen, partyId, partyCode, partyName, inviterName
                   }}
                   className="input mb-3"
                   autoFocus
+                  aria-label="Email address"
                 />
                 <label htmlFor="invite-personal-message" className="sr-only">
                   Personal message (optional)

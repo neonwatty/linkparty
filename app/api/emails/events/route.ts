@@ -54,8 +54,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  // Verify admin access server-side
-  const adminEmails = (process.env.NEXT_PUBLIC_ADMIN_EMAILS || '')
+  // Verify admin access server-side (ADMIN_EMAILS is server-only, not exposed to client)
+  const adminEmails = (process.env.ADMIN_EMAILS || '')
     .split(',')
     .map((e) => e.trim())
     .filter(Boolean)

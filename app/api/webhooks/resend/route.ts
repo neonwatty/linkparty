@@ -1,3 +1,4 @@
+import { timingSafeEqual } from 'node:crypto'
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -76,9 +77,14 @@ async function verifyWebhookSignature(payload: string, headers: Headers): Promis
 
   const expectedSignature = `v1,${uint8ArrayToBase64(new Uint8Array(signatureBytes))}`
 
-  // Compare signatures (svix-signature may contain multiple signatures)
+  // Compare signatures using constant-time comparison (svix-signature may contain multiple signatures)
   const signatures = svixSignature.split(' ')
-  return signatures.some((sig) => sig === expectedSignature)
+  const expectedBuf = Buffer.from(expectedSignature)
+  return signatures.some((sig) => {
+    const sigBuf = Buffer.from(sig)
+    if (sigBuf.length !== expectedBuf.length) return false
+    return timingSafeEqual(sigBuf, expectedBuf)
+  })
 }
 
 function base64ToUint8Array(base64: string): Uint8Array {

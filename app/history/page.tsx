@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { supabase, getSessionId } from '@/lib/supabase'
+import { useAuth } from '@/contexts/AuthContext'
 import { logger } from '@/lib/logger'
 import { ChevronLeftIcon, LockIcon } from '@/components/icons'
 import { TwinklingStars } from '@/components/ui/TwinklingStars'
@@ -19,6 +20,7 @@ interface PartyHistoryItem {
 }
 
 export default function HistoryPage() {
+  const { user } = useAuth()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [parties, setParties] = useState<PartyHistoryItem[]>([])
@@ -34,8 +36,8 @@ export default function HistoryPage() {
         setError(null)
         const sessionId = getSessionId()
 
-        // Fetch parties the user has joined
-        const { data: memberData, error: memberError } = await supabase
+        // Query by user_id if authenticated, fall back to session_id for anonymous users
+        let query = supabase
           .from('party_members')
           .select(
             `
@@ -44,9 +46,16 @@ export default function HistoryPage() {
             parties (id, code, name, created_at, has_password)
           `,
           )
-          .eq('session_id', sessionId)
           .order('joined_at', { ascending: false })
           .limit(10)
+
+        if (user?.id) {
+          query = query.eq('user_id', user.id)
+        } else {
+          query = query.eq('session_id', sessionId)
+        }
+
+        const { data: memberData, error: memberError } = await query
 
         if (memberError) {
           throw memberError
@@ -121,7 +130,7 @@ export default function HistoryPage() {
     }
 
     fetchPartyHistory()
-  }, [])
+  }, [user?.id])
 
   return (
     <div className="container-mobile bg-gradient-party flex flex-col px-6 py-8 relative">

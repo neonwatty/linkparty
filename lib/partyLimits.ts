@@ -53,3 +53,39 @@ export const FRIEND_INVITE_RATE_LIMIT = 5
 
 /** Rate limit window for friend invites in milliseconds (1 hour) */
 export const FRIEND_INVITE_RATE_WINDOW_MS = 60 * 60 * 1000
+
+/** Rate limit: max party creations per IP per hour */
+export const PARTY_CREATE_RATE_LIMIT = 5
+
+/** Rate limit window for party creation in milliseconds (1 hour) */
+export const PARTY_CREATE_RATE_WINDOW_MS = 60 * 60 * 1000
+
+/** Rate limit: max friend accept requests per user per hour */
+export const FRIEND_ACCEPT_RATE_LIMIT = 50
+
+/** Rate limit window for friend accept in milliseconds (1 hour) */
+export const FRIEND_ACCEPT_RATE_WINDOW_MS = 60 * 60 * 1000
+
+/** Rate limit: max friend delete requests per user per hour */
+export const FRIEND_DELETE_RATE_LIMIT = 60
+
+/** Rate limit window for friend delete in milliseconds (1 hour) */
+export const FRIEND_DELETE_RATE_WINDOW_MS = 60 * 60 * 1000
+
+/** Rate limit: max queue item mutations per user per minute */
+export const QUEUE_MUTATION_RATE_LIMIT = 60
+
+/** Rate limit window for queue item mutations in milliseconds (1 minute) */
+export const QUEUE_MUTATION_RATE_WINDOW_MS = 60_000
+
+/** Rate limit: max friends-active GET requests per user per minute */
+export const FRIENDS_ACTIVE_RATE_LIMIT = 60
+
+/** Rate limit window for friends-active in milliseconds (1 minute) */
+export const FRIENDS_ACTIVE_RATE_WINDOW_MS = 60_000
+
+/** Rate limit: max push subscribe requests per user per hour */
+export const PUSH_SUBSCRIBE_RATE_LIMIT = 30
+
+/** Rate limit window for push subscribe in milliseconds (1 hour) */
+export const PUSH_SUBSCRIBE_RATE_WINDOW_MS = 60 * 60 * 1000

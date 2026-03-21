@@ -56,6 +56,7 @@ const nextConfig: NextConfig = {
               "frame-src 'none'",
               "object-src 'none'",
               "base-uri 'self'",
+              "form-action 'self'",
             ].join('; '),
           },
         ],

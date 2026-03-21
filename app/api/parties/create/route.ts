@@ -3,10 +3,17 @@ import { createClient } from '@supabase/supabase-js'
 import { hashPassword } from '@/lib/passwordHash'
 import { LIMITS } from '@/lib/errorMessages'
 import { validateOrigin } from '@/lib/csrf'
+import { createRateLimiter } from '@/lib/serverRateLimit'
+import { PARTY_CREATE_RATE_LIMIT, PARTY_CREATE_RATE_WINDOW_MS } from '@/lib/partyLimits'
 
 export const dynamic = 'force-dynamic'
 
 const MAX_ACTIVE_PARTIES = 5
+
+const rateLimiter = createRateLimiter({
+  maxRequests: PARTY_CREATE_RATE_LIMIT,
+  windowMs: PARTY_CREATE_RATE_WINDOW_MS,
+})
 
 /** Generate 6-character alphanumeric party code (same charset as lib/supabase.ts) */
 function generatePartyCode(): string {
@@ -19,6 +26,18 @@ export async function POST(request: NextRequest) {
   try {
     if (!validateOrigin(request)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
+    // Rate limit by IP address
+    const clientIp =
+      request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || request.headers.get('x-real-ip') || 'unknown'
+    const { limited, retryAfterMs } = rateLimiter.check(clientIp)
+    if (limited) {
+      const retryAfterSec = Math.ceil(retryAfterMs / 1000)
+      return NextResponse.json(
+        { error: 'Too many parties created. Please try again later.', retryAfter: retryAfterSec },
+        { status: 429, headers: { 'Retry-After': retryAfterSec.toString() } },
+      )
     }
 
     let body: Record<string, unknown>

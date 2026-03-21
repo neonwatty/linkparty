@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { signInWithGoogle, signUpWithEmail } from '@/lib/auth'
 import { validateEmail, validatePassword, validateDisplayName } from '@/lib/validation'
+import { trackSignup } from '@/lib/analytics'
 import { ChevronLeftIcon, LoaderIcon } from '@/components/icons'
 import { TwinklingStars } from '@/components/ui/TwinklingStars'
 
@@ -80,6 +81,7 @@ function SignupForm() {
     setIsLoading(false)
 
     if (result.success && result.needsConfirmation) {
+      trackSignup()
       setSignupSuccess(true)
     } else if (!result.success) {
       setError(result.error || 'Failed to create account')

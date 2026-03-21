@@ -53,6 +53,7 @@ function createMockSupabase(overrides?: {
   const positionOrder = vi.fn().mockReturnValue({ limit: positionLimit })
 
   const supabase = {
+    rpc: vi.fn().mockResolvedValue({ data: maxPosition !== null ? maxPosition + 1 : 0, error: null }),
     from: vi.fn(() => {
       return {
         select: vi.fn((selectArg: string) => {
@@ -312,11 +313,12 @@ describe('Queue Items POST Handler', () => {
     const response = await POST(mockRequest)
     expect(response.status).toBe(200)
 
-    // Should only call from() for position query + queue count + insert, NOT for image count
-    // from() called for: position query, count check, insert
+    // Should only call from() for queue count + insert, NOT for image count
+    // Position is now computed via rpc(), not from()
+    // from() called for: count check, insert
     const fromCalls = mock.supabase.from.mock.calls
     const queueItemsCalls = fromCalls.filter((c: string[]) => c[0] === 'queue_items')
-    expect(queueItemsCalls.length).toBe(3) // position + count + insert, no image count
+    expect(queueItemsCalls.length).toBe(2) // count + insert, no image count (position via rpc)
   })
 
   it('inserts note item with correct DB fields', async () => {

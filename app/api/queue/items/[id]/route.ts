@@ -6,8 +6,15 @@ import {
   validateMembership,
   parseAndValidateRequest,
 } from '@/lib/apiHelpers'
+import { createRateLimiter } from '@/lib/serverRateLimit'
+import { QUEUE_MUTATION_RATE_LIMIT, QUEUE_MUTATION_RATE_WINDOW_MS } from '@/lib/partyLimits'
 
 export const dynamic = 'force-dynamic'
+
+const rateLimiter = createRateLimiter({
+  maxRequests: QUEUE_MUTATION_RATE_LIMIT,
+  windowMs: QUEUE_MUTATION_RATE_WINDOW_MS,
+})
 
 interface PatchBody {
   partyId: string
@@ -93,6 +100,16 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     if (parsed.error) return parsed.error
     const body = parsed.body
 
+    // Rate limit by sessionId
+    const { limited, retryAfterMs } = rateLimiter.check(body.sessionId)
+    if (limited) {
+      const retryAfterSec = Math.ceil(retryAfterMs / 1000)
+      return NextResponse.json(
+        { error: 'Rate limit exceeded. Please try again later.', retryAfter: retryAfterSec },
+        { status: 429, headers: { 'Retry-After': retryAfterSec.toString() } },
+      )
+    }
+
     const svc = createServiceClient()
     if (svc.error) return svc.error
     const supabase = svc.supabase
@@ -170,6 +187,16 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     const parsed = await parseAndValidateRequest<DeleteBody>(request, validateDeleteBody)
     if (parsed.error) return parsed.error
     const body = parsed.body
+
+    // Rate limit by sessionId
+    const { limited: deleteLimited, retryAfterMs: deleteRetryMs } = rateLimiter.check(body.sessionId)
+    if (deleteLimited) {
+      const retryAfterSec = Math.ceil(deleteRetryMs / 1000)
+      return NextResponse.json(
+        { error: 'Rate limit exceeded. Please try again later.', retryAfter: retryAfterSec },
+        { status: 429, headers: { 'Retry-After': retryAfterSec.toString() } },
+      )
+    }
 
     const svc = createServiceClient()
     if (svc.error) return svc.error

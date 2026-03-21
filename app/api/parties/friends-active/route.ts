@@ -1,8 +1,15 @@
 import { createClient } from '@supabase/supabase-js'
+import { createRateLimiter } from '@/lib/serverRateLimit'
+import { FRIENDS_ACTIVE_RATE_LIMIT, FRIENDS_ACTIVE_RATE_WINDOW_MS } from '@/lib/partyLimits'
 
 export const dynamic = 'force-dynamic'
 
 const CACHE_HEADERS = { 'Cache-Control': 'private, max-age=30' }
+
+const rateLimiter = createRateLimiter({
+  maxRequests: FRIENDS_ACTIVE_RATE_LIMIT,
+  windowMs: FRIENDS_ACTIVE_RATE_WINDOW_MS,
+})
 
 export async function GET(request: Request) {
   try {
@@ -25,6 +32,16 @@ export async function GET(request: Request) {
     } = await supabase.auth.getUser(token)
     if (authError || !user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Rate limit by userId
+    const { limited, retryAfterMs } = rateLimiter.check(user.id)
+    if (limited) {
+      const retryAfterSec = Math.ceil(retryAfterMs / 1000)
+      return Response.json(
+        { error: 'Rate limit exceeded. Please try again later.', retryAfter: retryAfterSec },
+        { status: 429, headers: { 'Retry-After': retryAfterSec.toString() } },
+      )
     }
 
     // 1. Get accepted friend IDs

@@ -40,7 +40,12 @@ export const NowShowingSection = memo(function NowShowingSection({
       {/* YouTube Content */}
       {currentItem.type === 'youtube' && (
         <>
-          <div className="relative aspect-video bg-surface-800 rounded-xl overflow-hidden mb-4 glow-accent">
+          <a
+            href={currentItem.sourceUrl || undefined}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block relative aspect-video bg-surface-800 rounded-xl overflow-hidden mb-4 glow-accent"
+          >
             <Image
               src={currentItem.thumbnail!}
               alt={currentItem.title || 'YouTube thumbnail'}
@@ -54,7 +59,7 @@ export const NowShowingSection = memo(function NowShowingSection({
                 <PlayIcon />
               </div>
             </div>
-          </div>
+          </a>
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
               <h2 className="font-semibold text-lg truncate">{currentItem.title}</h2>
@@ -66,7 +71,12 @@ export const NowShowingSection = memo(function NowShowingSection({
 
       {/* Tweet Content */}
       {currentItem.type === 'tweet' && (
-        <div className="bg-surface-800 rounded-xl p-4 mb-4">
+        <a
+          href={currentItem.sourceUrl || undefined}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block bg-surface-800 rounded-xl p-4 mb-4"
+        >
           <div className="flex items-center gap-3 mb-3">
             <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400">
               <TwitterIcon size={24} />
@@ -78,12 +88,17 @@ export const NowShowingSection = memo(function NowShowingSection({
           </div>
           <p className="text-lg leading-relaxed mb-3">{currentItem.tweetContent}</p>
           <div className="text-text-muted text-sm">{currentItem.tweetTimestamp}</div>
-        </div>
+        </a>
       )}
 
       {/* Reddit Content */}
       {currentItem.type === 'reddit' && (
-        <div className="bg-surface-800 rounded-xl p-4 mb-4">
+        <a
+          href={currentItem.sourceUrl || undefined}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block bg-surface-800 rounded-xl p-4 mb-4"
+        >
           <div className="flex items-center gap-2 mb-2">
             <div className="w-6 h-6 rounded-full bg-orange-500/20 flex items-center justify-center text-orange-500">
               <RedditIcon size={14} />
@@ -96,7 +111,7 @@ export const NowShowingSection = memo(function NowShowingSection({
             <span>{currentItem.upvotes?.toLocaleString()} upvotes</span>
             <span>{currentItem.commentCount?.toLocaleString()} comments</span>
           </div>
-        </div>
+        </a>
       )}
 
       {/* Note Content */}

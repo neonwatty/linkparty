@@ -11,7 +11,7 @@ export function InstallPrompt() {
   if (!canInstall) return null
 
   return (
-    <div className="fixed bottom-20 left-4 right-4 z-40 animate-fade-in-up">
+    <div className="fixed bottom-24 left-4 right-4 z-40 animate-fade-in-up">
       <div className="bg-surface-800 border border-surface-700 rounded-xl p-4 shadow-xl max-w-sm mx-auto">
         <div className="flex items-start gap-3">
           <div className="text-2xl">📲</div>

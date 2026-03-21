@@ -32,7 +32,10 @@ export default async function Image() {
           boxShadow: '0 4px 24px rgba(255, 138, 92, 0.3)',
         }}
       >
-        <div style={{ fontSize: 40, display: 'flex' }}>&#x1F525;</div>
+        <svg width="40" height="40" fill="none" stroke="white" strokeWidth="2.5" viewBox="0 0 40 40">
+          <path d="M20 8c-6 0-12 6-12 14s6 10 12 10 12-2 12-10-6-14-12-14z" fill="white" opacity="0.3" />
+          <path d="M20 4v4M12 8l2 3M28 8l-2 3M20 32v4" />
+        </svg>
       </div>
 
       {/* Title */}

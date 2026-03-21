@@ -453,7 +453,13 @@ export default function PartyRoomClient() {
   )
 
   // Party actions
-  const handleLeave = useCallback(async () => {
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false)
+
+  const handleLeave = useCallback(() => {
+    setShowLeaveConfirm(true)
+  }, [])
+
+  const handleConfirmLeave = useCallback(async () => {
     try {
       await leaveParty()
       clearCurrentParty()
@@ -589,6 +595,24 @@ export default function PartyRoomClient() {
         onShare={handleShare}
         onInvite={handleOpenInvite}
       />
+
+      {/* Leave party confirmation dialog */}
+      {showLeaveConfirm && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 px-6">
+          <div className="bg-surface-900 rounded-2xl p-6 max-w-sm w-full animate-fade-in-up">
+            <h3 className="text-lg font-bold mb-2">Leave party?</h3>
+            <p className="text-text-secondary text-sm mb-6">You can rejoin later with the party code.</p>
+            <div className="flex gap-3">
+              <button onClick={() => setShowLeaveConfirm(false)} className="btn btn-secondary flex-1">
+                Stay
+              </button>
+              <button onClick={handleConfirmLeave} className="btn bg-red-600 hover:bg-red-500 text-white flex-1">
+                Leave
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <PushPrompt />
 

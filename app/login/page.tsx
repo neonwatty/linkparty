@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { signInWithGoogle, signInWithEmail, resetPassword } from '@/lib/auth'
 import { validateEmail, validatePassword } from '@/lib/validation'
+import { trackLogin } from '@/lib/analytics'
 import { ChevronLeftIcon, LoaderIcon } from '@/components/icons'
 import { TwinklingStars } from '@/components/ui/TwinklingStars'
 
@@ -100,6 +101,7 @@ export default function LoginPage() {
     if (!result.success) {
       setError(result.error || 'Failed to sign in')
     } else {
+      trackLogin()
       const params = new URLSearchParams(window.location.search)
       const rawRedirect = params.get('redirect') || '/'
       const redirect = rawRedirect.startsWith('/') && !rawRedirect.startsWith('//') ? rawRedirect : '/'

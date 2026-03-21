@@ -10,7 +10,7 @@ const config: CapacitorConfig = {
   },
   ios: {
     contentInset: 'automatic',
-    backgroundColor: '#6366f1',
+    backgroundColor: '#1A1D2E',
     appendUserAgent: 'LinkPartyCapacitor',
   },
 }

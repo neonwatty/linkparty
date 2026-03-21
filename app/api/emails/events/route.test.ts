@@ -93,7 +93,7 @@ describe('Email Events API', () => {
       NEXT_PUBLIC_SUPABASE_URL: 'https://test.supabase.co',
       NEXT_PUBLIC_SUPABASE_ANON_KEY: 'test-anon-key',
       SUPABASE_SERVICE_ROLE_KEY: 'test-service-key',
-      NEXT_PUBLIC_ADMIN_EMAILS: 'test@example.com,other-admin@example.com',
+      ADMIN_EMAILS: 'test@example.com,other-admin@example.com',
     }
     mockGetUser.mockResolvedValue({ data: { user: { id: 'user-123', email: 'test@example.com' } }, error: null })
     mockInviteTokensResult.mockReturnValue({

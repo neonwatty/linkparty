@@ -1,8 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { validateOrigin } from '@/lib/csrf'
+import { createRateLimiter } from '@/lib/serverRateLimit'
+import { PUSH_SUBSCRIBE_RATE_LIMIT, PUSH_SUBSCRIBE_RATE_WINDOW_MS } from '@/lib/partyLimits'
 
 export const dynamic = 'force-dynamic'
+
+const rateLimiter = createRateLimiter({
+  maxRequests: PUSH_SUBSCRIBE_RATE_LIMIT,
+  windowMs: PUSH_SUBSCRIBE_RATE_WINDOW_MS,
+})
 
 export async function POST(request: NextRequest) {
   try {
@@ -42,6 +49,16 @@ export async function POST(request: NextRequest) {
     } = await supabaseAuth.auth.getUser(token)
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Rate limit by userId
+    const { limited, retryAfterMs } = rateLimiter.check(user.id)
+    if (limited) {
+      const retryAfterSec = Math.ceil(retryAfterMs / 1000)
+      return NextResponse.json(
+        { error: 'Rate limit exceeded. Please try again later.', retryAfter: retryAfterSec },
+        { status: 429, headers: { 'Retry-After': retryAfterSec.toString() } },
+      )
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)

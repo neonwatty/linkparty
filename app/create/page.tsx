@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { getSessionId, getDisplayName, setDisplayName, getAvatar, setCurrentParty } from '@/lib/supabase'
+import { trackPartyCreated } from '@/lib/analytics'
 import { logger } from '@/lib/logger'
 import { useAuth } from '@/contexts/AuthContext'
 import { ChevronLeftIcon, LoaderIcon, LockIcon, UsersIcon } from '@/components/icons'
@@ -102,6 +103,7 @@ export default function CreatePartyPage() {
       // Save display name for future use
       setDisplayName(displayName.trim())
       setCurrentParty(data.party.id, data.party.code)
+      trackPartyCreated(data.party.id)
 
       // Fire-and-forget: invite selected friends
       if (selectedFriendIds.length > 0 && data.party?.code) {

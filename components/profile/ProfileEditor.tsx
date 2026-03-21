@@ -1,7 +1,9 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { getMyProfile, updateProfile, checkUsernameAvailable } from '@/lib/profile'
+import { supabase } from '@/lib/supabase'
 import { LoaderIcon } from '@/components/icons'
 
 const EMOJI_OPTIONS = ['🎉', '🎸', '🎭', '🎪', '🎵', '🌟', '🔥', '🎯', '🦊', '🐻', '🦁', '🐱', '🐶', '🦄', '🌈', '🍕']
@@ -78,12 +80,15 @@ function UsernameField({
 }
 
 export default function ProfileEditor() {
+  const router = useRouter()
   const [displayName, setDisplayName] = useState('')
   const [username, setUsername] = useState('')
   const [avatarValue, setAvatarValue] = useState('🎉')
   const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null)
   const [usernameChecking, setUsernameChecking] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -207,6 +212,68 @@ export default function ProfileEditor() {
       <button onClick={handleSave} className="btn btn-primary w-full" disabled={saving || !displayName.trim()}>
         {saving ? <LoaderIcon /> : 'Save Profile'}
       </button>
+
+      {/* Delete Account */}
+      <div className="pt-6 mt-6 border-t border-surface-700">
+        {!showDeleteConfirm ? (
+          <button
+            onClick={() => setShowDeleteConfirm(true)}
+            className="text-red-400 hover:text-red-300 text-sm transition-colors"
+          >
+            Delete my account
+          </button>
+        ) : (
+          <div className="card p-4 border-red-500/30">
+            <p className="text-sm text-text-secondary mb-3">
+              This will permanently delete your account and all associated data. This action cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                className="btn btn-secondary flex-1 text-sm"
+                disabled={deleting}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  setDeleting(true)
+                  setError(null)
+                  try {
+                    const {
+                      data: { session },
+                    } = await supabase.auth.getSession()
+                    if (!session?.access_token) {
+                      setError('You must be signed in to delete your account.')
+                      setDeleting(false)
+                      return
+                    }
+                    const res = await fetch('/api/users/delete', {
+                      method: 'POST',
+                      headers: { Authorization: `Bearer ${session.access_token}` },
+                    })
+                    if (!res.ok) {
+                      const data = await res.json()
+                      setError(data.error || 'Failed to delete account')
+                      setDeleting(false)
+                      return
+                    }
+                    await supabase.auth.signOut()
+                    router.push('/')
+                  } catch {
+                    setError('Failed to delete account. Please try again.')
+                    setDeleting(false)
+                  }
+                }}
+                className="bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex-1 disabled:opacity-50"
+                disabled={deleting}
+              >
+                {deleting ? <LoaderIcon /> : 'Delete Account'}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

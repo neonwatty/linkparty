@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { useRouter, useParams } from 'next/navigation'
+import { trackTVModeStarted } from '@/lib/analytics'
 import { usePartyContext } from '@/contexts/PartyContext'
 import { getQueueItemTitle } from '@/utils/queueHelpers'
 import { getContentTypeBadge } from '@/utils/contentHelpers'
@@ -32,6 +33,10 @@ export default function TVModeClient() {
   const handleExit = () => {
     router.push(`/party/${partyId}`)
   }
+
+  useEffect(() => {
+    trackTVModeStarted()
+  }, [])
 
   useEffect(() => {
     if (!autoAdvance || !isHost || !hasNext) return

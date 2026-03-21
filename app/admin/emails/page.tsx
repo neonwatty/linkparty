@@ -66,11 +66,6 @@ function StatCard({
   )
 }
 
-const ADMIN_EMAILS = (process.env.NEXT_PUBLIC_ADMIN_EMAILS || '')
-  .split(',')
-  .map((e) => e.trim())
-  .filter(Boolean)
-
 export default function EmailEventsPage() {
   const { isAuthenticated, isLoading: authLoading, session } = useAuth()
   const [loading, setLoading] = useState(true)
@@ -152,17 +147,8 @@ export default function EmailEventsPage() {
     )
   }
 
-  if (!ADMIN_EMAILS.includes(session?.user?.email || '')) {
-    return (
-      <div className="container-mobile bg-gradient-party flex flex-col items-center justify-center min-h-screen px-6">
-        <h1 className="text-2xl font-bold mb-4">Access denied</h1>
-        <p className="text-text-secondary mb-6">You do not have permission to view this page.</p>
-        <Link href="/" className="btn-primary px-6 py-3 rounded-full">
-          Go home
-        </Link>
-      </div>
-    )
-  }
+  // Admin access is verified server-side by the /api/emails/events route.
+  // If the user is not an admin, the API returns 403 and the error state is shown.
 
   return (
     <div className="container-mobile bg-gradient-party flex flex-col px-6 py-8 min-h-screen">

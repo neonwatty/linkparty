@@ -2,8 +2,15 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { FRIENDS } from '@/lib/errorMessages'
 import { validateOrigin } from '@/lib/csrf'
+import { createRateLimiter } from '@/lib/serverRateLimit'
+import { FRIEND_ACCEPT_RATE_LIMIT, FRIEND_ACCEPT_RATE_WINDOW_MS } from '@/lib/partyLimits'
 
 export const dynamic = 'force-dynamic'
+
+const rateLimiter = createRateLimiter({
+  maxRequests: FRIEND_ACCEPT_RATE_LIMIT,
+  windowMs: FRIEND_ACCEPT_RATE_WINDOW_MS,
+})
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -49,6 +56,16 @@ export async function POST(request: NextRequest) {
     } = await supabase.auth.getUser(token)
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Rate limit by userId
+    const { limited, retryAfterMs } = rateLimiter.check(user.id)
+    if (limited) {
+      const retryAfterSec = Math.ceil(retryAfterMs / 1000)
+      return NextResponse.json(
+        { error: 'Rate limit exceeded. Please try again later.', retryAfter: retryAfterSec },
+        { status: 429, headers: { 'Retry-After': retryAfterSec.toString() } },
+      )
     }
 
     // Look up the friendship row

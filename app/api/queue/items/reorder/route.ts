@@ -6,8 +6,15 @@ import {
   getCallerIdentity,
   validateMembership,
 } from '@/lib/apiHelpers'
+import { createRateLimiter } from '@/lib/serverRateLimit'
+import { QUEUE_MUTATION_RATE_LIMIT, QUEUE_MUTATION_RATE_WINDOW_MS } from '@/lib/partyLimits'
 
 export const dynamic = 'force-dynamic'
+
+const rateLimiter = createRateLimiter({
+  maxRequests: QUEUE_MUTATION_RATE_LIMIT,
+  windowMs: QUEUE_MUTATION_RATE_WINDOW_MS,
+})
 
 interface ReorderUpdate {
   id: string
@@ -51,6 +58,16 @@ export async function POST(request: NextRequest) {
     const parsed = await parseAndValidateRequest<ReorderRequest>(request, validateReorderRequest)
     if (parsed.error) return parsed.error
     const { body } = parsed
+
+    // Rate limit by sessionId
+    const { limited, retryAfterMs } = rateLimiter.check(body.sessionId)
+    if (limited) {
+      const retryAfterSec = Math.ceil(retryAfterMs / 1000)
+      return NextResponse.json(
+        { error: 'Rate limit exceeded. Please try again later.', retryAfter: retryAfterSec },
+        { status: 429, headers: { 'Retry-After': retryAfterSec.toString() } },
+      )
+    }
 
     // 2. Create service client
     const client = createServiceClient()

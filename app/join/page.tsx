@@ -12,6 +12,7 @@ import {
   IS_MOCK_MODE,
   supabase,
 } from '@/lib/supabase'
+import { trackPartyJoined } from '@/lib/analytics'
 import { logger } from '@/lib/logger'
 import { useAuth } from '@/contexts/AuthContext'
 import { ChevronLeftIcon, LoaderIcon, LockIcon } from '@/components/icons'
@@ -113,6 +114,7 @@ function JoinPartyForm() {
       // Save display name for future use
       setDisplayName(displayName.trim())
       setCurrentParty(data.party.id, data.party.code)
+      trackPartyJoined(data.party.id)
 
       // Fire-and-forget: claim invite tokens for auto-friendship
       if (inviterId) {
@@ -150,8 +152,11 @@ function JoinPartyForm() {
 
         <div className="space-y-6 animate-fade-in-up delay-200">
           <div>
-            <label className="block text-sm text-text-secondary mb-2">Party code</label>
+            <label htmlFor="join-party-code" className="block text-sm text-text-secondary mb-2">
+              Party code
+            </label>
             <input
+              id="join-party-code"
               type="text"
               placeholder="ABC123"
               value={code}

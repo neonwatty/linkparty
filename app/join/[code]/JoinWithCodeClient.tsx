@@ -5,6 +5,7 @@ import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { getSessionId, getDisplayName, setDisplayName, getAvatar, setCurrentParty, IS_MOCK_MODE } from '@/lib/supabase'
 import { supabase } from '@/lib/supabase'
+import { trackPartyJoined } from '@/lib/analytics'
 import { logger } from '@/lib/logger'
 import { useAuth } from '@/contexts/AuthContext'
 import { ChevronLeftIcon, LoaderIcon, LockIcon } from '@/components/icons'
@@ -102,6 +103,7 @@ export default function JoinWithCodeClient() {
       // Save display name for future use
       setDisplayName(displayName.trim())
       setCurrentParty(data.party.id, data.party.code)
+      trackPartyJoined(data.party.id)
 
       // Fire-and-forget: claim invite tokens for auto-friendship
       if (inviterId) {
@@ -137,8 +139,11 @@ export default function JoinWithCodeClient() {
 
         <div className="space-y-6 animate-fade-in-up delay-200">
           <div>
-            <label className="block text-sm text-text-secondary mb-2">Party code</label>
+            <label htmlFor="join-code-input" className="block text-sm text-text-secondary mb-2">
+              Party code
+            </label>
             <input
+              id="join-code-input"
               type="text"
               placeholder="ABC123"
               value={code}

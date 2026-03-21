@@ -20,7 +20,7 @@ const steps = [
 ]
 
 export function GettingStarted() {
-  const [dismissed] = useState(getInitialDismissed)
+  const [dismissed, setDismissed] = useState(getInitialDismissed)
 
   if (dismissed) return null
 
@@ -30,7 +30,7 @@ export function GettingStarted() {
     } catch {
       /* private browsing */
     }
-    window.location.reload()
+    setDismissed(true)
   }
 
   return (
