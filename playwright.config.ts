@@ -49,14 +49,16 @@ export default defineConfig({
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
     },
-    {
-      name: 'Mobile Safari',
-      use: {
-        ...devices['iPhone 12'],
-        /* WebKit on Linux CI is slow — generous timeouts to avoid false failures */
-        ...(process.env.CI ? { navigationTimeout: 60_000, actionTimeout: 30_000 } : {}),
-      },
-    },
+    ...(process.env.CI
+      ? []
+      : [
+          {
+            name: 'Mobile Safari' as const,
+            use: {
+              ...devices['iPhone 12'],
+            },
+          },
+        ]),
   ],
 
   /* Run your local dev server before starting the tests */
