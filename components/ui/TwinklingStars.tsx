@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 function generateStars(count: number) {
   return Array.from({ length: count }, (_, i) => ({
@@ -19,9 +19,12 @@ interface TwinklingStarsProps {
 
 export function TwinklingStars({ count = 35 }: TwinklingStarsProps) {
   const [stars] = useState(() => generateStars(count))
-  const [prefersReduced] = useState(() =>
-    typeof window !== 'undefined' ? window.matchMedia('(prefers-reduced-motion: reduce)').matches : false,
-  )
+  const [prefersReduced, setPrefersReduced] = useState(false)
+
+  useEffect(() => {
+    setPrefersReduced(window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+  }, [])
+
   if (prefersReduced) return null
 
   return (

@@ -28,11 +28,14 @@ export default defineConfig({
       origin: 'http://localhost:3000',
     },
 
-    /* Disable CSS animations/transitions so Playwright doesn't wait for stability */
+    /* Disable CSS animations/transitions so Playwright doesn't wait for element stability */
     reducedMotion: 'reduce',
 
     /* Collect trace when retrying the failed test */
     trace: 'on-first-retry',
+
+    /* Don't wait for animations to settle before actions — prevents timeout on animated elements */
+    actionTimeout: process.env.CI ? 15_000 : 5_000,
 
     /* Capture screenshot on failure */
     screenshot: 'only-on-failure',
