@@ -73,6 +73,7 @@ jobs:
         env:
           NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
           NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
+          NEXT_PUBLIC_E2E_MOCK_AUTH: 'true'
       - name: Remove build cache
         run: rm -rf .next/cache
       - name: Upload build output
@@ -140,6 +141,7 @@ jobs:
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ env.ANON_KEY }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ env.SERVICE_ROLE_KEY }}
           E2E_MOCK_AUTH: 'true'
+          NEXT_PUBLIC_E2E_MOCK_AUTH: 'true'
           # SUPABASE_LIVE: 'true'  # TODO: re-enable when social test login flow works in CI (cookie/redirect issue)
       - name: Upload Playwright report
         uses: actions/upload-artifact@v4

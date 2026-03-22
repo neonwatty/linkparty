@@ -52,7 +52,7 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' https://fonts.gstatic.com",
               `img-src 'self' data: blob: https://*.supabase.co https://i.ytimg.com https://pbs.twimg.com${isLocalSupabase ? ' http://localhost:* http://127.0.0.1:*' : ''}`,
-              `connect-src 'self' https://*.supabase.co wss://*.supabase.co https://va.vercel-scripts.com${isLocalSupabase ? ' http://localhost:* http://127.0.0.1:* ws://localhost:* ws://127.0.0.1:*' : ''}`,
+              `connect-src 'self' https://*.supabase.co wss://*.supabase.co https://va.vercel-scripts.com https://us.i.posthog.com${isLocalSupabase ? ' http://localhost:* http://127.0.0.1:* ws://localhost:* ws://127.0.0.1:*' : ''}`,
               "frame-src 'none'",
               "object-src 'none'",
               "base-uri 'self'",

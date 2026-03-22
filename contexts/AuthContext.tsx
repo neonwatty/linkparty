@@ -19,6 +19,23 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
+/** Check if E2E mock auth is active (cookie present + env flag set) */
+function isE2EMockAuth(): boolean {
+  if (typeof document === 'undefined') return false
+  if (!process.env.NEXT_PUBLIC_E2E_MOCK_AUTH) return false
+  return document.cookie.includes('mock-auth-token')
+}
+
+/** Minimal fake user for E2E mock auth */
+const MOCK_USER = {
+  id: 'e2e-mock-user-id',
+  email: 'e2e@test.local',
+  user_metadata: { display_name: 'Test User' },
+  app_metadata: {},
+  aud: 'authenticated',
+  created_at: new Date().toISOString(),
+} as AuthUser
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter()
   const [user, setUser] = useState<AuthUser | null>(null)
@@ -26,6 +43,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
+    // E2E mock auth bypass — provide a fake user without hitting Supabase
+    if (isE2EMockAuth()) {
+      setUser(MOCK_USER)
+      setSession(null)
+      setIsLoading(false)
+      return
+    }
+
     // Get initial session
     getCurrentSession()
       .then((session) => {
